@@ -19,18 +19,6 @@ if(${USE_ROS_TIMER})
   MESSAGE(WARNING "[mrs_uav_px4_api]: Compiling with ROS Timers. This can cause high CPU load in runtime.")
 endif()
 
-if(MRS_ENABLE_TESTING)
-  message(WARNING "Setting optimizaton levels for tests")
-  add_definitions("-O0")
-  add_definitions("-g")
-endif()
-
-if(COVERAGE)
-  message(WARNING "building with --coverage, the performance might be limited")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
-endif()
-
 set(DEPENDENCIES
   rclcpp
   rclpy
@@ -41,11 +29,6 @@ set(DEPENDENCIES
   std_msgs
   mrs_msgs
   mrs_uav_px4_api
-  
-  ## TODO: stibipet@fel.cvut.cz
-  # mrs_uav_testing
-  # mrs_uav_gazebo_testing
-  ## TODO
   )
 
 foreach(DEP IN LISTS DEPENDENCIES)
@@ -84,8 +67,6 @@ include_directories(
 
 set(INSTALLED_PROGRAMS
   scripts/mrs_drone_spawner/mrs_drone_spawner.py
-  scripts/dangerous_pixhawk_only_takeoff
-  scripts/kill_previous_session.sh
 )
 
 foreach(PROG IN LISTS INSTALLED_PROGRAMS)
@@ -106,10 +87,6 @@ install(DIRECTORY config
 install(DIRECTORY models
   DESTINATION share/${PROJECT_NAME}
 )
-
-# install(DIRECTORY tmux/
-#   DESTINATION share/${PROJECT_NAME}
-# )
 
 install(DIRECTORY ROMFS
   DESTINATION share/${PROJECT_NAME}
