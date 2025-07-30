@@ -21,7 +21,6 @@
   <depend>ros_gz_sim</depend>
   <depend>px4</depend>
   <depend>mavros</depend>
-  <depend>mrs_gazebo_common_resources</depend>
   <depend>std_msgs</depend>
   <depend>mrs_msgs</depend>
   <depend>mrs_uav_px4_api</depend>

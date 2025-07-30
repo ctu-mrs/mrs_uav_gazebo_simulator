@@ -38,7 +38,6 @@ set(DEPENDENCIES
   ros_gz_sim
   px4
   mavros
-  mrs_gazebo_common_resources
   std_msgs
   mrs_msgs
   mrs_uav_px4_api
