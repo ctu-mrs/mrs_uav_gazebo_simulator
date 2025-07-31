@@ -70,6 +70,7 @@ def generate_launch_description():
                     ],
 
                 remappings=[
+                    ('spawn', '~/spawn'),
                 ],
                 )
             )
