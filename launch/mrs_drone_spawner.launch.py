@@ -3,8 +3,6 @@
 import launch
 import os
 
-import rclpy.parameter
-
 from launch_ros.actions import Node 
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import (
@@ -25,29 +23,22 @@ def generate_launch_description():
 
     this_pkg_path = get_package_share_directory(pkg_name)
     node_name='mrs_drone_spawner'
-    spawner_params = LaunchConfiguration('spawner_params')
 
     # #{ custom_config
 
-    custom_config = LaunchConfiguration('custom_config')
+    custom_config_arg = LaunchConfiguration('custom_config')
 
-    # this adds the args to the list of args available for this launch files
-    # these args can be listed at runtime using -s flag
-    # default_value is required to if the arg is supposed to be optional at launch time
     ld.add_action(DeclareLaunchArgument(
         'custom_config',
         default_value="",
         description="Path to the custom configuration file. The path can be absolute, starting with '/' or relative to the current working directory",
         ))
 
-    # behaviour:
-    #     custom_config == "" => custom_config: ""
-    #     custom_config == "/<path>" => custom_config: "/<path>"
-    #     custom_config == "<path>" => custom_config: "$(pwd)/<path>"
-    custom_config = IfElseSubstitution(
-            condition=PythonExpression(['"', custom_config, '" != "" and ', 'not "', custom_config, '".startswith("/")']),
-            if_value=PathJoinSubstitution([EnvironmentVariable('PWD'), custom_config]),
-            else_value=custom_config
+    # This logic correctly creates a substitution that resolves to an absolute path.
+    custom_config_path = IfElseSubstitution(
+            condition=PythonExpression(['"', custom_config_arg, '" != "" and ', 'not "', custom_config_arg, '".startswith("/")']),
+            if_value=PathJoinSubstitution([EnvironmentVariable('PWD'), custom_config_arg]),
+            else_value=custom_config_arg
             )
 
     # #} end of custom_config
@@ -67,18 +58,15 @@ def generate_launch_description():
 
     ld.add_action(
             Node(
-                # namespace=node_name,
                 name=node_name,
                 package=pkg_name,
-                executable='mrs_drone_spawner.py',
+                executable='mrs_drone_spawner',
                 output="screen",
                 arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
-
-                # prefix=['debug_roslaunch ' + os.ttyname(sys.stdout.fileno())],
-
                 parameters=[
-                    {'custom_config': custom_config},
-                    spawner_params,
+                    # This passes the custom_config path as a parameter named 'custom_config'
+                    {'custom_config': custom_config_path},
+                    LaunchConfiguration('spawner_params'),
                     ],
 
                 remappings=[

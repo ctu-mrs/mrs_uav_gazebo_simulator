@@ -4,7 +4,7 @@
   
   <name>mrs_uav_gazebo_simulation</name>
   <version>2.0.0</version>
-  <description>The Metapackage for MRS UAV Gazebo simulation pipeline.</description>
+  <description>The MRS UAV Gazebo simulation package.</description>
 
   <author email="vojtech.spurny@fel.cvut.cz">Vojtech Spurny</author>
   <maintainer email="petr.stibinger@fel.cvut.cz">Petr Stibinger</maintainer>
@@ -13,10 +13,10 @@
 
   <license>BSD 3-Clause</license>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_python</buildtool_depend>
 
   <depend>rclpy</depend>
-  <depend>python3-jinja2</depend>
+  <depend>python3_jinja2</depend>
   <depend>ros_gz</depend>
   <depend>ros_gz_sim</depend>
   <depend>px4</depend>
@@ -24,14 +24,14 @@
   <depend>std_msgs</depend>
   <depend>mrs_msgs</depend>
   <depend>mrs_uav_px4_api</depend>
- <!-- TODO: stibipet@fel.cvut.cz -->
-  <!-- <depend>mrs_uav_testing</depend> -->
-  <!-- <depend>mrs_uav_gazebo_testing</depend> --> 
- <!-- TODO -->
-
+  
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3_pytest</test_depend>
 
   <export>
-    <build_type>ament_cmake</build_type>
+    <build_type>ament_python</build_type>
     <!-- ros_gz_sim automatically registers these exports when running the simulation from the ros_gz_sim launch file. You can than use URIs of type model://my_package/stuff. -->
     <gazebo_ros gazebo_model_path="${prefix}/models"/>
     <gazebo_ros gazebo_media_path="${prefix}"/>

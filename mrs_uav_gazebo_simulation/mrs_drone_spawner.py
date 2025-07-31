@@ -28,8 +28,8 @@ from ament_index_python.packages import get_package_share_directory, get_package
 
 from inspect import getmembers, isfunction
 
-from component_wrapper import ComponentWrapper
-from template_wrapper import TemplateWrapper
+from mrs_uav_gazebo_simulation.utils.component_wrapper import ComponentWrapper
+from mrs_uav_gazebo_simulation.utils.template_wrapper import TemplateWrapper
 
 from mrs_msgs.srv import String as StringSrv
 from mrs_msgs.msg import GazeboSpawnerDiagnostics
@@ -188,7 +188,7 @@ class MrsDroneSpawner(Node):
         # # #{ handle extra resource paths
         extra_resource_paths = []
         try:
-            extra_resource_paths = self.get_parameter('~extra_resource_paths').value
+            extra_resource_paths = self.get_parameter('extra_resource_paths').value
         except rclpy.exceptions.ParameterNotDeclaredException:
             # no extra resources
             extra_resource_paths = []
@@ -208,8 +208,8 @@ class MrsDroneSpawner(Node):
         # # #{ find launchfiles for mavros and px4_firmware
         gazebo_simulation_path = get_package_share_directory('mrs_uav_gazebo_simulation')
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
-        self.mavros_launch_path = px4_api_path + os.sep + 'launch' + os.sep + 'mavros_gazebo_simulation.py'
-        self.px4_fimrware_launch_path = gazebo_simulation_path + os.sep + 'launch' + os.sep + 'run_simulation_firmware.launch.py'
+        self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.py')
+        self.px4_fimrware_launch_path = os.path.join(gazebo_simulation_path, 'launch', 'run_simulation_firmware.launch.py')
         # # #}
 
         try:
