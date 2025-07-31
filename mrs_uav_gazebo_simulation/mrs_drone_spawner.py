@@ -331,9 +331,10 @@ class MrsDroneSpawner(Node):
     # #{ callback_spawn
     def callback_spawn(self, req, res):
         if not self.gazebo_spawn_proxy.wait_for_service(timeout_sec=5.0):
-            self.get_logger().error('Gazebo spawn service not available.')
+            service_name = self.gazebo_spawn_proxy.service_name
+            self.get_logger().error(f'Gazebo spawn service "{service_name}" not available.')
             res.success = False
-            res.message = 'Gazebo spawn service not available.'
+            res.message =  f'Gazebo spawn service "{service_name}" not available.'
             return res
 
         self.spawn_called = True
