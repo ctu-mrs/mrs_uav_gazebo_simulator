@@ -48,6 +48,10 @@ def generate_launch_description():
         arguments=[
             # Clock (IGN -> ROS2)
             '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+            # SpawnEntity (ROS2 -> IGN)
+            '/world/default/create@ros_gz_interfaces/srv/SpawnEntity',
+            # DeleteEntity (ROS2 -> IGN)
+            '/world/default/remove@ros_gz_interfaces/srv/DeleteEntity',
         ],
         output='screen'
     )
