@@ -1,6 +1,0 @@
-﻿# ros_gz_bridge.yaml
-- ros_topic_name: "/clock"
-  gz_topic_name: "/clock"
-  ros_type_name: "rosgraph_msgs/msg/Clock"
-  gz_type_name: "gz.msgs.Clock"
-  direction: "BIDIRECTIONAL"
