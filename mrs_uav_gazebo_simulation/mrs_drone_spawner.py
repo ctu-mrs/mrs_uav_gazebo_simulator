@@ -9,6 +9,7 @@ import math
 import os
 import random
 import re
+import sys
 import rclpy
 from rclpy.node import Node
 import rclpy.exceptions
@@ -58,6 +59,18 @@ class SuffixError(NameError):
 
 # #} end of Exceptions and Errors
 
+# #{ dummy_function()
+def dummy_function():
+    '''Empty function to temporarily replace ros signal handlers'''
+    pass
+# #}
+
+# #{ filter_templates(template_name)
+def filter_templates(template_name, suffix):
+    '''Comparator used to load files with given suffix'''
+    return template_name.endswith(suffix)
+# #}
+
 # #{ exit_handler()
 def exit_handler():
     '''
@@ -91,6 +104,7 @@ def exit_handler():
     print('[INFO] [MrsDroneSpawner]: Exited gracefully')
 # #}
 
+
 class MrsDroneSpawner(Node):
 
     def __init__(self):
@@ -116,7 +130,6 @@ class MrsDroneSpawner(Node):
         self.declare_parameter('jinja_templates.save_rendered_sdf', True)
 
         self.declare_parameter('extra_resource_paths', [])
-        self.declare_parameter('world_name', "default")
 
         # Get all parameters
         try:
@@ -137,7 +150,6 @@ class MrsDroneSpawner(Node):
 
             self.template_suffix = self.get_parameter('jinja_templates.suffix').value
             self.save_sdf_files = self.get_parameter('jinja_templates.save_rendered_sdf').value
-            self.world_name = self.get_parameter('world_name').value
 
         except rclpy.exceptions.ParameterNotDeclaredException as e:
             self.get_logger().error(f'Could not load required param. {e}')
@@ -181,8 +193,8 @@ class MrsDroneSpawner(Node):
         self.diagnostics_timer = self.create_timer(0.1, self.callback_diagnostics_timer)
         self.action_timer = self.create_timer(0.1, self.callback_action_timer)
 
-        self.gazebo_spawn_proxy = self.create_client(SpawnEntity, f'/world/{self.world_name}/create')
-        self.gazebo_delete_proxy = self.create_client(DeleteEntity, f'/world/{self.world_name}/remove')
+        self.gazebo_spawn_proxy = self.create_client(SpawnEntity, 'create_entity')
+        self.gazebo_delete_proxy = self.create_client(DeleteEntity, 'delete_entity')
 
         # Setup system variables
         self.spawn_called = False
@@ -278,7 +290,7 @@ class MrsDroneSpawner(Node):
             return False
 
         if self.save_sdf_files:
-            time_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            time_str = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
             
             filename = f"mrs_drone_spawner_{name}_{time_str}.sdf"
             filepath = os.path.join('/tmp', filename)
@@ -290,21 +302,20 @@ class MrsDroneSpawner(Node):
         request = SpawnEntity.Request()
         request.entity_factory.name = name
         request.entity_factory.sdf = sdf_content
-        request.initial_pose.position.x = robot_params['spawn_pose']['x']
-        request.initial_pose.position.y = robot_params['spawn_pose']['y']
-        request.initial_pose.position.z = robot_params['spawn_pose']['z']
+        request.entity_factory.pose.position.x = robot_params['spawn_pose']['x']
+        request.entity_factory.pose.position.y = robot_params['spawn_pose']['y']
+        request.entity_factory.pose.position.z = robot_params['spawn_pose']['z']
         
         q_w = math.cos(robot_params['spawn_pose']['heading'] / 2.0)
         q_z = math.sin(robot_params['spawn_pose']['heading'] / 2.0)
-        request.initial_pose.orientation.w = q_w
-        request.initial_pose.orientation.z = q_z
+        request.entity_factory.pose.orientation.w = q_w
+        request.entity_factory.pose.orientation.z = q_z
 
         self.get_logger().info(f'Requesting spawn for model {name}')
         future = self.gazebo_spawn_proxy.call_async(request)
         
-        rclpy.spin_until_future_complete(self, future, timeout_sec=10.0)
-
-        if future.result() is not None and future.result().success:
+        rclpy.spin_until_future_complete(self, future)
+        if future.result() is not None:
             self.get_logger().info(f'Model {name} spawned successfully.')
             return True
         else:
@@ -338,13 +349,13 @@ class MrsDroneSpawner(Node):
             return res
 
         self.spawn_called = True
-        self.get_logger().info(f'Spawn called with args "{req.data}"')
+        self.get_logger().info(f'Spawn called with args "{req.value}"')
         res.success = False
 
         params_dict = None
         already_assigned_ids = copy.deepcopy(self.assigned_ids)
         try:
-            params_dict = self.parse_user_input(req.data)
+            params_dict = self.parse_user_input(req.value)
         except Exception as e:
             self.get_logger().warn(f'While parsing user input: {e}')
             res.message = str(e.args[0])
@@ -415,370 +426,728 @@ class MrsDroneSpawner(Node):
 
     # #{ callback_diagnostics_timer
     def callback_diagnostics_timer(self):
-        msg = GazeboSpawnerDiagnostics()
-        msg.spawn_called = self.spawn_called
-        msg.processing = self.processing
-        msg.queued_vehicles= self.vehicle_queue
-        msg.active_vehicles = self.active_vehicles
-
-        self.diagnostics_pub.publish(msg)
+        diagnostics = GazeboSpawnerDiagnostics()
+        diagnostics.spawn_called = self.spawn_called
+        diagnostics.processing = self.processing
+        diagnostics.active_vehicles = self.active_vehicles
+        self.queue_mutex.acquire()
+        diagnostics.queued_vehicles = [params['name'] for params in self.vehicle_queue]
+        diagnostics.queued_processes = len(self.vehicle_queue)
+        self.queue_mutex.release()
+        self.diagnostics_pub.publish(diagnostics)
+    # #}
     # #}
 
-    # -----------------------------------------------------------------------------------
-    # | --------------------------- All Helper Functions -------------------------------- |
-    # -----------------------------------------------------------------------------------
+    # --------------------------------------------------------------
+    # |                    jinja template utils                    |
+    # --------------------------------------------------------------
 
-    # #{ get_ros_package_name
-    def get_ros_package_name(self, model_path):
-        # This function is ported to use ROS 2's ament_index_python
-        # It finds the package a file belongs to by looking for a package.xml file
-        # in parent directories.
-        current_path = os.path.dirname(model_path)
-        while current_path != os.path.dirname(current_path): # Stop at root
-            if 'package.xml' in os.listdir(current_path):
-                with open(os.path.join(current_path, 'package.xml'), 'r') as f:
-                    doc = xml.dom.minidom.parse(f)
-                    package_name = doc.getElementsByTagName('name')[0].firstChild.nodeValue
-                    return package_name
-            current_path = os.path.dirname(current_path)
-        return None
+    # #{ get_ros_package_name(self, filepath)
+    def get_ros_package_name(self, filepath):
+        '''Return the name of a ros package that contains a given filepath'''
+
+        package_share_pattern = r"^(.*?share/[^/]+)"
+        match_result = re.match(package_share_pattern, filepath)
+        if match_result is not None:
+            package_share_path = match_result.group(0)
+        else:
+            package_share_path = None
+
+        package_name_pattern = r"share/([^/]+)"
+        search_result = re.search(package_name_pattern, filepath)
+        if search_result is not None:
+            package_name = search_result.group(1)
+        else:
+            package_name = None
+
+        if package_share_path is None or package_name is None:
+            self.get_logger().error(f"Package name or share path could not be determined from filepath '{filepath}'")
+            return None
+
+        share_path_from_ament_index = get_package_share_directory(package_name)
+
+        # sanity check
+        if share_path_from_ament_index != package_share_path:
+            self.get_logger().error(f"Share path for package '{package_name}' not registered in ament index. Is the resource package installed and sourced?")
+            return None
+
+        return package_name
     # #}
 
-    # #{ get_all_templates
-    def get_all_templates(self, path):
-        # returns all .sdf.jinja templates in a folder
+    # #{ get_all_templates(self)
+    def get_all_templates(self):
+        '''
+        Get all templates loaded by the given jinja environment
+        :returns a list of tuples, consisting of (str_name, jinja2.Template)
+        '''
+        template_names = self.jinja_env.list_templates(filter_func=lambda template_name: filter_templates(template_name, self.template_suffix))
         templates = []
-        for f in os.listdir(path):
-            if f.endswith(self.template_suffix):
-                templates.append(TemplateWrapper(os.path.join(path, f), self.get_ros_package_name(os.path.join(path, f)), self))
+        for i, full_name in enumerate(template_names):
+            self.get_logger().info(f'\t({i+1}/{len(template_names)}): {full_name}')
+            template_name = full_name.split(os.path.sep)[-1][:-(len(self.template_suffix))]
+            templates.append((template_name, self.jinja_env.get_template(full_name)))
         return templates
     # #}
 
-    # #{ get_template_imports
-    def get_template_imports(self, template, templates):
-        """
-        Recursively returns all templates imported by a template
-        """
-        # remove suffix to get model name
-        my_name = os.path.basename(template.path).replace(self.template_suffix, '')
-        components = self.get_spawner_components_from_template(template)
-        imports = []
-        if 'imports' in components:
-            for imp in components['imports']:
-                if imp in [os.path.basename(t.path).replace(self.template_suffix, '') for t in templates]:
-                    # get the template object from the list of all templates
-                    imported_template = [t for t in templates if os.path.basename(t.path).replace(self.template_suffix, '') == imp][0]
-                    # recursively get all imports from the imported template
-                    imports.extend(self.get_template_imports(imported_template, templates))
-                    imports.append(imp)
-                else:
-                    self.get_logger().warn(f'Could not find imported model "{imp}" in template "{my_name}"')
-        return imports
+    # #{ get_template_imports(self, jinja_template)
+    def get_template_imports(self, jinja_template):
+        '''Returns a list of sub-templates imported by a given jinja_template'''
+        with open(jinja_template.filename, 'r') as f:
+            template_source = f.read()
+            preprocessed_template = template_source.replace('\n', '')
+            parsed_template = self.jinja_env.parse(preprocessed_template)
+            import_names = [node.template.value for node in parsed_template.find_all(jinja2.nodes.Import)]
+            imported_templates = []
+            for i in import_names:
+                template = self.jinja_env.get_template(i)
+                imported_templates.append(template)
+            return imported_templates
     # #}
 
-    # #{ get_spawner_components_from_template
+    # #{ get_spawner_components_from_template(self, template)
     def get_spawner_components_from_template(self, template):
-        """
-        Returns a dictionary of all spawner components from a template
-        """
-        # load jinja file
-        with open(template.path, 'r') as f:
-            template_string = f.read()
+        '''
+        Builds a dict of spawner-compatible macros in a given template and their corresponding ComponentWrapper objects
+        Does NOT check for macros imported from other templates
+        :return a dict in format {macro name: component_wrapper.ComponentWrapper}
+        '''
+        with open(template.filename, 'r') as f:
+            template_source = f.read()
+            preprocessed_template = template_source.replace('\n', '')
+            parsed_template = self.jinja_env.parse(preprocessed_template)
+            macro_nodes = [node for node in parsed_template.find_all(jinja2.nodes.Macro)]
+            spawner_components = {}
+            for node in macro_nodes:
+                spawner_keyword = None
+                spawner_description = None
+                spawner_default_args = None
+                for elem in node.body:
+                    if isinstance(elem, jinja2.nodes.Assign) and elem.target.name == 'spawner_description':
+                        spawner_description = elem.node.value
+                    if isinstance(elem, jinja2.nodes.Assign) and elem.target.name == 'spawner_default_args':
+                        if isinstance(elem.node, jinja2.nodes.Const):
+                            spawner_default_args = elem.node.value
+                        elif isinstance(elem.node, jinja2.nodes.List):
+                            spawner_default_args = []
+                            for e in elem.node.items:
+                                spawner_default_args.append(e.value)
+                        elif isinstance(elem.node, jinja2.nodes.Dict):
+                            spawner_default_args = {}
+                            for pair in elem.node.items:
+                                spawner_default_args[pair.key.value] = pair.value.value
+                        else:
+                            self.get_logger().warn(f'Unsupported param type "{type(elem.node)}" in template {template.filename}')
+                    if isinstance(elem, jinja2.nodes.Assign) and elem.target.name == 'spawner_keyword':
+                        spawner_keyword = elem.node.value
+                if spawner_keyword is not None:
+                    spawner_components[node.name] = ComponentWrapper(spawner_keyword, spawner_description, spawner_default_args)
+            return spawner_components
+    # #}
 
-        # find all spawner comments
-        spawner_components_re = re.findall(r'\{\#\#(.+?)\#\#\}', template_string, re.DOTALL)
-        spawner_components = {}
-
-        # parse all spawner comments to dictionary
-        for component in spawner_components_re:
+    # #{ get_accessible_components(self, template_wrapper, all_components)
+    def get_accessible_components(self, template_wrapper, all_components):
+        '''
+        Recursive function to get all spawner-compatible components accessible from template_wrapper
+        Includes components in imported sub-templates
+        :param template_wrapper: template_wrapper.TemplateWrapper for which we want to load components
+        :param all_components: a dict to which all found ComponentWrappers will be added
+        :returns a dict of objects {macro name: component_wrapper.ComponentWrapper}
+        '''
+        all_components.update(template_wrapper.components)
+        for i in template_wrapper.imported_templates:
             try:
-                # remove all whitespace
-                component = ''.join(component.split())
-                # parse to dictionary
-                spawner_components.update(ast.literal_eval(component))
-            except:
-                self.get_logger().warn(f'Could not parse spawner component "{component}" in template "{template.path}"')
-
-        return spawner_components
+                all_components.update(self.get_accessible_components(i, all_components))
+            except RecursionError as err:
+                raise RecursionError(f'Cyclic import detected in file {template_wrapper.jinja_template.filename}. Fix your templates')
+        return all_components
     # #}
 
-    # #{ get_accessible_components
-    def get_accessible_components(self, path):
-        # check if component file is a valid csv file
-        components = []
-        try:
-            with open(path, 'r') as f:
-                reader = csv.reader(f)
-                for row in reader:
-                    components.append(ComponentWrapper(row[0], row[1], row[2], self))
-            return components
-        except:
-            return None
+    # #{ get_callable_components(self, template)
+    def get_callable_components(self, template, accessible_components):
+        '''
+        Get all components that are actually called from a template
+        :param template: a jinja template file
+        :param accessible_components: a dict of macros accessible from this template (including imported modules)
+        :returns a dictionary of callable components {macro_name: component_wrapper.ComponentWrapper}
+        sorted alphabetically by keywords
+        '''
+        callable_components = {}
+        with open(template.filename, 'r') as f:
+            template_source = f.read()
+            preprocessed_template = template_source.replace('\n', '')
+            parsed_template = self.jinja_env.parse(preprocessed_template)
+            call_nodes = [node for node in parsed_template.find_all(jinja2.nodes.Call)]
+            callable_components = {}
+            for node in call_nodes:
+                if isinstance(node.node, jinja2.nodes.Getattr):
+                    if node.node.attr in accessible_components.keys():
+                        callable_components[node.node.attr] = accessible_components[node.node.attr]
+                elif isinstance(node.node, jinja2.nodes.Name):
+                    if node.node.name in accessible_components.keys():
+                        callable_components[node.node.name] = accessible_components[node.node.name]
+        return dict(sorted(callable_components.items(), key=lambda item: item[1].keyword))
     # #}
 
-    # #{ get_callable_components
-    def get_callable_components(self, components):
-        # check if component file is a valid csv file
-        callable_comps = []
-        for comp in components:
-            if comp.callable:
-                callable_comps.append(comp)
-
-        return callable_comps
-    # #}
-
-    # #{ build_template_database
+    # #{ build_template_database(self)
     def build_template_database(self):
-        # find all templates in all resource paths
-        templates = []
-        for path in self.jinja_env.loader.searchpath:
-            templates.extend(self.get_all_templates(path))
+        '''
+        Generate a database of jinja2 templates available to the spawner
+        Scans through all folders provided into the jinja2 environment for files with matching target suffix
+        Recursively checks templates imported by templates, prevents recursion loops
+        Returns a dictionary of template_wrapper.TemplateWrapper objects in format {template_name: template_wrapper.TemplateWrapper}
+        '''
 
-        # remove duplicates
-        templates = list(dict.fromkeys(templates))
+        template_wrappers = {}
 
-        # build template database
-        template_database = {}
-        for template in templates:
-            # remove suffix to get model name
-            my_name = os.path.basename(template.path).replace(self.template_suffix, '')
-            template_database[my_name] = template
+        self.get_logger().info('Loading all templates')
+        all_templates = self.get_all_templates()
+        for name, template in all_templates:
+            imports = self.get_template_imports(template)
+            components = self.get_spawner_components_from_template(template)
+            package_name = self.get_ros_package_name(template.filename)
+            wrapper = TemplateWrapper(template, imports, components, package_name)
+            template_wrappers[name] = wrapper
 
-        # check for circular dependencies
-        for name, template in template_database.items():
-            imports = self.get_template_imports(template, templates)
-            if name in imports:
-                raise RecursionError(f'Circular dependency detected in template "{name}"')
+        self.get_logger().info('Reindexing imported templates')
+        for name, wrapper in template_wrappers.items():
+            for i, it in enumerate(wrapper.imported_templates):
+                if not isinstance(it, TemplateWrapper):
+                    for ww in template_wrappers.values():
+                        if ww.jinja_template == it:
+                            wrapper.imported_templates[i] = ww
 
-        return template_database
+        self.get_logger().info('Adding available components from dependencies')
+        for _, wrapper in template_wrappers.items():
+            prev_limit = sys.getrecursionlimit()
+            sys.setrecursionlimit(int(math.pow(len(template_wrappers),2)))
+            wrapper.components = self.get_accessible_components(wrapper, {})
+            sys.setrecursionlimit(prev_limit)
+
+        self.get_logger().info('Pruning components to only include callables')
+        callable_components = {}
+        for name, template in all_templates:
+            callable_components[name] = self.get_callable_components(template, template_wrappers[name].components)
+
+        for name, wrapper in template_wrappers.items():
+            wrapper.components = callable_components[name]
+
+        self.get_logger().info('Template database built')
+
+        return template_wrappers
     # #}
 
-    # #{ configure_jinja2_environment
+    # #{ configure_jinja2_environment(self, resource_paths)
     def configure_jinja2_environment(self, resource_paths):
-        # create jinja2 environment
-        return jinja2.Environment(
+        '''Create a jinja2 environment and setup its variables'''
+        env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(resource_paths),
-            autoescape=jinja2.select_autoescape(['html', 'xml'])
+            autoescape=False
         )
+        # Allows use of math module directly in the templates
+        env.globals['math'] = math
+
+        return env
     # #}
 
-    # #{ render
-    def render(self, robot_params):
+    # #{ render(self, spawner_args)
+    def render(self, spawner_args):
+        '''
+        Renders a jinja template into a sdf, creates a formatted xml
+        Input has to specify the template name in spawner_args["model"]
+        :param spawner_args: a dict to be passed into the template as variables, format {component_name (string): args (list or dict)}
+        :return: content of the xml file as a string or None
+        '''
+
+        params = {
+            "spawner_args": spawner_args
+        }
+
         try:
-            template = self.jinja_templates[robot_params['model']]
-            return template.render(robot_params)
-        except jinja2.exceptions.TemplateNotFound:
-            self.get_logger().error(f'Could not find template for model "{robot_params["model"]}"')
-            return None
+            model_name = spawner_args['model']
+        except KeyError:
+            self.get_logger().error(f'Cannot render template, model not specified')
+            return
+
+        try:
+            template_wrapper = self.jinja_templates[model_name]
+        except KeyError:
+            self.get_logger().error(f'Cannot render model "{model_name}". Template not found!')
+            return
+
+        self.get_logger().info(f'Rendering model "{model_name}" using template {template_wrapper.jinja_template.filename}')
+
+        context = template_wrapper.jinja_template.new_context(params)
+        rendered_template = template_wrapper.jinja_template.render(context)
+        try:
+            root = xml.dom.minidom.parseString(rendered_template)
         except Exception as e:
-            self.get_logger().error(f'Error rendering template for model "{robot_params["model"]}": {e}')
-            return None
-    # #}
+            self.get_logger().error(f'XML error: "{e}"')
+            fd, filepath = tempfile.mkstemp(prefix='mrs_drone_spawner_' + datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S_"), suffix='_DUMP_' + str(model_name) + '.sdf')
+            with os.fdopen(fd, 'w') as output_file:
+                output_file.write(rendered_template)
+                self.get_logger().info(f'Malformed XML for model {model_name} dumped to {filepath}')
+            return
 
-    # #{ parse_user_input
-    def parse_user_input(self, data):
-        data = self.parse_string_to_objects(data)
-        return self.get_spawn_poses_from_args(data)
-    # #}
+        ugly_xml = root.toprettyxml(indent='  ')
 
-    # #{ parse_string_to_objects
-    def parse_string_to_objects(self, data):
-        # parse the string to a list of objects
-        data = data.split(' ')
-        # remove empty strings
-        data = [x for x in data if x]
-        return data
-    # #}
+        # Remove empty lines
+        pretty_xml = '\n'.join(line for line in ugly_xml.split('\n') if line.strip())
 
-    # #{ get_help_text
-    def get_help_text(self, params):
-        if 'help' in params:
-            if params['help'] is None:
-                return self.get_spawner_help_text(params)
+        return pretty_xml
+
+    # #} end render
+
+    # --------------------------------------------------------------
+    # |                     user input parsing                     |
+    # --------------------------------------------------------------
+
+    # #{ parse_user_input(self, input_str)
+    def parse_user_input(self, input_str):
+        '''
+        Extract params from an input string, create spawner args
+        expected input:
+            device ids (integers separated by spaces)
+            keywords (specified in jinja components starting with '--')
+            component args following a keyword (values separated by spaces)
+        :param input_str: string containing all args in the format specified above
+        :return: a dict in format {keyword: component_args}, always contains keys "help", "model", "ids", "names", "spawn_poses"
+        NOTE: arguments of a component/keyword will always be parsed as a list/dict, even for a single value
+
+        Raises:
+        AssertionError in case of unexpected data in mandatory values under keys "model", "ids", "names", "spawn_poses"
+        '''
+
+        input_dict = {
+            'help': False,
+            'model': None,
+            'ids': [],
+            'names': [],
+            'spawn_poses': {}
+        }
+
+        # parse out the keywords starting with '--'
+        pattern = re.compile(r'(--\S*)')
+        substrings = [m.strip() for m in re.split(pattern, input_str) if len(m.strip()) > 0]
+
+        if len(substrings) < 1:
+            input_dict['help'] = True
+            return input_dict
+
+        # before the first keyword, there should only be device IDs
+        first_keyword_index = 0
+        if '--' not in substrings[0]:
+            input_dict['ids'] = self.parse_string_to_objects(substrings[0])
+            first_keyword_index = 1
+        else:
+            input_dict['ids'].append(self.assign_free_id())
+
+        # pair up keywords with args
+        for i in range(first_keyword_index, len(substrings)):
+
+            if substrings[i].startswith('--'):
+                input_dict[substrings[i][2:]] = None
+                continue
             else:
-                return self.get_model_help_text(params['help'], self.jinja_templates)
+                input_keys = [*input_dict.keys()]
+                if len(input_keys) > 1:
+                    input_dict[input_keys[-1]] = self.parse_string_to_objects(substrings[i])
+
+        # attempt to match model to available templates
+        for k in input_dict.keys():
+            if k in self.jinja_templates.keys():
+                input_dict['model'] = str(k)
+                del input_dict[k]
+                break
+
+
+        valid_ids = []
+
+        for ID in input_dict['ids']:
+            if not isinstance(ID, int):
+                if ID in self.jinja_templates.keys() and input_dict['model'] is None:
+                    self.get_logger().info(f'Using {ID} as model template')
+                    input_dict['model'] = ID
+                else:
+                    self.get_logger().warn(f'Ignored ID {ID}: Not an integer')
+                continue
+            if ID < 0 or ID > 255:
+                self.get_logger().warn(f'Ignored ID {ID}: Must be in range(0, 256)')
+                continue
+            if ID in self.assigned_ids:
+                self.get_logger().warn(f'Ignored ID {ID}: Already assigned')
+                continue
+            valid_ids.append(ID)
+
+        input_dict['ids'].clear()
+
+        if '--help' in substrings:
+            input_dict['help'] = True
+            return input_dict
+
+        if len(valid_ids) > 0:
+            self.get_logger().info(f'Valid robot IDs: {valid_ids}')
+            input_dict['ids'] = valid_ids
+            self.assigned_ids.update(input_dict['ids'])
+        else:
+            raise NoValidIDGiven('No valid ID given. Check your input')
+
+        if 'pos' in input_dict.keys():
+            try:
+                input_dict['spawn_poses'] = self.get_spawn_poses_from_args(input_dict['pos'], input_dict['ids'])
+            except (WrongNumberOfArguments, ValueError) as err:
+                self.get_logger().error(f'While parsing args for "--pos": {err}')
+                self.get_logger().warn(f'Assigning random spawn poses instead')
+                input_dict['spawn_poses'] = self.get_randomized_spawn_poses(input_dict['ids'])
+            finally:
+                del input_dict['pos']
+
+        elif 'pos-file' in input_dict.keys():
+            try:
+                input_dict['spawn_poses'] = self.get_spawn_poses_from_file(input_dict['pos-file'][0], input_dict['ids'])
+            except (FileNotFoundError, SuffixError, FormattingError, WrongNumberOfArguments, ValueError) as err:
+                self.get_logger().error(f'While parsing args for "--pos-file": {err}')
+                self.get_logger().warn(f'Assigning random spawn poses instead')
+                input_dict['spawn_poses'] = self.get_randomized_spawn_poses(input_dict['ids'])
+            finally:
+                del input_dict['pos-file']
+
+        else:
+            input_dict['spawn_poses'] = self.get_randomized_spawn_poses(input_dict['ids'])
+
+        if 'name' in input_dict.keys():
+            for ID in input_dict['ids']:
+                input_dict['names'].append(str(input_dict['name'][0]) + str(ID))
+            del input_dict['name']
+        else:
+            for ID in input_dict['ids']:
+                input_dict['names'].append(str(self.default_robot_name) + str(ID))
+
+        assert isinstance(input_dict['ids'], list) and len(input_dict['ids']) > 0, 'No vehicle ID assigned'
+        assert input_dict['model'] is not None, 'Model not specified'
+        assert isinstance(input_dict['names'], list) and len(input_dict['names']) == len(input_dict['ids']), f'Invalid vehicle names {input_dict["names"]}'
+        assert isinstance(input_dict['spawn_poses'], dict) and len(input_dict['spawn_poses'].keys()) == len(input_dict['ids']), f'Invalid spawn poses {input_dict["spawn_poses"]}'
+
+        return input_dict
+    # #}
+
+    # #{ parse_string_to_objects(self, input_str)
+    def parse_string_to_objects(self, input_str):
+        '''
+        Attempt to convert input_str into a dictionary or a list
+        Convert numerals into number datatypes whenever possible
+        Returns None if the input cannot be interpreted as dict or list
+        '''
+        input_str = input_str.strip()
+
+        params = []
+        for s in input_str.split():
+            if len(s) > 0:
+                try:
+                    # try to convert input_str to numbers
+                    params.append(ast.literal_eval(s))
+                except (SyntaxError, ValueError):
+                    # leave non-numbers as string
+                    params.append(s)
+
+
+        params_dict = {}
+        if isinstance(params, list):
+            # try to convert named args into a dict
+            for p in params:
+                try:
+                    if ':=' in p:
+                        kw, arg = p.split(':=')
+                        try:
+                            # try to convert arg to number
+                            params_dict[kw] = ast.literal_eval(arg)
+                        except (SyntaxError, ValueError):
+                            # leave non-numbers as string
+                            params_dict[kw] = arg
+                except TypeError:
+                    pass
+
+        if len(params_dict.keys()) > 0 and len(params_dict.keys()) == len(params):
+            # whole input converted to a dict
+            return params_dict
+        else:
+            return params
+
         return None
     # #}
 
-    # #{ get_model_help_text
-    def get_model_help_text(self, model_name, templates):
-        if model_name not in templates:
-            return f'Model "{model_name}" not found'
+    # #{ get_help_text(self, input_dict):
+    def get_help_text(self, input_dict):
+        '''
+        Used to construct the help text (string) for a given dict of input args
+        Returns:
+            generic spawner help
+            or
+            help for a specific model
+            or
+            None (if the input does not contain "help")
+        '''
+        if not input_dict['help']:
+            return None
 
-        template = templates[model_name]
-        return template.get_help_text()
-    # #}
-
-    # #{ get_spawner_help_text
-    def get_spawner_help_text(self, spawner_params):
-        # TODO this
-        return 'TODO'
-    # #}
-
-    # #{ get_jinja_params_for_one_robot
-    def get_jinja_params_for_one_robot(self, spawner_params, it, ID):
-        params = copy.deepcopy(spawner_params)
-        params.update(self.get_mavlink_config_for_robot(it, ID))
-        params['ID'] = ID
-        return params
-    # #}
-
-    # #{ get_mavlink_config_for_robot
-    def get_mavlink_config_for_robot(self, it, ID):
-        mavlink_config = {}
-        mavlink_config['mavlink_config'] = {}
-        mavlink_config['mavlink_config']['vehicle_port'] = self.vehicle_base_port + it
-        mavlink_config['mavlink_config']['qgc_udp_port'] = self.qgc_udp_port + it
-        mavlink_config['mavlink_config']['sdk_udp_port'] = self.sdk_udp_port + it
-        mavlink_config['mavlink_config']['mavlink_tcp_port'] = self.mavlink_tcp_base_port + it
-        mavlink_config['mavlink_config']['mavlink_udp_port'] = self.mavlink_udp_base_port + it
-        mavlink_config['mavlink_config']['fcu_url'] = f'udp://127.0.0.1:{self.vehicle_base_port + it}@127.0.0.1:{self.mavlink_udp_base_port + it}'
-        mavlink_config['mavlink_config']['gcs_url'] = f'udp://@127.0.0.1:{self.mavlink_gcs_udp_base_port_local + it}'
-        mavlink_config['mavlink_config']['send_vision_estimation'] = self.send_vision_estimation
-        mavlink_config['mavlink_config']['send_odometry'] = self.send_odometry
-        mavlink_config['mavlink_config']['enable_lockstep'] = self.enable_lockstep
-        mavlink_config['mavlink_config']['use_tcp'] = self.use_tcp
-        return mavlink_config
-    # #}
-
-    # #{ assign_free_id
-    def assign_free_id(self, uav_id):
-
-        if uav_id is None:
-            # find the first free ID
-            for i in range(1, 100):
-                if i not in self.assigned_ids:
-                    self.assigned_ids.add(i)
-                    return i
-            raise NoFreeIDAvailable('Could not find a free ID')
+        if input_dict['model'] is None:
+            display_text = self.get_spawner_help_text()
         else:
-            if uav_id in self.assigned_ids:
-                raise NoValidIDGiven(f'ID "{uav_id}" is already assigned')
-            else:
-                self.assigned_ids.add(uav_id)
-                return uav_id
+            display_text = self.get_model_help_text(input_dict['model'])
+
+        return display_text
     # #}
 
-    # #{ get_spawn_poses_from_file
-    def get_spawn_poses_from_file(self, filename):
-        vehicles = {}
-        with open(filename, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith('#'):
-                    continue
-                if len(line) == 0:
-                    continue
-                parts = line.split(',')
-                uav_id = self.assign_free_id(int(parts[0]))
-                vehicles[uav_id] = {
-                    'x': float(parts[1]),
-                    'y': float(parts[2]),
-                    'z': float(parts[3]),
-                    'heading': float(parts[4])
-                }
-        return vehicles
+    # #{ get_model_help_text(self, model_name)
+    def get_model_help_text(self, model_name):
+        '''
+        Create a help string by loading all callable components from a given template in the following format
+        Component name
+            Description:
+            Default args:
+        '''
+        self.get_logger().info(f'Getting help for model {model_name}')
+        try:
+            template_wrapper = self.jinja_templates[model_name]
+            response = f'Components used in template "{template_wrapper.jinja_template.filename}":\n'
+        except ValueError:
+            return f'Template for model {model_name} not found'
+
+        for name, component in template_wrapper.components.items():
+            response += f'{component.keyword}\n\tDescription: {component.description}\n\tDefault args: {component.default_args}\n\n'
+
+        return response
     # #}
 
-    # #{ get_spawn_poses_from_args
-    def get_spawn_poses_from_args(self, args):
-        vehicles = {}
-        vehicles['ids'] = []
-        vehicles['names'] = []
-        vehicles['spawn_poses'] = []
-        vehicles['models'] = []
-        vehicles['mavlink_gcs_udp_port_locals'] = []
-        vehicles['mavlink_gcs_udp_port_remotes'] = []
-        vehicles['help'] = None
+    # #{ get_spawner_help_text(self)
+    def get_spawner_help_text(self):
+        '''Create a generic help string for the spawner basic use'''
 
-        it = 0
-        while it < len(args):
-            if args[it].lower() == 'help':
-                if it + 1 < len(args) and not args[it+1].startswith('--'):
-                    vehicles['help'] = args[it+1]
-                else:
-                    vehicles['help'] = None
-                return vehicles
-            elif args[it].lower() == '--file':
-                if it + 1 < len(args):
-                    vehicles['spawn_poses'] = self.get_spawn_poses_from_file(args[it+1])
-                    it += 1
-                else:
-                    raise WrongNumberOfArguments('Missing filename after --file')
-            elif args[it].lower() == '--id':
-                if it + 1 < len(args):
-                    vehicles['ids'].append(self.assign_free_id(int(args[it+1])))
-                    it += 1
-                else:
-                    raise WrongNumberOfArguments('Missing ID after --ID')
-            elif args[it].lower() == '--name':
-                if it + 1 < len(args):
-                    vehicles['names'].append(args[it+1])
-                    it += 1
-                else:
-                    raise WrongNumberOfArguments('Missing name after --name')
-            elif args[it].lower() == '--model':
-                if it + 1 < len(args):
-                    vehicles['models'].append(args[it+1])
-                    it += 1
-                else:
-                    raise WrongNumberOfArguments('Missing model after --model')
-            elif args[it].lower() == '--mavlink_gcs_udp_ports':
-                if it + 2 < len(args):
-                    vehicles['mavlink_gcs_udp_port_locals'].append(int(args[it+1]))
-                    vehicles['mavlink_gcs_udp_port_remotes'].append(int(args[it+2]))
-                    it += 2
-                else:
-                    raise WrongNumberOfArguments('Missing local and remote port after --mavlink_gcs_udp_ports')
-            else:
-                # spawn pose
-                try:
-                    vehicles['spawn_poses'].append({
-                        'x': float(args[it]),
-                        'y': float(args[it+1]),
-                        'z': float(args[it+2]),
-                        'heading': float(args[it+3])
-                    })
-                    it += 3
-                except:
-                    raise FormattingError(f'Could not parse spawn pose from "{args[it:]}"')
+        self.get_logger().info(f'Getting generic spawner help')
+        response = 'The spawn service expects the following input (as a string):\n'
+        response += '\tdevice ids (integers separated by spaces, auto-assigned if no ID is specified),\n'
+        response += '\tmodel (use \'--\' with a model name to select a specific model),\n'
+        response += '\tkeywords (specified inside jinja macros as "spawner_keyword". Add \'--\' before each keyword when calling spawn),\n'
+        response += '\tcomponent args following a keyword (values separated by spaces or a python dict, overrides "spawner_default_args" in jinja macros),\n'
+        response += '\n'
+        response += '\tModels available: '
 
-            it += 1
+        for model_name in sorted(self.jinja_templates.keys()):
+            response += f'{model_name}, '
 
-        # fill in the missing ids
-        if len(vehicles['ids']) < len(vehicles['spawn_poses']):
-            for i in range(len(vehicles['spawn_poses']) - len(vehicles['ids'])):
-                vehicles['ids'].append(self.assign_free_id(None))
-
-        # fill in the missing names
-        if len(vehicles['names']) < len(vehicles['ids']):
-            for i in range(len(vehicles['ids']) - len(vehicles['names'])):
-                vehicles['names'].append(f'{self.default_robot_name}{vehicles["ids"][i]}')
-
-        # fill in the missing models
-        if len(vehicles['models']) < len(vehicles['ids']):
-            # get default model
-            default_model_name = os.path.basename(list(self.jinja_templates.keys())[0])
-            for i in range(len(vehicles['ids']) - len(vehicles['models'])):
-                vehicles['models'].append(default_model_name)
-
-        if len(vehicles['spawn_poses']) == 0 and len(vehicles['ids']) > 0:
-            vehicles['spawn_poses'] = self.get_randomized_spawn_poses(len(vehicles['ids']))
-
-        return vehicles
+        return response
     # #}
 
-    # #{ get_randomized_spawn_poses
-    def get_randomized_spawn_poses(self, num_of_vehicles):
-        poses = []
-        for i in range(num_of_vehicles):
-            poses.append({
-                'x': random.uniform(-self.model_spacing, self.model_spacing),
-                'y': random.uniform(-self.model_spacing, self.model_spacing),
-                'z': random.uniform(0.1, 0.2),
-                'heading': random.uniform(-math.pi, math.pi)
-            })
-        return poses
+    # --------------------------------------------------------------
+    # |                        Spawner utils                       |
+    # --------------------------------------------------------------
+
+    # #{ assign_free_id(self)
+    def assign_free_id(self):
+        '''
+        Assign an unused ID in range <0, 255>
+        :return: unused ID for a robot (int)
+        :raise NoFreeIDAvailable: if max vehicle count has been reached
+        '''
+        for i in range(0, 256): # 255 is a hard limit of px4 sitl
+            if i not in self.assigned_ids:
+                self.get_logger().info(f'Assigned free ID "{i}" to a robot')
+                return i
+        raise NoFreeIDAvailable('Cannot assign a free ID')
+    # #}
+
+    # #{ get_spawn_poses_from_file(self, filename, ids)
+    def get_spawn_poses_from_file(self, filename, ids):
+        '''
+        Parses an input file and extracts spawn poses for vehicles. The file must be either ".csv" or ".yaml"
+
+        CSV files have to include one line per robot, formatting: X, Y, Z, HEADING
+        YAML files have to include one block per robot, formatting:
+        block_header: # not used
+            id: int
+            x: float
+            y: float
+            z: float
+            heading: float
+
+
+        The file must contain spawn poses for all vehicles
+        :param fileame: full path to a file
+        :param ids: a list of ints containing unique vehicle IDs
+        :return: a dict in format {id: {'x': pos_x, 'y', pos_y, 'z': pos_z, 'heading': pos_heading}}
+
+        Raises:
+        FileNotFoundError - if filename does not exist
+        FormattingError - if the csv or yaml file does not match the expected structure
+        SuffixError - filename has other suffix than ".csv" or ".yaml"
+        WrongNumberOfArguments - number of poses defined in the file does not match the number of ids
+        ValueError - spawn poses are not numbers
+        '''
+
+        self.get_logger().info(f'Loading spawn poses from file "{filename}"')
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f'File "{filename}" does not exist!')
+
+        spawn_poses = {}
+
+        # #{ csv
+        if filename.endswith('.csv'):
+            array_string = list(csv.reader(open(filename)))
+            for row in array_string:
+                if (len(row)!=5):
+                    raise FormattingError(f'Incorrect data in file "{filename}"! Data in ".csv" file type should be in format [id, x, y, z, heading] (types: int, float, float, float, float)')
+                if int(row[0]) in ids:
+                    spawn_poses[int(row[0])] = {'x' : float(row[1]), 'y' : float(row[2]), 'z' : float(row[3]), 'heading' : float(row[4])}
+        # #}
+
+        # #{ yaml
+        elif filename.endswith('.yaml'):
+            dict_vehicle_info = yaml.safe_load(open(filename, 'r'))
+            for item, data in dict_vehicle_info.items():
+                if (len(data.keys())!=5):
+                    raise FormattingError(f'Incorrect data in file "{filename}"! Data  in ".yaml" file type should be in format \n uav_name: \n\t id: (int) \n\t x: (float) \n\t y: (float) \n\t z: (float) \n\t heading: (float)')
+
+                if int(data['id']) in ids:
+                    spawn_poses[data['id']] = {'x' : float(data['x']), 'y' : float(data['y']), 'z' : float(data['z']), 'heading' : float(data['heading'])}
+        # #}
+
+        else:
+            raise SuffixError(f'Incorrect file type! Suffix must be either ".csv" or ".yaml"')
+
+        if len(spawn_poses.keys()) != len(ids) or set(spawn_poses.keys()) != set(ids):
+            raise WrongNumberOfArguments(f'File "{filename}" does not specify poses for all robots!')
+
+        self.get_logger().info(f'Spawn poses returned: {spawn_poses}')
+        return spawn_poses
+    # #}
+
+    # #{ get_spawn_poses_from_args(self, pos_args, ids)
+    def get_spawn_poses_from_args(self, pos_args, ids):
+        '''
+        Parses the input args extracts spawn poses for vehicles.
+        If more vehicles are spawned at the same time, the given pose is used for the first vehicle.
+        Additional vehicles are spawned with an offset of {config param: gazebo_models/spacing} meters in X
+
+        :param pos_args: a list of 4 numbers [x,y,z,heading]
+        :param ids: a list of ints containing unique vehicle IDs
+        :return: a dict in format {id: {'x': pos_x, 'y', pos_y, 'z': pos_z, 'heading': pos_heading}}
+
+        Raises:
+        WrongNumberOfArguments - pos_args does not contain exactly 4 values
+        ValueError - input cannot be converted into numbers
+        '''
+        spawn_poses = {}
+        if len(pos_args) != 4:
+            raise WrongNumberOfArguments(f'Expected exactly 4 args after keyword "--pos", got {len(pos_args)}')
+
+        x = float(pos_args[0])
+        y = float(pos_args[1])
+        z = float(pos_args[2])
+        heading = float(pos_args[3])
+
+        spawn_poses[ids[0]] = {'x': x, 'y': y, 'z': z, 'heading': heading}
+
+        if len(ids) > 1:
+            self.get_logger().warn(f'Spawning more than one vehicle with "--pos". Each additional vehicle will be offset by {self.model_spacing} meters in X')
+            for i in range(len(ids)):
+                x += self.model_spacing
+                spawn_poses[ids[i]] = {'x': x, 'y': y, 'z': z, 'heading': heading}
+
+        self.get_logger().info(f'Spawn poses returned: {spawn_poses}')
+        return spawn_poses
+    # #}
+
+    # #{ get_randomized_spawn_poses(self, ids)
+    def get_randomized_spawn_poses(self, ids):
+        '''
+        Creates randomized spawn poses for all vehicles.
+        The poses are generated with spacing defined by config param: gazebo_models/spacing
+        Height is always set to 0.3
+
+        :param ids: a list of ints containing unique vehicle IDs
+        :return: a dict in format {id: {'x': pos_x, 'y', pos_y, 'z': pos_z, 'heading': pos_heading}}
+        '''
+        spawn_poses = {}
+
+        circle_diameter = 0.0
+        total_positions_in_current_circle = 0;
+        angle_increment = 0;
+        remaining_positions_in_current_circle = 1;
+        circle_perimeter= math.pi * circle_diameter
+        random_angle_offset = 0
+        random_x_offset = round(random.uniform(-self.model_spacing, self.model_spacing), 2)
+        random_y_offset = round(random.uniform(-self.model_spacing, self.model_spacing), 2)
+
+        for ID in ids:
+            if remaining_positions_in_current_circle == 0:
+                circle_diameter = circle_diameter + self.model_spacing
+                circle_perimeter= math.pi*circle_diameter
+                total_positions_in_current_circle = math.floor(circle_perimeter / self.model_spacing)
+                remaining_positions_in_current_circle = total_positions_in_current_circle
+                angle_increment = (math.pi * 2) / total_positions_in_current_circle
+                random_angle_offset = round(random.uniform(-math.pi,math.pi), 2)
+
+            x = round(math.sin(angle_increment * remaining_positions_in_current_circle + random_angle_offset) * circle_diameter, 2) + random_x_offset
+            y = round(math.cos(angle_increment * remaining_positions_in_current_circle + random_angle_offset) * circle_diameter, 2) + random_y_offset
+            z = 0.3
+            heading = round(random.uniform(-math.pi,math.pi), 2)
+            remaining_positions_in_current_circle = remaining_positions_in_current_circle - 1
+            spawn_poses[ID] = {'x': x, 'y': y, 'z': z, 'heading': heading}
+
+        self.get_logger().info(f'Spawn poses returned: {spawn_poses}')
+        return spawn_poses
+    # #}
+
+    # #{ get_jinja_params_for_one_robot(self, params_dict, index, ID)
+    def get_jinja_params_for_one_robot(self, params_dict, index, ID):
+        '''Makes a deep copy of params dict, removes entries of other robots, assigns mavlink ports
+        :param index: index of the robot in the input sequence
+        :param ID: ID of the robot, should match the value in params_dict['ids'][index]
+        :return: a dict of params to be used in rendering the jinja template
+        '''
+
+        robot_params = copy.deepcopy(params_dict)
+        robot_params['ID'] = ID
+        robot_params['name'] = params_dict['names'][index]
+        robot_params['spawn_pose'] = params_dict['spawn_poses'][ID]
+
+        del robot_params['names']
+        del robot_params['help']
+        del robot_params['ids']
+        del robot_params['spawn_poses']
+
+        robot_params['mavlink_config'] = self.get_mavlink_config_for_robot(ID)
+
+        if 'enable_mavlink_gcs' in params_dict.keys():
+            robot_params['mavlink_gcs_udp_port_local'] = self.mavlink_gcs_udp_base_port_local + ID
+            robot_params['mavlink_gcs_udp_port_remote'] = self.mavlink_gcs_udp_base_port_remote + ID
+            self.get_logger().info(f'Publishing extra mavlink messages on UDP port {robot_params["mavlink_gcs_udp_port_remote"]}')
+
+        return robot_params
+    # #}
+
+   # #{ get_mavlink_config_for_robot(self, ID)
+    def get_mavlink_config_for_robot(self, ID):
+        '''Creates a mavlink port configuration based on default values offset by ID
+
+        NOTE: The offsets have to match values assigned in px4-rc.* files located in package_root/ROMFS/px4fmu_common/init.d-posix!!
+
+        '''
+        mavlink_config = {}
+        udp_offboard_port_remote = self.vehicle_base_port + (4 * ID) + 2
+        udp_offboard_port_local = self.vehicle_base_port + (4 * ID) + 1
+        mavlink_config['udp_offboard_port_remote'] = udp_offboard_port_remote
+        mavlink_config['udp_offboard_port_local'] = udp_offboard_port_local
+        mavlink_config['mavlink_tcp_port'] = self.mavlink_tcp_base_port + ID
+        mavlink_config['mavlink_udp_port'] = self.mavlink_udp_base_port + ID
+        mavlink_config['qgc_udp_port'] = self.qgc_udp_port
+        mavlink_config['sdk_udp_port'] = self.sdk_udp_port
+        mavlink_config['send_vision_estimation'] = int(self.send_vision_estimation)
+        mavlink_config['send_odometry'] = int(self.send_odometry)
+        mavlink_config['enable_lockstep'] = int(self.enable_lockstep)
+        mavlink_config['use_tcp'] = int(self.use_tcp)
+        mavlink_config['fcu_url'] = f'udp://127.0.0.1:{udp_offboard_port_remote}@127.0.0.1:{udp_offboard_port_local}'
+
+        return mavlink_config
     # #}
 
 def main(args=None):
