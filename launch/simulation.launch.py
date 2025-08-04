@@ -99,6 +99,7 @@ def generate_launch_description():
             # Launch arguments
             declare_world_file_cmd,
             declare_spawner_config_cmd,
+            declare_spawner_debug_cmd,
             declare_bridge_debug_cmd,
             # Nodes and Launches
             gazebo,

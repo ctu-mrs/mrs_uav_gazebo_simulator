@@ -15,6 +15,7 @@ from rclpy.node import Node
 import rclpy.exceptions
 import multiprocessing
 import xml.dom.minidom
+from time import time
 
 from ament_index_python.packages import get_package_share_directory
 from mrs_uav_gazebo_simulation.utils.component_wrapper import ComponentWrapper
@@ -43,6 +44,10 @@ class NoValidIDGiven(RuntimeError):
 
 class CouldNotLaunch(RuntimeError):
     """Raised when a subprocess (like PX4 or MAVROS) fails to start."""
+    pass
+
+class CouldNotSpawn(RuntimeError):
+    """Raised when a gazebo spawn call fails"""
     pass
 
 class FormattingError(ValueError):
@@ -203,6 +208,9 @@ class MrsDroneSpawner(Node):
         self.queue_mutex = multiprocessing.Lock()
         self.active_vehicles = []
         self.assigned_ids = set()
+        self.gazebo_spawn_future = None
+        self.gazebo_delete_future = None
+        self.gazebo_spawn_request_start_time = None
 
         self.is_initialized = True
         self.get_logger().info('Initialized')
@@ -287,7 +295,7 @@ class MrsDroneSpawner(Node):
 
         if sdf_content is None:
             self.get_logger().error('Template did not render, spawn failed.')
-            return False
+            return
 
         if self.save_sdf_files:
             time_str = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
@@ -312,15 +320,50 @@ class MrsDroneSpawner(Node):
         request.entity_factory.pose.orientation.z = q_z
 
         self.get_logger().info(f'Requesting spawn for model {name}')
-        future = self.gazebo_spawn_proxy.call_async(request)
-        
-        rclpy.spin_until_future_complete(self, future)
-        if future.result() is not None:
-            self.get_logger().info(f'Model {name} spawned successfully.')
-            return True
-        else:
-            self.get_logger().error(f'Failed to spawn model {name}. Error: {future.exception()}')
-            return False
+        self.gazebo_spawn_future = self.gazebo_spawn_proxy.call_async(request)
+
+        self.gazebo_spawn_future.add_done_callback(lambda future: self.service_response_callback_spawn_gazebo_model(future, robot_params))
+    # #}
+
+    # #{ service_response_callback_spawn_gazebo_model
+    def service_response_callback_spawn_gazebo_model(self, future, robot_params):
+        # This function is called automatically when the service response arrives.
+        try:
+
+            response = future.result()
+            if not response.success:
+                raise CouldNotSpawn(f'Call failed')
+
+            firmware_process = None
+            mavros_process = None
+
+            try:
+                firmware_process = self.launch_px4_firmware(robot_params)
+                mavros_process = self.launch_mavros(robot_params)
+
+            except Exception as e:
+                self.get_logger().error(f"Failed during spawn sequence for {robot_params['name']}: {e}")
+                self.delete_gazebo_model(robot_params['name'])
+                if firmware_process and firmware_process.is_alive():
+                    firmware_process.terminate()
+                if mavros_process and mavros_process.is_alive():
+                    mavros_process.terminate()
+                self.assigned_ids.remove(robot_params['ID'])
+                self.gazebo_spawn_future = None
+                return
+
+            glob_running_processes.append(firmware_process)
+            glob_running_processes.append(mavros_process)
+
+            self.get_logger().info(f'Vehicle {robot_params["name"]} successfully spawned')
+            self.active_vehicles.append(robot_params['name'])
+            self.gazebo_spawn_future = None
+
+        except Exception as e:
+            self.get_logger().error(f"Spawning failed for {robot_params['name']} with error: {e}, aborting launch sequence.")
+            self.assigned_ids.remove(robot_params['ID'])
+            self.gazebo_spawn_future = None
+            return
     # #}
 
     # #{ delete_gazebo_model
@@ -328,15 +371,27 @@ class MrsDroneSpawner(Node):
         self.get_logger().info(f'Requesting delete for model {name}')
         request = DeleteEntity.Request()
         request.entity.name = name
-        request.entity.type = request.entity.MODEL
 
-        future = self.gazebo_delete_proxy.call_async(request)
-        rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
+        self.gazebo_delete_future = self.gazebo_delete_proxy.call_async(request)
+        self.gazebo_delete_future.add_done_callback(lambda future: self.service_response_callback_delete_gazebo_model(future, name))
+    # #}
+    
+    # #{ service_response_callback_spawn_gazebo_model
+    def service_response_callback_delete_gazebo_model(self, future, name):
+        # This function is called automatically when the service response arrives.
+        try:
 
-        if future.result() is not None and future.result().success:
-            self.get_logger().info(f'Model {name} deleted successfully.')
-        else:
-            self.get_logger().error(f'Failed to delete model {name}. Error: {future.exception()}')
+            response = future.result()
+            if response is not None and response.success:
+                self.get_logger().info(f'Model {name} deleted successfully.')
+            else:
+                self.get_logger().error(f'Failed to delete model {name}. Error: {future.exception()}')
+            
+            self.gazebo_delete_future = None
+
+        except Exception as e:
+            self.get_logger().error(f'Failed to delete model {name}. Error: {e}')
+            self.gazebo_spawn_future = None
     # #}
     
     # #{ callback_spawn
@@ -385,43 +440,22 @@ class MrsDroneSpawner(Node):
 
     # #{ callback_action_timer
     def callback_action_timer(self):
+        # Check for an ongoing request and if it has timed out
+        if self.gazebo_spawn_future is not None and not self.gazebo_spawn_future.done() and self.gazebo_spawn_request_start_time is not None:
+            if time() - self.gazebo_spawn_request_start_time > 5.0:
+                self.get_logger().error('Service call timed out!')
+                self.gazebo_spawn_future = None # Reset state to allow a new request
+            else:
+                self.get_logger().warn('Previous gazebo_spawn service call is pending. Skipping this cycle.')
+            return
         with self.queue_mutex:
             if not self.vehicle_queue:
                 self.processing = False
                 return
             robot_params = self.vehicle_queue.pop(0)
+            
+        self.spawn_gazebo_model(robot_params)
 
-        model_spawned = False
-        firmware_process = None
-        mavros_process = None
-
-        try:
-            model_spawned = self.spawn_gazebo_model(robot_params)
-
-            if not model_spawned:
-                self.get_logger().error(f"Spawning failed for {robot_params['name']}, aborting launch sequence.")
-                self.assigned_ids.remove(robot_params['ID'])
-                return
-
-            firmware_process = self.launch_px4_firmware(robot_params)
-            mavros_process = self.launch_mavros(robot_params)
-
-        except Exception as e:
-            self.get_logger().error(f"Failed during spawn sequence for {robot_params['name']}: {e}")
-            if model_spawned:
-                self.delete_gazebo_model(robot_params['name'])
-            if firmware_process and firmware_process.is_alive():
-                firmware_process.terminate()
-            if mavros_process and mavros_process.is_alive():
-                mavros_process.terminate()
-            self.assigned_ids.remove(robot_params['ID'])
-            return
-
-        glob_running_processes.append(firmware_process)
-        glob_running_processes.append(mavros_process)
-
-        self.get_logger().info(f'Vehicle {robot_params["name"]} successfully spawned')
-        self.active_vehicles.append(robot_params['name'])
     # #}
 
     # #{ callback_diagnostics_timer
