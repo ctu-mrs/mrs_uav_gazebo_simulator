@@ -110,21 +110,7 @@
     {# ================================================================== #}
 
     <link name="{{ root }}">
-
-      <!-- Body physics {-->
-      {{ generic.multirotor_physics_macro(
-        mass = mass,
-        body_radius = body_radius,
-        body_height = body_height,
-        rotor_velocity_slowdown_sim = rotor_velocity_slowdown_sim,
-        ixx = body_ixx,
-        ixy = body_ixy,
-        ixz = body_ixz,
-        iyy = body_iyy,
-        iyz = body_iyz,
-        izz = body_izz)
-      }}
-      <!--}-->
+      <static>false</static>
 
       <!-- Body visuals {-->
 
@@ -570,438 +556,451 @@
       {# <!--}--> #}
 
       {# <!--}--> #}
-
-      <!--}-->
-
     </link>
-
-  {# Air drag {--> #}
-  {{ generic.gazebo_fluid_resistance_plugin_macro(
-    model_mass = mass,
-    verbose = true,
-    parent_link = root,
-    uav_body_resistance_x = 0.1,
-    uav_body_resistance_y = 0.1,
-    uav_body_resistance_z = 0.2,
-    )
-  }}
-  {# <!--}--> #}
-
-    {# Propellers {--> #}
-    {%- set prop_list = [
-    {
-    'motor_number': 0,
-    'direction': 'ccw',
-    'x': rotor_xy_offset,
-    'y': -rotor_xy_offset,
-    'z': rotor_z_offset,
-    'mesh_files': [prop_mesh_file, motor_top_mesh_file],
-    'mesh_scale': mesh_scale_prop_ccw,
-    'color': 'Grey'
-    },
-    {
-    'motor_number': 1,
-    'direction': 'ccw',
-    'x': -rotor_xy_offset,
-    'y': rotor_xy_offset,
-    'z': rotor_z_offset,
-    'mesh_files': [prop_mesh_file, motor_top_mesh_file],
-    'mesh_scale': mesh_scale_prop_ccw,
-    'color': 'Grey'
-    },
-    {
-    'motor_number': 2,
-    'direction': 'cw',
-    'x': rotor_xy_offset,
-    'y': rotor_xy_offset,
-    'z': rotor_z_offset,
-    'mesh_files': [prop_mesh_file, motor_top_mesh_file],
-    'mesh_scale': mesh_scale_prop_cw,
-    'color': 'Grey'
-    },
-    {
-    'motor_number': 3,
-    'direction': 'cw',
-    'x': -rotor_xy_offset,
-    'y': -rotor_xy_offset,
-    'z': rotor_z_offset,
-    'mesh_files': [prop_mesh_file, motor_top_mesh_file],
-    'mesh_scale': mesh_scale_prop_cw,
-    'color': 'Grey'
-    }
-    ]
-    -%}
-    {{ components.propellers_macro(
-      prop_list = prop_list,
-      rotor_velocity_slowdown_sim = rotor_velocity_slowdown_sim,
-      motor_constant = motor_constant,
-      moment_constant = moment_constant,
-      parent = root,
-      mass = mass_prop,
-      radius = radius_rotor,
-      time_constant_up = time_constant_up,
-      time_constant_down = time_constant_down,
-      max_rot_velocity = max_rot_velocity,
-      rotor_drag_coefficient = rotor_drag_coefficient,
-      rolling_moment_coefficient = rolling_moment_coefficient,
-      meshes_z_offset = motor_mesh_z_offset,
-      prop_ixx = prop_ixx,
-      prop_ixy = prop_ixy,
-      prop_ixz = prop_ixz,
-      prop_iyy = prop_iyy,
-      prop_iyz = prop_iyz,
-      prop_izz = prop_izz,
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
-
-    {# ================================================================== #}
-    {# ||                compulsory sensor definitions                 || #}
-    {# ================================================================== #}
-
-    <!-- Pixhawk {-->
-    {%- set imu_topic = '/imu' -%}
-    {%- set mag_topic = '/mag' -%}
-    {%- set baro_topic = '/baro' -%}
-    {%- set lidar_topic = '/lidar' -%}
-
-    <!-- Gazebo ground truth {-->
-    {{ generic.gazebo_groundtruth_macro(
-      home_latitude = 0,
-      home_longitude = 0,
-      home_altitude = 0)
-    }}
     <!--}-->
 
-    <!-- GPS {-->
-    {{ generic.gazebo_gps_macro(
-      gps_name = 'gps0',
-      parent_link = root,
-      update_rate = 10,
-      gps_noise = true,
-      gps_xy_random_walk = 2.0,
-      gps_z_random_walk = 4.0,
-      gps_xy_noise_density = '2.0e-4',
-      gps_z_noise_density = '4.0e-4',
-      gps_vxy_noise_density = 0.2,
-      gps_vz_noise_density = 0.4,
-      x = 0,
-      y = 0,
-      z = 0,
-      roll = 0,
-      pitch = 0,
-      yaw = 0)
-    }}
-    <!--}-->
+<!-- ROTORS {-->
+    <link name='rotor_0'>
+      <pose>0.175 -0.175 0.041 0 0 0</pose>
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay/>
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <mass>0.005</mass>
+        <inertia>
+          <ixx>0.0001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0001</iyy>
+          <iyz>0</iyz>
+          <izz>0.0001</izz>
+        </inertia>
+      </inertial>
+      <collision name='rotor_0_collision'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.009</length>
+            <radius>0.128</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+				 <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+			</ode>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='rotor_0_visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>{{ prop_mesh_file }}</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='rotor_0_joint' type='revolute'>
+      <child>rotor_0</child>
+      <parent>base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='rotor_1'>
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay/>
+      <pose>-0.175 0.175 0.041 0 0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <mass>0.005</mass>
+        <inertia>
+          <ixx>0.0001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0001</iyy>
+          <iyz>0</iyz>
+          <izz>0.0001</izz>
+        </inertia>
+      </inertial>
+      <collision name='rotor_1_collision'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.009</length>
+            <radius>0.128</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+				 <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+			</ode>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='rotor_1_visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>{{ prop_mesh_file }}</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='rotor_1_joint' type='revolute'>
+      <child>rotor_1</child>
+      <parent>base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='rotor_2'>
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay/>
+      <pose>0.175 0.175 0.041 0 0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <mass>0.005</mass>
+        <inertia>
+          <ixx>0.0001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0001</iyy>
+          <iyz>0</iyz>
+          <izz>0.0001</izz>
+        </inertia>
+      </inertial>
+      <collision name='rotor_2_collision'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.009</length>
+            <radius>0.128</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+				 <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+			</ode>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='rotor_2_visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>-1 1 1</scale>
+            <uri>{{ prop_mesh_file }}</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='rotor_2_joint' type='revolute'>
+      <child>rotor_2</child>
+      <parent>base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='rotor_3'>
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay/>
+      <pose>-0.175 -0.175 0.041 0 0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <mass>0.005</mass>
+        <inertia>
+          <ixx>0.0001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0001</iyy>
+          <iyz>0</iyz>
+          <izz>0.0001</izz>
+        </inertia>
+      </inertial>
+      <collision name='rotor_3_collision'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.009</length>
+            <radius>0.128</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+				 <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+			</ode>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='rotor_3_visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>-1 1 1</scale>
+            <uri>{{ prop_mesh_file }}</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='rotor_3_joint' type='revolute'>
+      <child>rotor_3</child>
+      <parent>base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <!--} END ROTORS -->
 
-    <!-- Magnetometer {-->
-    {{ generic.gazebo_magnetometer_macro(
-      pub_rate = 100,
-      noise_density = 0.0004,
-      random_walk = 0.0000064,
-      bias_correlation_time = 600,
-      mag_topic = mag_topic)
-    }}
-    <!--}-->
+    <!-- PLUGINS {-->
+    <!-- MOTOR PLUGINS {-->
+    <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel">
+      <jointName>rotor_0_joint</jointName>
+      <linkName>rotor_0</linkName>
+      <turningDirection>ccw</turningDirection>
+      <timeConstantUp>0.0125</timeConstantUp>
+      <timeConstantDown>0.025</timeConstantDown>
+      <maxRotVelocity>1000.0</maxRotVelocity>
+      <motorConstant>8.54858e-06</motorConstant>
+      <momentConstant>0.016</momentConstant>
+      <commandSubTopic>command/motor_speed</commandSubTopic>
+      <motorNumber>0</motorNumber>
+      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+      <motorType>velocity</motorType>
+    </plugin>
+    <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel">
+      <jointName>rotor_1_joint</jointName>
+      <linkName>rotor_1</linkName>
+      <turningDirection>ccw</turningDirection>
+      <timeConstantUp>0.0125</timeConstantUp>
+      <timeConstantDown>0.025</timeConstantDown>
+      <maxRotVelocity>1000.0</maxRotVelocity>
+      <motorConstant>8.54858e-06</motorConstant>
+      <momentConstant>0.016</momentConstant>
+      <commandSubTopic>command/motor_speed</commandSubTopic>
+      <motorNumber>1</motorNumber>
+      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+      <motorType>velocity</motorType>
+    </plugin>
+    <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel">
+      <jointName>rotor_2_joint</jointName>
+      <linkName>rotor_2</linkName>
+      <turningDirection>cw</turningDirection>
+      <timeConstantUp>0.0125</timeConstantUp>
+      <timeConstantDown>0.025</timeConstantDown>
+      <maxRotVelocity>1000.0</maxRotVelocity>
+      <motorConstant>8.54858e-06</motorConstant>
+      <momentConstant>0.016</momentConstant>
+      <commandSubTopic>command/motor_speed</commandSubTopic>
+      <motorNumber>2</motorNumber>
+      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+      <motorType>velocity</motorType>
+    </plugin>
+    <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel">
+      <jointName>rotor_3_joint</jointName>
+      <linkName>rotor_3</linkName>
+      <turningDirection>cw</turningDirection>
+      <timeConstantUp>0.0125</timeConstantUp>
+      <timeConstantDown>0.025</timeConstantDown>
+      <maxRotVelocity>1000.0</maxRotVelocity>
+      <motorConstant>8.54858e-06</motorConstant>
+      <momentConstant>0.016</momentConstant>
+      <commandSubTopic>command/motor_speed</commandSubTopic>
+      <motorNumber>3</motorNumber>
+      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+      <motorType>velocity</motorType>
+    </plugin>
+    <!--} END MOTOR PLUGINS -->
 
-    <!-- Barometer {-->
-    {{ generic.gazebo_barometer_macro(
-      baro_topic = baro_topic,
-      pub_rate = 50,
-      baro_drift_pa_per_sec = 0)
-    }}
-    <!--}-->
+    <!-- GARMIN RANGEFINDER {-->
+    <link name="lidar0_link">
+      <pose>-0.007 -0.04 -0.039 0 1.5708 1.5708</pose>
+      <inertial>
+        <mass>0.01</mass>
+        <inertia>
+          <ixx>0.000166667</ixx>
+          <iyy>0.000166667</iyy>
+          <izz>0.000166667</izz>
+        </inertia>
+      </inertial>
+      <visual name='garmin_visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>meshes/garmin_lidar_v3.stl</uri>
+          </mesh>
+        </geometry>
+          <material>
+            <script>
+              <name>Gazebo/Black</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+          </material>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <sensor name="garmin" type="gpu_lidar">
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+        <visualize>false</visualize>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>-0</min_angle>
+              <max_angle>0</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>0.06</min> <!-- do not change: use min_distance (below) for realistic behavior (smaller values cause issues) -->
+            <max>35</max>   <!-- do not change: use max_distance (below) for realistic behavior (bigger values cause issues) -->
+            <resolution>0.01</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.01</stddev>
+          </noise>
+        </ray>
+        <!-- <plugin name="drone-placeholder-1_garmin" filename="libgazebo_lidar_plugin.so"> -->
+        <!--   <robotNamespace></robotNamespace> -->
+        <!--   <min_distance>0.1</min_distance> -->
+        <!--   <max_distance>30.0</max_distance> -->
+        <!-- </plugin> -->
+      </sensor>
+    </link>
+    <!-- name of the link for garmin has to contain lidar word to be detected by mavlink gazebo plugin -->
+    <joint name='lidar0_joint' type='fixed'>
+      <child>lidar0_link</child>
+      <parent>base_link</parent>
+    </joint>
+    <!--} END GARMIN RANGEFINDER -->
 
-    <!-- Mavlink interface {-->
-    {{ generic.gazebo_mavlink_interface_macro(
-      imu_topic = imu_topic,
-      mag_topic = mag_topic,
-      baro_topic = baro_topic,
-      lidar_topic = lidar_topic,
-      mavlink_config = spawner_args['mavlink_config'])
-    }}
-    <!--}-->
+    <plugin
+        filename="gz-sim-pose-publisher-system"
+        name="gz::sim::systems::PosePublisher">
+      <publish_link_pose>true</publish_link_pose>
+      <publish_nested_model_pose>true</publish_nested_model_pose>
+      <use_pose_vector_msg>true</use_pose_vector_msg>
+      <static_publisher>true</static_publisher>
+      <static_update_frequency>1</static_update_frequency>
+    </plugin>
 
-    <!-- IMU {-->
-    <!-- NOTE: IMU has to be last, otherwise the simulation is extremely slow! -->
-    {{ generic.gazebo_imu_macro(
-      imu_name = 'imu',
-      parent_link = root,
-      imu_topic = '/imu',
-      gyroscope_noise_density = 0.00018665,
-      gyroscope_random_walk = 0.000038785,
-      gyroscope_bias_correlation_time = 1000.0,
-      gyroscope_turn_on_bias_sigma = 0.0087,
-      accelerometer_noise_density = 0.00186,
-      accelerometer_random_walk = 0.006,
-      accelerometer_bias_correlation_time = 300.0,
-      accelerometer_turn_on_bias_sigma = 0.1960,
-      x = 0,
-      y = 0,
-      z = 0,
-      roll = 0,
-      pitch = 0,
-      yaw = 0)
-    }}
-    <!--}-->
+    <plugin
+        filename="gz-sim-odometry-publisher-system"
+        name="gz::sim::systems::OdometryPublisher">
+      <dimensions>3</dimensions>
+    </plugin>
 
-    <!--}-->
+    <plugin
+        filename="gz-sim-joint-position-controller-system"
+        name="gz::sim::systems::JointPositionController">
+      <joint_name>camera_joint_pan</joint_name>
+      <p_gain>1</p_gain>
+      <i_gain>0.1</i_gain>
+      <d_gain>0.01</d_gain>
+      <i_max>1</i_max>
+      <i_min>-1</i_min>
+      <cmd_max>1000</cmd_max>
+      <cmd_min>-1000</cmd_min>
+    </plugin>
 
-    {# ================================================================== #}
-    {# ||                  optional sensor definitions                 || #}
-    {# ================================================================== #}
+    <plugin
+        filename="gz-sim-joint-position-controller-system"
+        name="gz::sim::systems::JointPositionController">
+      <joint_name>camera_joint_tilt</joint_name>
+      <p_gain>1</p_gain>
+      <i_gain>0.1</i_gain>
+      <d_gain>0.01</d_gain>
+      <i_max>1</i_max>
+      <i_min>-1</i_min>
+      <cmd_max>1000</cmd_max>
+      <cmd_min>-1000</cmd_min>
+    </plugin>
 
-    {# Ground truth {--> #}
-    {{ components.ground_truth_macro(
-      parent_link = root,
-      x = 0,
-      y = 0,
-      z = 0,
-      roll = 0,
-      pitch = 0,
-      yaw = 0,
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
+    <plugin
+        filename="gz-sim-joint-state-publisher-system"
+        name="gz::sim::systems::JointStatePublisher">
+      <joint_name>camera_joint_pan</joint_name>
+    </plugin>
 
-    {# ======================= rangefinder sensors ====================== #}
-
-    {# Garmin down {--> #}
-    {{ components.garmin_down_macro(
-      parent_link = root,
-      x = 0.0,
-      y = 0.0625,
-      z = -0.009,
-      roll = 0,
-      pitch = math.radians(90),
-      yaw = math.radians(-90),
-      mount = garmin_down_mount,
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
-
-    {# ========================== LIDAR sensors ========================= #}
-
-    {# Rplidar {--> #}
-    {%- set rplidar = components.rplidar_macro(
-      parent_link = root,
-      x = 0.0,
-      y = 0.0,
-      z = 0.136,
-      roll = 0,
-      pitch = 0,
-      yaw = 0,
-      mount = none,
-      spawner_args = spawner_args)
-    -%}
-    {{ rplidar }}
-    {# <!--}--> #}
-
-    {# Ouster {--> #}
-    {%- set ouster = components.ouster_macro(
-      parent_link = root,
-      sensor_name = 'os',
-      x = 0.0,
-      y = 0.0,
-      z = 0.107,
-      roll = 0,
-      pitch = 0,
-      yaw = 0,
-      mount = none,
-      spawner_args = spawner_args)
-    -%}
-    {{ ouster }}
-    {# <!--}--> #}
-
-    {# ========================== camera sensors ======================== #}
-
-    {# Realsense placements {--> #}
-
-    {# realsense front {--> #}
-    {%- set realsense_front = components.realsense_front_macro(
-      camera_name = 'front_rgbd',
-      camera_suffix='',
-      parent_link = root,
-      x = 0.092,
-      y = 0.0,
-      z = 0.016,
-      roll = 0,
-      pitch = 0,
-      yaw = 0,
-      mount = none,
-      spawner_args = spawner_args)
-    -%}
-    {{ realsense_front }}
-    {# <!--}--> #}
-
-    {# realsense up {--> #}
-    {%- set realsense_up = components.realsense_up_macro(
-      camera_name = 'up_rgbd',
-      camera_suffix='',
-      parent_link = root,
-      x = 0.086,
-      y = 0,
-      z = 0.03,
-      roll = 0,
-      pitch = -math.radians(90),
-      yaw = 0,
-      mount = none,
-      spawner_args = spawner_args)
-    -%}
-    {{ realsense_up }}
-    {# <!--}--> #}
-
-    {# realsense down {--> #}
-    {%- set realsense_down = components.realsense_down_macro(
-      camera_name = 'down_rgbd',
-      camera_suffix='',
-      parent_link = root,
-      x = 0.086,
-      y = 0,
-      z = 0.002,
-      roll = 0,
-      pitch = math.radians(90),
-      yaw = 0,
-      mount = none,
-      spawner_args = spawner_args)
-    -%}
-    {{ realsense_down }}
-    {# <!--}--> #}
-
-    {%- if realsense_front | replace('\s', '') | length != 0 or realsense_up | replace('\s', '') | length != 0 or realsense_down | replace('\s', '') | length != 0 -%}
-      {{ realsense_mount }}
-    {%- endif -%}
-
-    {# <!--}--> #}
-
-    {# Bluefox camera placements {--> #}
-
-    {# bluefox (classic) {--> #}
-    {%- set bluefox_camera = components.bluefox_camera_macro(
-      camera_name = 'bluefox_optflow',
-      parent_link = root,
-      x = 0.0,
-      y = -0.0515,
-      z = -0.038,
-      mount = none,
-      spawner_args = spawner_args)
-    -%}
-    {{ bluefox_camera }}
-    {# <!--}--> #}
-
-    {# bluefox reverse {--> #}
-    {%- set bluefox_camera_reverse = components.bluefox_camera_reverse_macro(
-      camera_name = 'bluefox_optflow',
-      parent_link = root,
-      x = 0.0,
-      y = -0.0515,
-      z = -0.038,
-      mount = none,
-      spawner_args = spawner_args)
-    -%}
-    {{ bluefox_camera_reverse }}
-    {# <!--}--> #}
-
-    {# <!--}--> #}
-
-    {# UV camera placements {--> #}
-
-    {# Dual UV cameras {--> #}
-    {{ components.dual_uv_cameras_macro(
-      parent_link = root,
-      x1 = 0.039,
-      y1 = 0.1175,
-      z1 = 0.089,
-      roll1 = 0,
-      pitch1 = 0,
-      yaw1 = math.radians(70),
-      x2 = 0.039,
-      y2 = -0.1175,
-      z2 = 0.089,
-      roll2 = 0,
-      pitch2 = 0,
-      yaw2 = -math.radians(70),
-      mount = uvdar_mount,
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
-
-    {# Back UV camera {--> #}
-    {{ components.back_uv_camera_macro(
-      parent_link = root,
-      x = -0.1,
-      y = 0.0,
-      z = 0.085,
-      roll = math.radians(90),
-      pitch = 0,
-      yaw = math.radians(180),
-      mount = none,
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
-
-    {# <!--}--> #}
-
-    {# ========================== other sensors ========================= #}
-
-    {# UV leds {--> #}
-    {{ components.uv_leds_macro(
-      parent_link = root,
-      x1 = 0.2017755,
-      x2 = 0.1947045,
-      y1 = 0.1947045,
-      y2 = 0.2017755,
-      z = 0.025,
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
-
-    {# UV leds beacon {--> #}
-    {{ components.uv_leds_beacon_macro(
-      parent_link = root,
-      x1 = 0.01,
-      x2 = 0.0,
-      y1 = 0.0,
-      y2 = 0.01,
-      z = 0.125,
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
-
-    {# Qorvo UWB {--> #}
-    {{ components.uwb_range_macro(
-        parent_link = root,
-        x = 0.0,
-        y = 0.08,
-        z = -0.10,
-        roll = 0.0,
-        pitch = 0.0,
-        yaw = 0.0,
-        mount = qorvo_dw1000_mount,
-        spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
-
-    {# ====================== conditional components ==================== #}
-
-    {# lidar mount / gps antenna visuals {--> #}
-    {%- if rplidar | replace('\s', '') | length != 0 or ouster | replace('\s', '') | length != 0 -%}
-      <!-- lidar mount {-->
-      {{ lidar_mount }}
-      <!--}-->
-    {%- else -%}
-      {# otherwise put a GPS antenna to the empty space #}
-      {{ gps_visuals }}
-    {%- endif -%}
-    {# <!--}--> #}
-
-    {# Bluefox mount {--> #}
-    {%- if bluefox_camera | replace('\s', '') | length != 0 or bluefox_camera_reverse | replace('\s', '') | length != 0 -%}
-      <!-- Bluefox mount {-->
-      {{ bluefox_mount }}
-      <!--}-->
-    {%- endif -%}
-    {# <!--}--> #}
-
+    <plugin
+        filename="gz-sim-joint-state-publisher-system"
+        name="gz::sim::systems::JointStatePublisher">
+      <joint_name>camera_joint_tilt</joint_name>
+    </plugin>
+    <!--} END PLUGINS -->
   </model>
 </sdf>

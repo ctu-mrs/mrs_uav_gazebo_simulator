@@ -339,7 +339,7 @@ class MrsDroneSpawner(Node):
 
             try:
                 firmware_process = self.launch_px4_firmware(robot_params)
-                mavros_process = self.launch_mavros(robot_params)
+                # mavros_process = self.launch_mavros(robot_params)
 
             except Exception as e:
                 self.get_logger().error(f"Failed during spawn sequence for {robot_params['name']}: {e}")
