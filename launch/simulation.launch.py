@@ -4,7 +4,7 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, SetEnvironmentVariable
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
@@ -18,7 +18,7 @@ def generate_launch_description():
 
 
     # Launch arguments declaration
-    declare_world_file_cmd = DeclareLaunchArgument(
+    declare_world_file_arg = DeclareLaunchArgument(
         'world_file',
         default_value = PathJoinSubstitution([
                 pkg_mrs_common_gazebo_resources, 'worlds', 'grass_plane.world'
@@ -26,7 +26,7 @@ def generate_launch_description():
         description='Path to the SDF world file'
     )
 
-    declare_spawner_config_cmd = DeclareLaunchArgument(
+    declare_spawner_config_arg = DeclareLaunchArgument(
         'spawner_config', 
         default_value = PathJoinSubstitution([
                 pkg_mrs_uav_gazebo_simulation, 'config', 'spawner_params.yaml'
@@ -34,14 +34,28 @@ def generate_launch_description():
         description='Configuration file for the custom spawner.'
     )
 
-    declare_spawner_debug_cmd = DeclareLaunchArgument(
+    declare_spawner_debug_arg = DeclareLaunchArgument(
         'spawner_debug', default_value = 'false',
         description='Run spawner with debug log level'
     )
 
-    declare_bridge_debug_cmd = DeclareLaunchArgument(
+    declare_bridge_debug_arg = DeclareLaunchArgument(
         'bridge_debug', default_value = 'false',
         description='Run ros_gz_bridge with debug log level'
+    )
+
+    declare_gz_sim_server_config_path_arg =  DeclareLaunchArgument(
+        'GZ_SIM_SERVER_CONFIG_PATH',
+        default_value=PathJoinSubstitution([
+            pkg_mrs_uav_gazebo_simulation, 'config/gazebo_server.config'
+        ]),
+        description='Custom Gazebo server configuration file'
+    )
+
+    # Environment variables setting
+    set_gz_config_env_var = SetEnvironmentVariable(
+        name='GZ_SIM_SERVER_CONFIG_PATH',
+        value=LaunchConfiguration('GZ_SIM_SERVER_CONFIG_PATH')
     )
 
     ## | ----------------------- Gazebo sim  ---------------------- |
@@ -97,10 +111,13 @@ def generate_launch_description():
     return LaunchDescription(
         [
             # Launch arguments
-            declare_world_file_cmd,
-            declare_spawner_config_cmd,
-            declare_spawner_debug_cmd,
-            declare_bridge_debug_cmd,
+            declare_world_file_arg,
+            declare_spawner_config_arg,
+            declare_spawner_debug_arg,
+            declare_bridge_debug_arg,
+            declare_gz_sim_server_config_path_arg,
+            # Environment variables
+            set_gz_config_env_var,
             # Nodes and Launches
             gazebo,
             bridge,
