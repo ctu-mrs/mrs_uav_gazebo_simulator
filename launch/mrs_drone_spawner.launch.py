@@ -64,6 +64,7 @@ def generate_launch_description():
 
                 remappings=[
                     ('spawn', '~/spawn'),
+                    ('diagnostics', '~/diagnostics'),
                     ('create_entity', '/ros_gz_bridge/create_entity'),
                     ('delete_entity', '/ros_gz_bridge/delete_entity'),
                 ],
