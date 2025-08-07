@@ -1,20 +1,25 @@
 #!/bin/sh
 # shellcheck disable=SC2154
 
-simulator_tcp_port=$((4560+px4_instance))
+# Simulator IMU data provided at 250 Hz
+param set-default IMU_INTEG_RATE 250
 
-# Check if PX4_SIM_HOSTNAME environment variable is empty
-# If empty check if PX4_SIM_HOST_ADDR environment variable is empty
-# If both are empty use localhost for simulator
-if [ -z "${PX4_SIM_HOSTNAME}" ]; then
-  if [ -z "${PX4_SIM_HOST_ADDR}" ]; then
-    echo "PX4 SIM HOST: localhost"
-    simulator start -c $simulator_tcp_port
-  else
-    echo "PX4 SIM HOST: $PX4_SIM_HOST_ADDR"
-    simulator start -t $PX4_SIM_HOST_ADDR $simulator_tcp_port
-  fi
+# For simulation, allow registering modes while armed for developer convenience
+param set-default COM_MODE_ARM_CHK 1
+
+if [ "$PX4_SIMULATOR" = "sihsim" ] || [ "$(param show -q SYS_AUTOSTART)" -eq "0" ]; then
+    # Run SIH
+    . px4-rc.sihsim
+
+elif [ "$PX4_SIMULATOR" = "gz" ] || [ "$(param show -q SIM_GZ_EN)" = "1" ]; then
+    # Run Gazebo (gz)
+    . px4-rc.gzsim
+
+elif [ "$PX4_SIM_MODEL" = "jmavsim_iris" ] || [ "$(param show -q SYS_AUTOSTART)" -eq "10017" ]; then
+    # Run jMAVSim
+    . px4-rc.jmavsim
+
 else
-  echo "PX4 SIM HOST: $PX4_SIM_HOSTNAME"
-  simulator start -h $PX4_SIM_HOSTNAME $simulator_tcp_port
+    # Run simulator_mavlink module for interface with gazebo-classic
+    . px4-rc.mavlinksim
 fi

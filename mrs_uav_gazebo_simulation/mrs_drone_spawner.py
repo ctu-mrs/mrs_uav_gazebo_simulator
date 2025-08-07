@@ -25,6 +25,8 @@ from mrs_uav_gazebo_simulation.utils.template_wrapper import TemplateWrapper
 from launch import LaunchDescription, LaunchService
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
+
 from ros_gz_interfaces.srv import SpawnEntity, DeleteEntity
 from mrs_msgs.srv import String as StringSrv
 from mrs_msgs.msg import GazeboSpawnerDiagnostics
@@ -117,16 +119,6 @@ class MrsDroneSpawner(Node):
 
         # Declare all parameters with default values. The type is inferred.
         self.declare_parameter('mavlink_config.vehicle_base_port', 14000)
-        self.declare_parameter('mavlink_config.mavlink_tcp_base_port', 4560)
-        self.declare_parameter('mavlink_config.mavlink_udp_base_port', 14560)
-        self.declare_parameter('mavlink_config.mavlink_gcs_udp_base_port_local', 18000)
-        self.declare_parameter('mavlink_config.mavlink_gcs_udp_base_port_remote', 18100)
-        self.declare_parameter('mavlink_config.qgc_udp_port', 14550)
-        self.declare_parameter('mavlink_config.sdk_udp_port', 14540)
-        self.declare_parameter('mavlink_config.send_vision_estimation', False)
-        self.declare_parameter('mavlink_config.send_odometry', True)
-        self.declare_parameter('mavlink_config.enable_lockstep', True)
-        self.declare_parameter('mavlink_config.use_tcp', True)
 
         self.declare_parameter('gazebo_models.default_robot_name', 'uav')
         self.declare_parameter('gazebo_models.spacing', 5.0)
@@ -139,16 +131,6 @@ class MrsDroneSpawner(Node):
         # Get all parameters
         try:
             self.vehicle_base_port = self.get_parameter('mavlink_config.vehicle_base_port').value
-            self.mavlink_tcp_base_port = self.get_parameter('mavlink_config.mavlink_tcp_base_port').value
-            self.mavlink_udp_base_port = self.get_parameter('mavlink_config.mavlink_udp_base_port').value
-            self.mavlink_gcs_udp_base_port_local = self.get_parameter('mavlink_config.mavlink_gcs_udp_base_port_local').value
-            self.mavlink_gcs_udp_base_port_remote = self.get_parameter('mavlink_config.mavlink_gcs_udp_base_port_remote').value
-            self.qgc_udp_port = self.get_parameter('mavlink_config.qgc_udp_port').value
-            self.sdk_udp_port = self.get_parameter('mavlink_config.sdk_udp_port').value
-            self.send_vision_estimation = self.get_parameter('mavlink_config.send_vision_estimation').value
-            self.send_odometry = self.get_parameter('mavlink_config.send_odometry').value
-            self.enable_lockstep = self.get_parameter('mavlink_config.enable_lockstep').value
-            self.use_tcp = self.get_parameter('mavlink_config.use_tcp').value
 
             self.default_robot_name = self.get_parameter('gazebo_models.default_robot_name').value
             self.model_spacing = self.get_parameter('gazebo_models.spacing').value
@@ -181,7 +163,7 @@ class MrsDroneSpawner(Node):
         # Find launch files
         gazebo_simulation_path = get_package_share_directory('mrs_uav_gazebo_simulation')
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
-        self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.py')
+        self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch')
         self.px4_fimrware_launch_path = os.path.join(gazebo_simulation_path, 'launch', 'run_simulation_firmware.launch.py')
 
         try:
@@ -233,10 +215,6 @@ class MrsDroneSpawner(Node):
             'ROMFS_PATH': str(romfs_path)
         }
 
-        if 'mavlink_gcs_udp_port_local' in robot_params and 'mavlink_gcs_udp_port_remote' in robot_params:
-            launch_arguments['MAVLINK_GCS_UDP_PORT_LOCAL'] = str(robot_params['mavlink_gcs_udp_port_local'])
-            launch_arguments['MAVLINK_GCS_UDP_PORT_REMOTE'] = str(robot_params['mavlink_gcs_udp_port_remote'])
-
         ld = LaunchDescription([
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(self.px4_fimrware_launch_path),
@@ -265,15 +243,15 @@ class MrsDroneSpawner(Node):
 
         ld = LaunchDescription([
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(self.mavros_launch_path),
+                XMLLaunchDescriptionSource(self.mavros_launch_path),
                 launch_arguments={
                     'ID': str(robot_params['ID']),
                     'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
-                    'vehicle': str(robot_params['model'])
                 }.items(),
             )
         ])
 
+        self.get_logger().info(f'robot_params: {robot_params}')
         launch_service = LaunchService(debug=False)
         launch_service.include_launch_description(ld)
         mavros_process = multiprocessing.Process(target=launch_service.run)
@@ -1151,11 +1129,6 @@ class MrsDroneSpawner(Node):
 
         robot_params['mavlink_config'] = self.get_mavlink_config_for_robot(ID)
 
-        if 'enable_mavlink_gcs' in params_dict.keys():
-            robot_params['mavlink_gcs_udp_port_local'] = self.mavlink_gcs_udp_base_port_local + ID
-            robot_params['mavlink_gcs_udp_port_remote'] = self.mavlink_gcs_udp_base_port_remote + ID
-            self.get_logger().info(f'Publishing extra mavlink messages on UDP port {robot_params["mavlink_gcs_udp_port_remote"]}')
-
         return robot_params
     # #}
 
@@ -1167,18 +1140,14 @@ class MrsDroneSpawner(Node):
 
         '''
         mavlink_config = {}
-        udp_offboard_port_remote = self.vehicle_base_port + (4 * ID) + 2
-        udp_offboard_port_local = self.vehicle_base_port + (4 * ID) + 1
+        udp_offboard_port_local = self.vehicle_base_port + (4 * ID)
+        udp_offboard_port_remote = self.vehicle_base_port + (4 * ID) + 1
+        udp_qgc_port_local = self.vehicle_base_port + (4 * ID) + 2
+        udp_qgc_port_remote = self.vehicle_base_port + (4 * ID) + 3
         mavlink_config['udp_offboard_port_remote'] = udp_offboard_port_remote
         mavlink_config['udp_offboard_port_local'] = udp_offboard_port_local
-        mavlink_config['mavlink_tcp_port'] = self.mavlink_tcp_base_port + ID
-        mavlink_config['mavlink_udp_port'] = self.mavlink_udp_base_port + ID
-        mavlink_config['qgc_udp_port'] = self.qgc_udp_port
-        mavlink_config['sdk_udp_port'] = self.sdk_udp_port
-        mavlink_config['send_vision_estimation'] = int(self.send_vision_estimation)
-        mavlink_config['send_odometry'] = int(self.send_odometry)
-        mavlink_config['enable_lockstep'] = int(self.enable_lockstep)
-        mavlink_config['use_tcp'] = int(self.use_tcp)
+        mavlink_config['udp_qgc_port_remote'] = udp_qgc_port_remote
+        mavlink_config['udp_qgc_port_local'] = udp_qgc_port_local
         mavlink_config['fcu_url'] = f'udp://127.0.0.1:{udp_offboard_port_remote}@127.0.0.1:{udp_offboard_port_local}'
 
         return mavlink_config

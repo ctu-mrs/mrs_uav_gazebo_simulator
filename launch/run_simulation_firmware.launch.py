@@ -1,5 +1,3 @@
-import os
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
@@ -35,7 +33,7 @@ def generate_launch_description():
             ]),
             description='Path to the PX4 ROMFS directory.'
         ),
-        DeclareLaunchArgument('interactive', default_value='false', description='Run PX4 in interactive mode.')
+        DeclareLaunchArgument('interactive', default_value='true', description='Run PX4 in interactive mode.')
     ]
 
     px4_interactive_mode = PythonExpression([
@@ -53,7 +51,7 @@ def generate_launch_description():
             '-i',
             LaunchConfiguration('ID'),
             '-w',
-            [TextSubstitution(text='sitl_uav_'), LaunchConfiguration('ID')]
+            [TextSubstitution(text='/tmp/sitl_uav_'), LaunchConfiguration('ID')]
         ],
         name=['sitl_uav_', LaunchConfiguration('ID')],
         output='screen'
@@ -66,6 +64,7 @@ def generate_launch_description():
             # Set environment variables for the PX4 process
             SetEnvironmentVariable('PX4_SIM_MODEL', LaunchConfiguration('PX4_SIM_MODEL')),
             SetEnvironmentVariable('PX4_ESTIMATOR', LaunchConfiguration('PX4_ESTIMATOR')),
+            SetEnvironmentVariable('PX4_GZ_MODEL_NAME', [TextSubstitution(text='uav'), LaunchConfiguration('ID')]),
             SetEnvironmentVariable(
                 'MAVLINK_GCS_UDP_PORT_LOCAL',
                 LaunchConfiguration('MAVLINK_GCS_UDP_PORT_LOCAL'),
