@@ -169,6 +169,13 @@ param set-default COM_RAM_MAX -1
 # Don't require RC calibration and configuration
 param set-default COM_RC_IN_MODE 1
 
+# Ignored RC Loss
+# https://docs.px4.io/main/en/advanced_config/parameter_reference.html#COM_RCL_EXCEPT
+param set-default COM_RCL_EXCEPT 0
+
+# Ignored COM Loss in simulation.
+param set-default NAV_DLL_ACT 0
+
 # Speedup SITL startup
 param set-default EKF2_REQ_GPS_H 0.5
 
