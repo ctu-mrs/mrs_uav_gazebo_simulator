@@ -44,6 +44,11 @@ def generate_launch_description():
         description='Run ros_gz_bridge with debug log level'
     )
 
+    declare_gz_headless_arg = DeclareLaunchArgument(
+        'gz_headless', default_value = 'false',
+        description='Run gz in headless mode'
+    )
+
     declare_gz_sim_server_config_path_arg =  DeclareLaunchArgument(
         'GZ_SIM_SERVER_CONFIG_PATH',
         default_value=PathJoinSubstitution([
@@ -58,13 +63,21 @@ def generate_launch_description():
         value=LaunchConfiguration('GZ_SIM_SERVER_CONFIG_PATH')
     )
 
+    # Prepare the arguments for the Gazebo executable
+    gz_args = [LaunchConfiguration('world_file'), ' -r']
+
+    # Check if we should run gz in headless mode
+    gz_args.append(PythonExpression([
+        "'' if '", LaunchConfiguration('gz_headless'), "' == 'false' else ' -s'",
+    ]))
+
     ## | ----------------------- Gazebo sim  ---------------------- |
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')
         ),
         launch_arguments={
-            'gz_args': LaunchConfiguration('world_file'),
+            'gz_args': gz_args
         }.items(),
     )
 
@@ -116,6 +129,7 @@ def generate_launch_description():
             declare_spawner_debug_arg,
             declare_bridge_debug_arg,
             declare_gz_sim_server_config_path_arg,
+            declare_gz_headless_arg,
             # Environment variables
             set_gz_config_env_var,
             # Nodes and Launches
