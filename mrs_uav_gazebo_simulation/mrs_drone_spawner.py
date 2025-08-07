@@ -181,7 +181,7 @@ class MrsDroneSpawner(Node):
         # Find launch files
         gazebo_simulation_path = get_package_share_directory('mrs_uav_gazebo_simulation')
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
-        self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.py')
+        self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch')
         self.px4_fimrware_launch_path = os.path.join(gazebo_simulation_path, 'launch', 'run_simulation_firmware.launch.py')
 
         try:
@@ -274,6 +274,7 @@ class MrsDroneSpawner(Node):
             )
         ])
 
+        self.get_logger().info(f'robot_params: {robot_params}')
         launch_service = LaunchService(debug=False)
         launch_service.include_launch_description(ld)
         mavros_process = multiprocessing.Process(target=launch_service.run)
@@ -339,7 +340,7 @@ class MrsDroneSpawner(Node):
 
             try:
                 firmware_process = self.launch_px4_firmware(robot_params)
-                mavros_process = self.launch_mavros(robot_params)
+                # mavros_process = self.launch_mavros(robot_params)
 
             except Exception as e:
                 self.get_logger().error(f"Failed during spawn sequence for {robot_params['name']}: {e}")
@@ -1151,10 +1152,10 @@ class MrsDroneSpawner(Node):
 
         robot_params['mavlink_config'] = self.get_mavlink_config_for_robot(ID)
 
-        if 'enable_mavlink_gcs' in params_dict.keys():
-            robot_params['mavlink_gcs_udp_port_local'] = self.mavlink_gcs_udp_base_port_local + ID
-            robot_params['mavlink_gcs_udp_port_remote'] = self.mavlink_gcs_udp_base_port_remote + ID
-            self.get_logger().info(f'Publishing extra mavlink messages on UDP port {robot_params["mavlink_gcs_udp_port_remote"]}')
+        # if 'enable_mavlink_gcs' in params_dict.keys():
+        robot_params['mavlink_gcs_udp_port_local'] = self.mavlink_gcs_udp_base_port_local + ID
+        robot_params['mavlink_gcs_udp_port_remote'] = self.mavlink_gcs_udp_base_port_remote + ID
+        self.get_logger().info(f'Publishing extra mavlink messages on UDP port {robot_params["mavlink_gcs_udp_port_remote"]}')
 
         return robot_params
     # #}
