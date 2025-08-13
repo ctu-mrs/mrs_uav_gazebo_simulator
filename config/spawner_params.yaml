@@ -1,0 +1,14 @@
+mrs_drone_spawner:
+  ros__parameters:
+    mavlink_config:
+      vehicle_base_port: 14000
+
+    gazebo_models:
+      spacing: 5.0 # for randomized spawn poses
+      default_robot_name: 'uav'
+    
+    jinja_templates:
+      save_rendered_sdf: true
+      suffix: '.sdf.jinja'
+    
+    extra_resource_paths: []

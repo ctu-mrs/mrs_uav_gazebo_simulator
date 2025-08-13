@@ -2,23 +2,6 @@
 
 ![](.fig/thumbnail.jpg)
 
-A metapackage for the MRS UAV Gazebo + PX4 SITL simulation pipeline.
-
-## Installation
-
-1. Install the [MRS UAV System](https://github.com/ctu-mrs/mrs_uav_system#installation)
-2. `sudo apt install ros-noetic-mrs-uav-gazebo-simulation`
-
-## Submodules
-
-| Package                     | Repository                                                                            |
-|-----------------------------|---------------------------------------------------------------------------------------|
-| MRS Gazebo Common Resources | [mrs_gazebo_common_resources](https://github.com/ctu-mrs/mrs_gazebo_common_resources) |
-| PX4                         | [px4_firmware](https://github.com/ctu-mrs/px4_firmware)                               |
-| PX4 SITL Gazebo             | [px4_sitl_gazebo](https://github.com/ctu-mrs/px4_sitl_gazebo)                         |
-
-## Unmanned Aerial Vehicles
-
 ### Pre-defined UAVs
 
 | Model         | Spawn argument | Simulation                       |
@@ -42,28 +25,28 @@ The wiki page [https://ctu-mrs.github.io/docs/simulation/gazebo/gazebo/custom_dr
 
 Use one of the prepared Tmuxinator sessions in [`roscd mrs_uav_gazebo_simulation/tmux`](./ros_packages/mrs_uav_gazebo_simulation/tmux) as an example:
 
-- [one_drone](./ros_packages/mrs_uav_gazebo_simulation/tmux/one_drone)
-- [one_drone_3dlidar](./ros_packages/mrs_uav_gazebo_simulation/tmux/one_drone_3dlidar)
-- [one_drone_realsense](./ros_packages/mrs_uav_gazebo_simulation/tmux/one_drone_realsense)
-- [three_drones](./ros_packages/mrs_uav_gazebo_simulation/tmux/three_drones)
+- [one_drone](./tmux/one_drone)
+- [one_drone_3dlidar](./tmux/one_drone_3dlidar)
+- [one_drone_realsense](./tmux/one_drone_realsense)
+- [three_drones](./tmux/three_drones)
 
 ## Using the MRS drone spawner in your simulations
 
-The drone models are dynamically created in runtime using the [MRS drone spawner](https://ctu-mrs.github.io/docs/simulation/gazebo/gazebo/drone_spawner.html). The UAV platforms can be additionally equipped by adding [components](ros_packages/mrs_uav_gazebo_simulation/models/mrs_robots_description/sdf/component_snippets.sdf.jinja) (rangefinders, LiDARs, cameras, plugins etc.).
+The drone models are dynamically created in runtime using the [MRS drone spawner](https://ctu-mrs.github.io/docs/simulation/gazebo/gazebo/drone_spawner.html). The UAV platforms can be additionally equipped by adding [components](models/mrs_robots_description/sdf/component_snippets.sdf.jinja) (rangefinders, LiDARs, cameras, plugins etc.).
 
 ### Start the Gazebo simulator
 
 To start the example Gazebo world call:
 
 ```bash
-roslaunch mrs_uav_gazebo_simulation simulation.launch world_name:=grass_plane.world gui:=true
+ros2 launch mrs_uav_gazebo_simulation simulation.launch world_name:=grass_plane.world gui:=true
 ```
 
 At this point the Gazebo world will only contain the environment with grass plane but with no vehicles yet.
 
 ### Spawning the UAVs
 
-The `simulation.launch` will automatically start the `mrs_drone_spawner` as a ROS node. If you use a custom launch file to start Gazbo, you can launch the spawner separately:
+The `simulation.launch` will automatically start the `mrs_drone_spawner` as a ROS node. If you use a custom launch file to start Gazebo, you can launch the spawner separately:
 
 ```bash
 roslaunch mrs_uav_gazebo_simulation mrs_drone_spawner.launch

@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  
+  <name>mrs_uav_gazebo_simulation</name>
+  <version>2.0.0</version>
+  <description>The MRS UAV Gazebo simulation package.</description>
+
+  <maintainer email="vojtech.spurny@fel.cvut.cz">Vojtech Spurny</maintainer>
+  <maintainer email="petr.stibinger@fel.cvut.cz">Petr Stibinger</maintainer>
+  <maintainer email="tomas.baca@fel.cvut.cz">Tomas Baca</maintainer>
+
+  <license>BSD 3-Clause</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>python3_jinja2</depend>
+  <depend>ros_gz</depend>
+  <depend>px4</depend>
+  <depend>mavros</depend>
+  <depend>std_msgs</depend>
+  <depend>mrs_msgs</depend>
+  <depend>mrs_uav_px4_api</depend>
+  <depend>mrs_uav_gazebo_common_resources</depend>
+  
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3_pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+    <!-- ros_gz_sim automatically registers these exports when running the simulation from the ros_gz_sim launch file. You can than use URIs of type model://my_package/stuff. -->
+    <gazebo_ros gazebo_model_path="${prefix}/models"/>
+    <gazebo_ros gazebo_media_path="${prefix}"/>
+  </export>
+
+</package>

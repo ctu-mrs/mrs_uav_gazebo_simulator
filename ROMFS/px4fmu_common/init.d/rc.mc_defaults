@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# Multicopter default parameters.
+#
+# NOTE: Script variables are declared/initialized/unset in the rcS script.
+#
+
+set VEHICLE_TYPE mc
+
+# MAV_TYPE_QUADROTOR 2
+param set-default MAV_TYPE 2
+
+if param compare IMU_GYRO_RATEMAX 400
+then
+	param set-default IMU_GYRO_RATEMAX 800
+fi
+
+param set-default NAV_ACC_RAD 2
+
+param set-default RTL_RETURN_ALT 30
+param set-default RTL_DESCEND_ALT 10
+
+# lower RNG_FOG since MC are expected to fly closer over obstacles
+param set-default EKF2_RNG_FOG 1.0

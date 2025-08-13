@@ -1,0 +1,106 @@
+#!/bin/sh
+#
+# Vehicle configuration setup script.
+#
+# NOTE: Script variables are declared/initialized/unset in the rcS script.
+#
+
+#
+# Fixed wing setup.
+#
+if [ $VEHICLE_TYPE = fw ]
+then
+	# Start standard fixedwing apps.
+	. ${R}etc/init.d/rc.fw_apps
+fi
+
+#
+# Multicopter setup.
+#
+if [ $VEHICLE_TYPE = mc ]
+then
+	# Start standard multicopter apps.
+	. ${R}etc/init.d/rc.mc_apps
+fi
+
+#
+# UGV setup.
+#
+if [ $VEHICLE_TYPE = rover ]
+then
+	# Start standard UGV apps.
+	. ${R}etc/init.d/rc.rover_apps
+fi
+
+#
+# Differential Rover setup.
+#
+if [ $VEHICLE_TYPE = rover_differential ]
+then
+	# Start differential drive rover apps.
+	. ${R}etc/init.d/rc.rover_differential_apps
+fi
+
+#
+# Ackermann Rover setup.
+#
+if [ $VEHICLE_TYPE = rover_ackermann ]
+then
+	# Start ackermann drive rover apps.
+	. ${R}etc/init.d/rc.rover_ackermann_apps
+fi
+
+#
+# Mecanum Rover setup.
+#
+if [ $VEHICLE_TYPE = rover_mecanum ]
+then
+	# Start mecanum drive rover apps.
+	. ${R}etc/init.d/rc.rover_mecanum_apps
+fi
+
+#
+# VTOL setup.
+#
+if [ $VEHICLE_TYPE = vtol ]
+then
+	# Start standard vtol apps.
+	. ${R}etc/init.d/rc.vtol_apps
+fi
+
+#
+# Spacecraft setup.
+#
+if [ $VEHICLE_TYPE = spacecraft ]
+then
+	# Start standard multicopter apps.
+	. ${R}etc/init.d/rc.sc_apps
+fi
+
+#
+# Airship setup.
+#
+if [ $VEHICLE_TYPE = airship ]
+then
+	# Start airship apps.
+	. ${R}etc/init.d/rc.airship_apps
+fi
+
+#
+# UUV setup
+#
+if [ $VEHICLE_TYPE = uuv ]
+then
+	# Start standard vtol apps.
+	. ${R}etc/init.d/rc.uuv_apps
+fi
+
+
+
+#
+# Generic setup (autostart ID not found).
+#
+if [ $VEHICLE_TYPE = none ]
+then
+	echo "No autostart ID found"
+fi

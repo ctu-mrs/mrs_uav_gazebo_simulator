@@ -1,0 +1,991 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sdf version="1.6">
+
+  {%- import 'mrs_robots_description/sdf/component_snippets.sdf.jinja' as components -%}
+  {%- import 'mrs_robots_description/sdf/generic_components.sdf.jinja' as generic -%}
+
+  {# ================================================================== #}
+  {# ||                    parameters definition                     || #}
+  {# ================================================================== #}
+
+  {# Robot parameters and arguments {--> #}
+  {%- set mass = 2.0 -%} {# [kg] #}
+  {%- set body_radius = 0.1 -%} {# [m] #}
+  {%- set body_height = 0.1 -%} {# [m] #}
+  {%- set mass_prop = 0.005 -%} {# [kg] #}
+  {%- set radius_rotor = 0.1651 -%} {# [m] #}
+
+  {%- set motor_mesh_z_offset = -0.0086 -%} {# [m] #}
+  {%- set rotor_xy_offset = 0.1812 -%} {# [m] #}
+  {%- set rotor_z_offset = 0.057 -%} {# [m] #}
+
+  {%- set root = 'base_link' -%}
+  {# <!--}--> #}
+
+  {# Motor constants {--> #}
+  {%- set rotor_velocity_slowdown_sim = 0.0159236 -%}
+  {%- set motor_constant = 16.48 -%} {# [kg.m/s^2] #}
+  {%- set moment_constant = 0.016 -%} {# [m] #}
+  {%- set time_constant_up = 1.0 / 80.0 -%} {# [s] #}
+  {%- set time_constant_down = 1.0 / 40.0 -%} {# [s] #}
+  {%- set max_rot_velocity = 1 -%} {# [rad/s] #}
+  {%- set rotor_drag_coefficient = 0.1 -%} {# orig 8.06428e-04 #}
+  {%- set rolling_moment_coefficient = '1.0e-6' -%}
+  {# <!--}--> #}
+
+  {# Inertia constants {--> #}
+  {%- set inertia_body_radius = 0.25 -%} {# [m] #}
+  {%- set inertia_body_height = 0.05 -%} {# [m] #}
+  {# <!--}--> #}
+
+  {# Scales {--> #}
+  {%- set mesh_scale = '1 1 1' -%}
+  {%- set mesh_scale_prop_ccw = '1 1 1' -%}
+  {%- set mesh_scale_prop_cw = '-1 1 1' -%}
+  {%- set mesh_scale_milimeters = '0.001 0.001 0.001' -%}
+  {# <!--}--> #}
+
+  {# Meshes {--> #}
+
+  {# Frame parts {--> #}
+  {%- set top_board_mesh_file = 'model://mrs_robots_description/meshes/x500v2/top_board_mesh_file.dae' -%}
+  {%- set bottom_board_mesh_file = 'model://mrs_robots_description/meshes/x500v2/bottom_board_mesh_file.dae' -%}
+  {%- set arm_carbon_mesh_file = 'model://mrs_robots_description/meshes/x500v2/arm_carbon_mesh_file.dae' -%}
+  {%- set arm_plastic1_mesh_file = 'model://mrs_robots_description/meshes/x500v2/arm_plastic1_mesh_file.stl' -%}
+  {%- set arm_plastic2_mesh_file = 'model://mrs_robots_description/meshes/x500v2/arm_plastic2_mesh_file.stl' -%}
+  {%- set arm_3d_print_mesh_file = 'model://mrs_robots_description/meshes/x500v2/arm_3d_print_mesh_file.stl' -%}
+  {%- set leg_3d_print_mesh_file = 'model://mrs_robots_description/meshes/x500v2/leg_3d_print_mesh_file.stl' -%}
+  {# <!--}--> #}
+
+  {# Motors and props {--> #}
+  {%- set motor_bottom_mesh_file = 'model://mrs_robots_description/meshes/x500v2/motor_bottom_mesh_file.stl' -%}
+  {%- set motor_middle_mesh_file = 'model://mrs_robots_description/meshes/x500v2/motor_middle_mesh_file.stl' -%}
+  {%- set motor_top_mesh_file = 'model://mrs_robots_description/meshes/x500v2/motor_top_mesh_file.stl' -%}
+  {%- set prop_mesh_file = 'model://mrs_robots_description/meshes/x500v2/prop_mesh_file.dae' -%}
+  {# <!--}--> #}
+
+  {# Sensors and computers {--> #}
+  {%- set pixhawk6c_mesh_file = 'model://mrs_robots_description/meshes/x500v2/pixhawk6c_mesh_file.stl' -%}
+  {%- set gps_mount_mesh_file = 'model://mrs_robots_description/meshes/x500v2/gps_mount_mesh_file.stl' -%}
+  {%- set nuc_board_mesh_file = 'model://mrs_robots_description/meshes/x500v2/nuc_board_mesh_file.stl' -%}
+  {%- set nuc_cooler_mesh_file = 'model://mrs_robots_description/meshes/x500v2/nuc_cooler_mesh_file.stl' -%}
+  {# <!--}--> #}
+
+  {# Mounts {--> #}
+  {%- set battery_mesh_file = 'model://mrs_robots_description/meshes/x500v2/battery_mesh_file.stl' -%}
+  {%- set battery_mount_mesh_file = 'model://mrs_robots_description/meshes/x500v2/battery_mount_mesh_file.stl' -%}
+  {%- set nuc_hex_posts_mesh_file = 'model://mrs_robots_description/meshes/x500v2/nuc_hex_posts_mesh_file.stl' -%}
+  {%- set gps_module_mesh_file = 'model://mrs_robots_description/meshes/x500v2/gps_module_mesh_file.stl' -%}
+  {%- set garmin_mount_mesh_file = 'model://mrs_robots_description/meshes/x500v2/garmin_mount_mesh_file.stl' -%}
+  {%- set lidar_mount_mesh_file = 'model://mrs_robots_description/meshes/x500v2/lidar_mount_mesh_file.stl' -%}
+  {%- set realsense_mount_mesh_file = 'model://mrs_robots_description/meshes/x500v2/realsense_mount_mesh_file.stl' -%}
+  {%- set bluefox_mount_mesh_file = 'model://mrs_robots_description/meshes/x500v2/bluefox_mount_mesh_file.stl' -%}
+  {%- set uvdar_mount_mesh = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_uvdar_mount.dae' -%}
+  {%- set qorvo_dw1000_mount_file = 'model://mrs_robots_description/meshes/x500v2/qorvo_dw1000_mount.stl' -%}
+
+  {# <!--}--> #}
+
+  {# <!--}--> #}
+
+  {# Inertias {--> #}
+  {%- set body_ixx = mass * (3 * inertia_body_radius * inertia_body_radius + inertia_body_height * inertia_body_height) / 12 -%}
+  {%- set body_ixy = 0 -%}
+  {%- set body_ixz = 0 -%}
+  {%- set body_iyy = mass * (3 * inertia_body_radius * inertia_body_radius + inertia_body_height * inertia_body_height) / 12 -%}
+  {%- set body_iyz = 0 -%}
+  {%- set body_izz = (mass * inertia_body_radius * inertia_body_radius) / 2 -%}
+
+  {%- set prop_ixx = 0.0001 -%}
+  {%- set prop_ixy = 0 -%}
+  {%- set prop_ixz = 0 -%}
+  {%- set prop_iyy = 0.0001 -%}
+  {%- set prop_iyz = 0 -%}
+  {%- set prop_izz = 0.0001 -%}
+  {# <!--}--> #}
+
+  <model name="{{ spawner_args['name'] }}">
+    <static>false</static>
+
+    {# ================================================================== #}
+    {# ||                    bare body definitions                     || #}
+    {# ================================================================== #}
+
+    <link name="{{ root }}">
+
+      <!-- Body visuals {-->
+
+      <!-- Boards {-->
+      {{ generic.visual_mesh_textured_macro(
+        name = 'top_board',
+        mesh_file = top_board_mesh_file,
+        mesh_scale = mesh_scale,
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(90))
+      }}
+
+      {{ generic.visual_mesh_textured_macro(
+        name = 'bottom_board',
+        mesh_file = bottom_board_mesh_file,
+        mesh_scale = mesh_scale,
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(90))
+      }}
+      <!--}-->
+
+      <!-- Arms and legs {-->
+      {%- for id in range(0, 4) -%}
+
+        {%- set affix = 'front_right' -%}
+        {%- set print_color = 'Black' -%}
+        {%- if id == 1 -%}
+          {%- set affix = 'front_left' -%}
+        {%- endif -%}
+        {%- if id == 2 -%}
+          {%- set affix = 'back_left' -%}
+          {%- set print_color = 'Red' -%}
+        {%- endif -%}
+        {%- if id == 3 -%}
+          {%- set affix = 'back_right' -%}
+          {%- set print_color = 'Red' -%}
+        {%- endif -%}
+
+        {{ generic.visual_mesh_textured_macro(
+          name = 'arm_carbon_' + affix,
+          mesh_file = arm_carbon_mesh_file,
+          mesh_scale = mesh_scale,
+          x = 0,
+          y = 0,
+          z = 0,
+          roll = 0,
+          pitch = 0,
+          yaw = id * 1.57079633)
+        }}
+
+        {{ generic.visual_mesh_mrs_material_macro(
+          name = 'arm_plastic1_' + affix,
+          mesh_file = arm_plastic1_mesh_file,
+          mesh_scale = mesh_scale,
+          color = 'X500Blue',
+          x = 0,
+          y = 0,
+          z = 0,
+          roll = 0,
+          pitch = 0,
+          yaw = id * 1.57079633)
+        }}
+
+        {{ generic.visual_mesh_mrs_material_macro(
+          name = 'arm_plastic2_' + affix,
+          mesh_file = arm_plastic2_mesh_file,
+          mesh_scale = mesh_scale,
+          color = 'X500Blue',
+          x = 0,
+          y = 0,
+          z = 0,
+          roll = 0,
+          pitch = 0,
+          yaw = id * 1.57079633)
+        }}
+
+        {{ generic.visual_mesh_macro(
+          name = 'arm_3d_print_' + affix,
+          mesh_file = arm_3d_print_mesh_file,
+          mesh_scale = mesh_scale,
+          color = print_color,
+          x = 0,
+          y = 0,
+          z = 0,
+          roll = 0,
+          pitch = 0,
+          yaw = id * 1.57079633)
+        }}
+
+      {%- endfor -%}
+
+      {{ generic.leg_collision_offset_macro(
+        name = 'leg_3d_print_front_right',
+        mesh_file = leg_3d_print_mesh_file,
+        mesh_scale = mesh_scale,
+        color = 'Black',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = 0,
+        collision_height = 0.165,
+        collision_radius = 0.015,
+        offset_x = 0.13,
+        offset_y = -0.13,
+        offset_z = -0.07)
+      }}
+
+     {{ generic.leg_collision_offset_macro(
+        name = 'leg_3d_print_front_left',
+        mesh_file = leg_3d_print_mesh_file,
+        mesh_scale = mesh_scale,
+        color = 'Black',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = 1.57079633,
+        collision_height = 0.165,
+        collision_radius = 0.015,
+        offset_x = 0.13,
+        offset_y = 0.13,
+        offset_z = -0.07)
+      }}
+
+      {{ generic.leg_collision_offset_macro(
+        name = 'leg_3d_print_back_left',
+        mesh_file = leg_3d_print_mesh_file,
+        mesh_scale = mesh_scale,
+        color = 'Red',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = 3.14159266,
+        collision_height = 0.165,
+        collision_radius = 0.015,
+        offset_x = -0.13,
+        offset_y = 0.13,
+        offset_z = -0.07)
+      }}
+
+      {{ generic.leg_collision_offset_macro(
+        name = 'leg_3d_print_back_right',
+        mesh_file = leg_3d_print_mesh_file,
+        mesh_scale = mesh_scale,
+        color = 'Red',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = 4.71238899,
+        collision_height = 0.165,
+        collision_radius = 0.015,
+        offset_x = -0.13,
+        offset_y = -0.13,
+        offset_z = -0.07)
+      }}
+
+      <!--}-->
+
+      <!-- Intel nuc {-->
+      {{ generic.visual_mesh_macro(
+        name = 'nuc_board',
+        mesh_file = nuc_board_mesh_file,
+        mesh_scale = mesh_scale,
+        color = 'Grass',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(90))
+      }}
+      {{ generic.visual_mesh_macro(
+        name = 'nuc_cooler',
+        mesh_file = nuc_cooler_mesh_file,
+        mesh_scale = mesh_scale,
+        color = 'Grey',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(90))
+      }}
+      {{ generic.visual_mesh_macro(
+        name = 'nuc_hex_posts',
+        mesh_file = nuc_hex_posts_mesh_file,
+        mesh_scale = mesh_scale,
+        color = 'Grey',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(90))
+      }}
+      <!--}-->
+
+      <!-- Pixhawk {-->
+      {{ generic.visual_mesh_macro(
+        name = 'pixhawk6c',
+        mesh_file = pixhawk6c_mesh_file,
+        mesh_scale = mesh_scale,
+        color = 'DarkGrey',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(90))
+      }}
+      <!--}-->
+
+      <!-- Motors {-->
+      {%- set affix = 'front_right' -%}
+
+      {%- for id in range(0, 4) -%}
+
+        {%- if id == 1 -%}
+          {%- set affix = 'front_left' -%}
+        {%- endif -%}
+        {%- if id == 2 -%}
+          {%- set affix = 'back_left' -%}
+        {%- endif -%}
+        {%- if id == 3 -%}
+          {%- set affix = 'back_right' -%}
+        {%- endif -%}
+
+        {{ generic.visual_mesh_macro(
+          name = 'motor_bottom_' + affix,
+          mesh_file = motor_bottom_mesh_file,
+          mesh_scale = mesh_scale,
+          color = 'Grey',
+          x = 0,
+          y = 0,
+          z = 0,
+          roll = 0,
+          pitch = 0,
+          yaw = id * 1.57079633)
+        }}
+
+        {{ generic.visual_mesh_macro(
+          name = 'motor_middle_' + affix,
+          mesh_file = motor_middle_mesh_file,
+          mesh_scale = mesh_scale,
+          color = 'Black',
+          x = 0,
+          y = 0,
+          z = 0,
+          roll = 0,
+          pitch = 0,
+          yaw = id * 1.57079633)
+        }}
+
+      {%- endfor -%}
+      <!--}-->
+
+      <!-- Battery mount and battery {-->
+      {{ generic.visual_mesh_macro(
+        name = 'battery_mount',
+        mesh_file = battery_mount_mesh_file,
+        mesh_scale = mesh_scale,
+        color = 'Red',
+        x = 0,
+        y = 0,
+        z = 0.001,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(90))
+      }}
+      {{ generic.visual_mesh_macro(
+        name = 'battery',
+        mesh_file = battery_mesh_file,
+        mesh_scale = mesh_scale,
+        color = 'Grey',
+        x = 0,
+        y = 0,
+        z = 0.001,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(90))
+      }}
+      <!--}-->
+
+      {# GPS antenna and mount {--> #}
+      {%- set gps_visuals -%}
+      <!-- GPS mount {-->
+      {{ generic.visual_link_macro(
+        name = 'gps_mount',
+        mesh_file = gps_mount_mesh_file,
+        mesh_scale = mesh_scale,
+        color = 'Grey',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(90),
+        parent_link = root)
+      }}
+      <!--}-->
+
+      <!-- GPS antenna {-->
+      {{ generic.visual_link_macro(
+        name = 'gps_module',
+        mesh_file = gps_module_mesh_file,
+        mesh_scale = mesh_scale,
+        color = 'Black',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(90),
+        parent_link = root)
+      }}
+      <!--}-->
+      {%- endset -%}
+      {# <!--}--> #}
+
+      {# component mounts and holders (these must be passed as args into components, or must be called) {--> #}
+
+      {# garmin down mount {--> #}
+      {%- set garmin_down_mount -%}
+        {{ generic.visual_link_macro(
+          name = 'garmin_mount',
+          mesh_file = garmin_mount_mesh_file,
+          mesh_scale = mesh_scale,
+          color = 'Black',
+          x = 0,
+          y = 0,
+          z = -0.001,
+          roll = 0,
+          pitch = 0,
+          yaw = math.radians(90),
+          parent_link = root)
+        }}
+      {%- endset -%}
+      {# <!--}--> #}
+
+      {# lidar mount {--> #}
+      {%- set lidar_mount -%}
+        {{ generic.visual_link_macro(
+          name = 'rplidar_mount',
+          mesh_file = lidar_mount_mesh_file,
+          mesh_scale = mesh_scale,
+          color = 'FlatBlack',
+          x = 0,
+          y = 0,
+          z = 0,
+          roll = 0,
+          pitch = 0,
+          yaw = math.radians(90),
+          parent_link = root)
+        }}
+      {%- endset -%}
+      {# <!--}--> #}
+
+      {# realsense mount {--> #}
+      {%- set realsense_mount -%}
+        {{ generic.visual_link_macro(
+          name = 'realsense_mount',
+          mesh_file = realsense_mount_mesh_file,
+          mesh_scale = mesh_scale,
+          color = 'Black',
+          x = 0,
+          y = 0,
+          z = 0,
+          roll = 0,
+          pitch = 0,
+          yaw = math.radians(90),
+          parent_link = root)
+        }}
+      {%- endset -%}
+      {# <!--}--> #}
+
+      {# bluefox mount {--> #}
+      {%- set bluefox_mount -%}
+        {{ generic.visual_link_macro(
+          name = 'bluefox_mount',
+          mesh_file = bluefox_mount_mesh_file,
+          mesh_scale = mesh_scale_milimeters,
+          color = 'FlatBlack',
+          x = 0,
+          y = 0,
+          z = 0,
+          roll = 0,
+          pitch = 0,
+          yaw = math.radians(90),
+          parent_link = root)
+        }}
+      {%- endset -%}
+      {# <!--}--> #}
+
+      {# uvdar mount {--> #}
+      {%- set uvdar_mount -%}
+        {{ generic.visual_link_macro(
+          name = 'uvdar_mount',
+          mesh_file = uvdar_mount_mesh,
+          mesh_scale = mesh_scale_milimeters,
+          color = 'DarkGrey',
+          x = 0.027,
+          y = 0,
+          z = 0.075,
+          roll = 0,
+          pitch = 0,
+          yaw = 0,
+          parent_link = root)
+        }}
+      {%- endset -%}
+      {# <!--}--> #}
+
+      {# Qorvo DW1000 mount {--> #}
+      {%- set qorvo_dw1000_mount -%}
+        {{ generic.visual_link_macro(
+          name = 'qorvo_dw1000_mount',
+          mesh_file = qorvo_dw1000_mount_file,
+          mesh_scale = mesh_scale_milimeters,
+          color = 'DarkGrey',
+          x = 0.0,
+          y = -0.01,
+          z = -0.078,
+          roll = 0,
+          pitch = 0,
+          yaw = 0,
+          parent_link = root)
+        }}
+      {%- endset -%}
+      {# <!--}--> #}
+
+      {# <!--}--> #}
+  
+      <sensor name="air_pressure_sensor" type="air_pressure">
+        <always_on>1</always_on>
+        <update_rate>50</update_rate>
+        <air_pressure>
+          <!-- Noise modeled after BMP390 -->
+          <pressure>
+            <noise type="gaussian">
+              <mean>0</mean>
+              <stddev>3</stddev>
+            </noise>
+          </pressure>
+        </air_pressure>
+      </sensor>
+      <sensor name="magnetometer_sensor" type="magnetometer">
+        <always_on>1</always_on>
+        <update_rate>100</update_rate>
+        <magnetometer>
+          <!-- TODO: update to fix units and coordinate system when we move past Harmonic -->
+          <!-- See https://github.com/gazebosim/gz-sim/pull/2460 -->
+          <!-- 3mgauss RMS: NOTE: noise is in tesla but sensor reports data in gauss -->
+          <!-- Noise modeled after IIS2MDC -->
+          <x>
+            <noise type="gaussian">
+              <stddev>0.0001</stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <stddev>0.0001</stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <stddev>0.0001</stddev>
+            </noise>
+          </z>
+        </magnetometer>
+      </sensor>
+      <sensor name="imu_sensor" type="imu">
+        <always_on>1</always_on>
+        <update_rate>250</update_rate>
+        <imu>
+          <angular_velocity>
+            <!-- Noise modeled after IIM42653 -->
+            <!-- 0.05 deg/s converted to rad/s -->
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.0008726646</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.0008726646</stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.0008726646</stddev>
+              </noise>
+            </z>
+          </angular_velocity>
+          <linear_acceleration>
+            <!-- Noise modeled after IIM42653 -->
+            <!-- X & Y axis: 0.65 mg-rms converted to m/ss -->
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.00637</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.00637</stddev>
+              </noise>
+            </y>
+            <!-- Z axis: 0.70 mg-rms converted to m/ss-->
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.00686</stddev>
+              </noise>
+            </z>
+          </linear_acceleration>
+        </imu>
+      </sensor>
+      <sensor name="navsat_sensor" type="navsat">
+        <always_on>1</always_on>
+        <update_rate>30</update_rate>
+      </sensor>
+    <!--}-->
+    
+    <!-- BODY PHYSICS {-->
+    {{ generic.multirotor_physics_macro(
+      mass = mass,
+      body_radius = body_radius,
+      body_height = body_height,
+      ixx = body_ixx,
+      ixy = body_ixy,
+      ixz = body_ixz,
+      iyy = body_iyy,
+      iyz = body_iyz,
+      izz = body_izz)
+    }}
+    <!--}-->
+    
+    </link>
+
+    <!-- ROTORS {-->
+    <link name='rotor_0'>
+      <pose>0.175 -0.175 0.041 0 0 0</pose>
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay/>
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <mass>0.005</mass>
+        <inertia>
+          <ixx>0.0001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0001</iyy>
+          <iyz>0</iyz>
+          <izz>0.0001</izz>
+        </inertia>
+      </inertial>
+      <collision name='rotor_0_collision'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.009</length>
+            <radius>0.128</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+				 <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+			</ode>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='rotor_0_visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>{{ prop_mesh_file }}</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='rotor_0_joint' type='revolute'>
+      <child>rotor_0</child>
+      <parent>base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='rotor_1'>
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay/>
+      <pose>-0.175 0.175 0.041 0 0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <mass>0.005</mass>
+        <inertia>
+          <ixx>0.0001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0001</iyy>
+          <iyz>0</iyz>
+          <izz>0.0001</izz>
+        </inertia>
+      </inertial>
+      <collision name='rotor_1_collision'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.009</length>
+            <radius>0.128</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+				 <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+			</ode>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='rotor_1_visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>{{ prop_mesh_file }}</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='rotor_1_joint' type='revolute'>
+      <child>rotor_1</child>
+      <parent>base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='rotor_2'>
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay/>
+      <pose>0.175 0.175 0.041 0 0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <mass>0.005</mass>
+        <inertia>
+          <ixx>0.0001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0001</iyy>
+          <iyz>0</iyz>
+          <izz>0.0001</izz>
+        </inertia>
+      </inertial>
+      <collision name='rotor_2_collision'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.009</length>
+            <radius>0.128</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+				 <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+			</ode>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='rotor_2_visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>-1 1 1</scale>
+            <uri>{{ prop_mesh_file }}</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='rotor_2_joint' type='revolute'>
+      <child>rotor_2</child>
+      <parent>base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='rotor_3'>
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+      <velocity_decay/>
+      <pose>-0.175 -0.175 0.041 0 0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <mass>0.005</mass>
+        <inertia>
+          <ixx>0.0001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0001</iyy>
+          <iyz>0</iyz>
+          <izz>0.0001</izz>
+        </inertia>
+      </inertial>
+      <collision name='rotor_3_collision'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.009</length>
+            <radius>0.128</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+				 <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+			</ode>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='rotor_3_visual'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>-1 1 1</scale>
+            <uri>{{ prop_mesh_file }}</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='rotor_3_joint' type='revolute'>
+      <child>rotor_3</child>
+      <parent>base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <!--} END ROTORS -->
+
+    <!-- PLUGINS {-->
+    <!-- MOTOR PLUGINS {-->
+    <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel">
+      <jointName>rotor_0_joint</jointName>
+      <linkName>rotor_0</linkName>
+      <turningDirection>ccw</turningDirection>
+      <timeConstantUp>0.0125</timeConstantUp>
+      <timeConstantDown>0.025</timeConstantDown>
+      <maxRotVelocity>1000.0</maxRotVelocity>
+      <motorConstant>8.54858e-06</motorConstant>
+      <momentConstant>0.016</momentConstant>
+      <commandSubTopic>command/motor_speed</commandSubTopic>
+      <motorNumber>0</motorNumber>
+      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+      <motorType>velocity</motorType>
+    </plugin>
+    <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel">
+      <jointName>rotor_1_joint</jointName>
+      <linkName>rotor_1</linkName>
+      <turningDirection>ccw</turningDirection>
+      <timeConstantUp>0.0125</timeConstantUp>
+      <timeConstantDown>0.025</timeConstantDown>
+      <maxRotVelocity>1000.0</maxRotVelocity>
+      <motorConstant>8.54858e-06</motorConstant>
+      <momentConstant>0.016</momentConstant>
+      <commandSubTopic>command/motor_speed</commandSubTopic>
+      <motorNumber>1</motorNumber>
+      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+      <motorType>velocity</motorType>
+    </plugin>
+    <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel">
+      <jointName>rotor_2_joint</jointName>
+      <linkName>rotor_2</linkName>
+      <turningDirection>cw</turningDirection>
+      <timeConstantUp>0.0125</timeConstantUp>
+      <timeConstantDown>0.025</timeConstantDown>
+      <maxRotVelocity>1000.0</maxRotVelocity>
+      <motorConstant>8.54858e-06</motorConstant>
+      <momentConstant>0.016</momentConstant>
+      <commandSubTopic>command/motor_speed</commandSubTopic>
+      <motorNumber>2</motorNumber>
+      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+      <motorType>velocity</motorType>
+    </plugin>
+    <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel">
+      <jointName>rotor_3_joint</jointName>
+      <linkName>rotor_3</linkName>
+      <turningDirection>cw</turningDirection>
+      <timeConstantUp>0.0125</timeConstantUp>
+      <timeConstantDown>0.025</timeConstantDown>
+      <maxRotVelocity>1000.0</maxRotVelocity>
+      <motorConstant>8.54858e-06</motorConstant>
+      <momentConstant>0.016</momentConstant>
+      <commandSubTopic>command/motor_speed</commandSubTopic>
+      <motorNumber>3</motorNumber>
+      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+      <motorType>velocity</motorType>
+    </plugin>
+    <!--} END MOTOR PLUGINS -->
+
+  </model>
+</sdf>

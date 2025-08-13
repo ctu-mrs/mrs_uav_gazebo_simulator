@@ -1,0 +1,37 @@
+# do not modify these
+root: ./
+name: simulation
+socket_name: mrs
+attach: false
+tmux_options: -f /etc/ctu-mrs/tmux.conf
+# you can modify these
+pre_window:
+  - export UAV_NAME=uav1
+  - export RUN_TYPE=simulation
+  - export UAV_TYPE=x500
+startup_window: status
+windows:
+  - zenoh_router:
+      layout: tiled
+      panes:
+        - ros2 run rmw_zenoh_cpp rmw_zenohd
+  - gazebo:
+      layout: tiled
+      panes:
+        - ros2 launch mrs_uav_gazebo_simulation simulation.launch.py gz_headless:=false
+        - |
+          sleep 5; && \
+          ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE'}"
+  - takeoff:
+      layout: tiled
+      panes:
+        - |
+          history -s "ros2 service call /uav1/mavros/cmd/arming mavros_msgs/srv/CommandBool \"{value: true}\""
+        - |
+          history -s "ros2 service call /uav1/mavros/cmd/takeoff mavros_msgs/srv/CommandTOL \"{min_pitch: 0.0, latitude: 47.3977279, longitude: 8.5455751, altitude: 1.0}\""
+        - |
+          history -s "ros2 service call /uav1/mavros/cmd/land mavros_msgs/srv/CommandTOL \"{}\""
+  - layout:
+      layout: tiled
+      panes:
+        - waitForControl; sleep 3; ~/.i3/layout_manager.sh ./layout.json
