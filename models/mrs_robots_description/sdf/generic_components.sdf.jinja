@@ -78,7 +78,7 @@ limitations under the License.
 {# <!--}--> #}
 
 {# multirotor_physics_macro {--> #}
-{%- macro multirotor_physics_macro(mass, body_radius, body_height, rotor_velocity_slowdown_sim, ixx, ixy, ixz, iyy, iyz, izz) -%}
+{%- macro multirotor_physics_macro(mass, body_radius, body_height, ixx, ixy, ixz, iyy, iyz, izz) -%}
   <inertial>
     <mass>{{ mass }}</mass>
     <inertia>
@@ -117,12 +117,6 @@ limitations under the License.
       </friction>
     </surface>
   </collision>
-
-  <plugin filename="libgazebo_multirotor_base_plugin.so" name="multirotor_base_plugin">
-    <robotNamespace/>
-    <linkName>base_link</linkName>
-    <rotorVelocitySlowdownSim>{{ rotor_velocity_slowdown_sim }}</rotorVelocitySlowdownSim>
-  </plugin>
 {%- endmacro -%}
 {# <!--}--> #}
 

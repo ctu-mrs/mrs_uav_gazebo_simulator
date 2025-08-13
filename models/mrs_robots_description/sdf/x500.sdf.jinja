@@ -650,8 +650,23 @@
         <always_on>1</always_on>
         <update_rate>30</update_rate>
       </sensor>
-    </link>
     <!--}-->
+    
+    <!-- BODY PHYSICS {-->
+    {{ generic.multirotor_physics_macro(
+      mass = mass,
+      body_radius = body_radius,
+      body_height = body_height,
+      ixx = body_ixx,
+      ixy = body_ixy,
+      ixz = body_ixz,
+      iyy = body_iyy,
+      iyz = body_iyz,
+      izz = body_izz)
+    }}
+    <!--}-->
+    
+    </link>
 
     <!-- ROTORS {-->
     <link name='rotor_0'>
