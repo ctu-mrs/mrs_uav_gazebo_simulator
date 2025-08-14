@@ -1,19 +1,29 @@
 # MRS UAV Gazebo Simulation
 
-![](.fig/thumbnail.jpg)
+This package provides UAV model definitions for the Gazebo simulator and a custom spawning mechanism that assembles the drones dynamically from provided arguments.
+
+
+## ROS2
+
+> :warning: **Attention please: This package is under development due to ROS2 transition.**
+>
+> Please keep in mind that the migration will take time and the components you are used to in ROS1 may not be available yet.
+
+![thumbnail](.fig/thumbnail.jpg)
+
 
 ### Pre-defined UAVs
 
-| Model         | Spawn argument | Simulation                       |
-|---------------|----------------|----------------------------------|
-| F4F RoboFly   | `--robofly`    | ![](.fig/robofly_simulation.jpg) |
-| DJI f330      | `--f330`       | ![](.fig/f330_simulation.jpg)    |
-| DJI f450      | `--f450`       | ![](.fig/f450_simulation.jpg)    |
-| Holybro x500  | `--x500`       | ![](.fig/x500_simulation.jpg)    |
-| DJI f550      | `--f550`       | ![](.fig/f550_simulation.jpg)    |
-| Tarot t650    | `--t650`       | ![](.fig/t650_simulation.jpg)    |
-| T-Drones m690 | `--m690`       | ![](.fig/m690_simulation.jpg)    |
-| NAKI II       | `--naki`       | ![](.fig/naki_simulation.jpg)    |
+| Model             | Spawn argument | Simulation                       |
+|-------------------|----------------|----------------------------------|
+| Holybro x500      | `--x500`       | ![](.fig/x500_simulation.jpg)    |
+| --F4F RoboFly--   | `--robofly`    | ![](.fig/robofly_simulation.jpg) |
+| --DJI f330--      | `--f330`       | ![](.fig/f330_simulation.jpg)    |
+| --DJI f450--      | `--f450`       | ![](.fig/f450_simulation.jpg)    |
+| --DJI f550--      | `--f550`       | ![](.fig/f550_simulation.jpg)    |
+| --Tarot t650--    | `--t650`       | ![](.fig/t650_simulation.jpg)    |
+| --T-Drones m690-- | `--m690`       | ![](.fig/m690_simulation.jpg)    |
+| --NAKI II--       | `--naki`       | ![](.fig/naki_simulation.jpg)    |
 
 ### Adding a custom UAV
 
