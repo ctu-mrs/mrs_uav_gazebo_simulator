@@ -15,6 +15,28 @@ param set-default SIM_GZ_EN 1
 param set-default CA_AIRFRAME 0
 param set-default CA_ROTOR_COUNT 4
 
+# NOTE: the index order does not match the gazebo model!
+
+param set-default CA_ROTOR0_PX 0.1812
+param set-default CA_ROTOR0_PY 0.1812
+param set-default CA_ROTOR0_PZ 0.057
+param set-default CA_ROTOR0_KM 0.037
+
+param set-default CA_ROTOR1_PX -0.1812
+param set-default CA_ROTOR1_PY -0.1812
+param set-default CA_ROTOR1_PZ 0.057
+param set-default CA_ROTOR1_KM  0.037
+
+param set-default CA_ROTOR2_PX 0.1812
+param set-default CA_ROTOR2_PY -0.1812
+param set-default CA_ROTOR2_PZ 0.057
+param set-default CA_ROTOR2_KM -0.037
+
+param set-default CA_ROTOR3_PX -0.1812
+param set-default CA_ROTOR3_PY 0.1812
+param set-default CA_ROTOR3_PZ 0.057
+param set-default CA_ROTOR3_KM -0.037
+
 param set-default SIM_GZ_EC_FUNC1 101
 param set-default SIM_GZ_EC_FUNC2 102
 param set-default SIM_GZ_EC_FUNC3 103
@@ -29,3 +51,5 @@ param set-default SIM_GZ_EC_MAX1 1000
 param set-default SIM_GZ_EC_MAX2 1000
 param set-default SIM_GZ_EC_MAX3 1000
 param set-default SIM_GZ_EC_MAX4 1000
+
+param set-default MPC_THR_HOVER 0.6

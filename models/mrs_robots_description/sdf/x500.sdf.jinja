@@ -9,11 +9,12 @@
   {# ================================================================== #}
 
   {# Robot parameters and arguments {--> #}
-  {%- set mass = 2.0 -%} {# [kg] #}
+  {%- set mass = 1.95 -%} {# [kg] #}
   {%- set body_radius = 0.1 -%} {# [m] #}
   {%- set body_height = 0.1 -%} {# [m] #}
-  {%- set mass_prop = 0.005 -%} {# [kg] #}
-  {%- set radius_rotor = 0.1651 -%} {# [m] #}
+  {%- set mass_prop = 0.016076923076923075 -%} {# [kg] #}
+  {%- set radius_rotor = 0.1751 -%} {# [m] #}
+  {%- set rotor_height = 0.002 -%} {# [m] #}
 
   {%- set motor_mesh_z_offset = -0.0086 -%} {# [m] #}
   {%- set rotor_xy_offset = 0.1812 -%} {# [m] #}
@@ -23,13 +24,13 @@
   {# <!--}--> #}
 
   {# Motor constants {--> #}
-  {%- set rotor_velocity_slowdown_sim = 0.0159236 -%}
-  {%- set motor_constant = 16.48 -%} {# [kg.m/s^2] #}
+  {%- set rotor_velocity_slowdown_sim = 10 -%}
+  {%- set motor_constant = '8.54858e-06' -%} {# [kg.m/s^2] #}
   {%- set moment_constant = 0.016 -%} {# [m] #}
-  {%- set time_constant_up = 1.0 / 80.0 -%} {# [s] #}
-  {%- set time_constant_down = 1.0 / 40.0 -%} {# [s] #}
-  {%- set max_rot_velocity = 1 -%} {# [rad/s] #}
-  {%- set rotor_drag_coefficient = 0.1 -%} {# orig 8.06428e-04 #}
+  {%- set time_constant_up = 0.0125 -%} {# [s] #}
+  {%- set time_constant_down = 0.025 -%} {# [s] #}
+  {%- set max_rot_velocity = 1000.0 -%} {# [rad/s] #}
+  {%- set rotor_drag_coefficient = '8.06428e-05' -%} {# orig 8.06428e-04 #}
   {%- set rolling_moment_coefficient = '1.0e-6' -%}
   {# <!--}--> #}
 
@@ -95,12 +96,12 @@
   {%- set body_iyz = 0 -%}
   {%- set body_izz = (mass * inertia_body_radius * inertia_body_radius) / 2 -%}
 
-  {%- set prop_ixx = 0.0001 -%}
+  {%- set prop_ixx = mass_prop * ( 3 * radius_rotor * radius_rotor + rotor_height * rotor_height) / 12 -%}
   {%- set prop_ixy = 0 -%}
   {%- set prop_ixz = 0 -%}
-  {%- set prop_iyy = 0.0001 -%}
+  {%- set prop_iyy = mass_prop * ( 3 * radius_rotor * radius_rotor + rotor_height * rotor_height) / 12  -%}
   {%- set prop_iyz = 0 -%}
-  {%- set prop_izz = 0.0001 -%}
+  {%- set prop_izz = (mass_prop * radius_rotor * radius_rotor) / 2 -%}
   {# <!--}--> #}
 
   <model name="{{ spawner_args['name'] }}">
@@ -556,7 +557,24 @@
       {# <!--}--> #}
 
       {# <!--}--> #}
-  
+
+    <!--}-->
+    
+    <!-- BODY PHYSICS {-->
+    {{ generic.multirotor_physics_macro(
+      mass = mass,
+      body_radius = body_radius,
+      body_height = body_height,
+      ixx = body_ixx,
+      ixy = body_ixy,
+      ixz = body_ixz,
+      iyy = body_iyy,
+      iyz = body_iyz,
+      izz = body_izz)
+    }}
+    <!--}-->
+
+      <!-- PX4 sensors {-->
       <sensor name="air_pressure_sensor" type="air_pressure">
         <always_on>1</always_on>
         <update_rate>50</update_rate>
@@ -651,341 +669,82 @@
         <update_rate>30</update_rate>
       </sensor>
     <!--}-->
-    
-    <!-- BODY PHYSICS {-->
-    {{ generic.multirotor_physics_macro(
-      mass = mass,
-      body_radius = body_radius,
-      body_height = body_height,
-      ixx = body_ixx,
-      ixy = body_ixy,
-      ixz = body_ixz,
-      iyy = body_iyy,
-      iyz = body_iyz,
-      izz = body_izz)
+
+    </link>
+
+    {# Propellers {--> #}
+    {%- set prop_list = [
+    {
+    'motor_number': 0,
+    'direction': 'ccw',
+    'x': rotor_xy_offset,
+    'y': -rotor_xy_offset,
+    'z': rotor_z_offset,
+    'mesh_files': [prop_mesh_file, motor_top_mesh_file],
+    'mesh_scale': mesh_scale_prop_ccw,
+    'color': 'Grey'
+    },
+    {
+    'motor_number': 1,
+    'direction': 'ccw',
+    'x': -rotor_xy_offset,
+    'y': rotor_xy_offset,
+    'z': rotor_z_offset,
+    'mesh_files': [prop_mesh_file, motor_top_mesh_file],
+    'mesh_scale': mesh_scale_prop_ccw,
+    'color': 'Grey'
+    },
+    {
+    'motor_number': 2,
+    'direction': 'cw',
+    'x': rotor_xy_offset,
+    'y': rotor_xy_offset,
+    'z': rotor_z_offset,
+    'mesh_files': [prop_mesh_file, motor_top_mesh_file],
+    'mesh_scale': mesh_scale_prop_cw,
+    'color': 'Grey'
+    },
+    {
+    'motor_number': 3,
+    'direction': 'cw',
+    'x': -rotor_xy_offset,
+    'y': -rotor_xy_offset,
+    'z': rotor_z_offset,
+    'mesh_files': [prop_mesh_file, motor_top_mesh_file],
+    'mesh_scale': mesh_scale_prop_cw,
+    'color': 'Grey'
+    }
+    ]
+    -%}
+    {{ components.propellers_macro(
+      prop_list = prop_list,
+      rotor_velocity_slowdown_sim = rotor_velocity_slowdown_sim,
+      motor_constant = motor_constant,
+      moment_constant = moment_constant,
+      parent = root,
+      mass = mass_prop,
+      radius = radius_rotor,
+      time_constant_up = time_constant_up,
+      time_constant_down = time_constant_down,
+      max_rot_velocity = max_rot_velocity,
+      rotor_drag_coefficient = rotor_drag_coefficient,
+      rolling_moment_coefficient = rolling_moment_coefficient,
+      meshes_z_offset = motor_mesh_z_offset,
+      prop_ixx = prop_ixx,
+      prop_ixy = prop_ixy,
+      prop_ixz = prop_ixz,
+      prop_iyy = prop_iyy,
+      prop_iyz = prop_iyz,
+      prop_izz = prop_izz,
+      spawner_args = spawner_args)
     }}
-    <!--}-->
-    
-    </link>
+    {# <!--}--> #}
 
-    <!-- ROTORS {-->
-    <link name='rotor_0'>
-      <pose>0.175 -0.175 0.041 0 0 0</pose>
-      <gravity>true</gravity>
-      <self_collide>false</self_collide>
-      <velocity_decay/>
-      <inertial>
-        <pose>0 0 0 0 0 0</pose>
-        <mass>0.005</mass>
-        <inertia>
-          <ixx>0.0001</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.0001</iyy>
-          <iyz>0</iyz>
-          <izz>0.0001</izz>
-        </inertia>
-      </inertial>
-      <collision name='rotor_0_collision'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <cylinder>
-            <length>0.009</length>
-            <radius>0.128</radius>
-          </cylinder>
-        </geometry>
-        <surface>
-          <contact>
-            <ode>
-				 <min_depth>0.001</min_depth>
-              <max_vel>0</max_vel>
-			</ode>
-          </contact>
-          <friction>
-            <ode/>
-          </friction>
-        </surface>
-      </collision>
-      <visual name='rotor_0_visual'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <scale>1 1 1</scale>
-            <uri>{{ prop_mesh_file }}</uri>
-          </mesh>
-        </geometry>
-      </visual>
-    </link>
-    <joint name='rotor_0_joint' type='revolute'>
-      <child>rotor_0</child>
-      <parent>base_link</parent>
-      <axis>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-        </dynamics>
-      </axis>
-    </joint>
-    <link name='rotor_1'>
-      <gravity>true</gravity>
-      <self_collide>false</self_collide>
-      <velocity_decay/>
-      <pose>-0.175 0.175 0.041 0 0 0</pose>
-      <inertial>
-        <pose>0 0 0 0 0 0</pose>
-        <mass>0.005</mass>
-        <inertia>
-          <ixx>0.0001</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.0001</iyy>
-          <iyz>0</iyz>
-          <izz>0.0001</izz>
-        </inertia>
-      </inertial>
-      <collision name='rotor_1_collision'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <cylinder>
-            <length>0.009</length>
-            <radius>0.128</radius>
-          </cylinder>
-        </geometry>
-        <surface>
-          <contact>
-            <ode>
-				 <min_depth>0.001</min_depth>
-              <max_vel>0</max_vel>
-			</ode>
-          </contact>
-          <friction>
-            <ode/>
-          </friction>
-        </surface>
-      </collision>
-      <visual name='rotor_1_visual'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <scale>1 1 1</scale>
-            <uri>{{ prop_mesh_file }}</uri>
-          </mesh>
-        </geometry>
-      </visual>
-    </link>
-    <joint name='rotor_1_joint' type='revolute'>
-      <child>rotor_1</child>
-      <parent>base_link</parent>
-      <axis>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-        </dynamics>
-      </axis>
-    </joint>
-    <link name='rotor_2'>
-      <gravity>true</gravity>
-      <self_collide>false</self_collide>
-      <velocity_decay/>
-      <pose>0.175 0.175 0.041 0 0 0</pose>
-      <inertial>
-        <pose>0 0 0 0 0 0</pose>
-        <mass>0.005</mass>
-        <inertia>
-          <ixx>0.0001</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.0001</iyy>
-          <iyz>0</iyz>
-          <izz>0.0001</izz>
-        </inertia>
-      </inertial>
-      <collision name='rotor_2_collision'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <cylinder>
-            <length>0.009</length>
-            <radius>0.128</radius>
-          </cylinder>
-        </geometry>
-        <surface>
-          <contact>
-            <ode>
-				 <min_depth>0.001</min_depth>
-              <max_vel>0</max_vel>
-			</ode>
-          </contact>
-          <friction>
-            <ode/>
-          </friction>
-        </surface>
-      </collision>
-      <visual name='rotor_2_visual'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <scale>-1 1 1</scale>
-            <uri>{{ prop_mesh_file }}</uri>
-          </mesh>
-        </geometry>
-      </visual>
-    </link>
-    <joint name='rotor_2_joint' type='revolute'>
-      <child>rotor_2</child>
-      <parent>base_link</parent>
-      <axis>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-        </dynamics>
-      </axis>
-    </joint>
-    <link name='rotor_3'>
-      <gravity>true</gravity>
-      <self_collide>false</self_collide>
-      <velocity_decay/>
-      <pose>-0.175 -0.175 0.041 0 0 0</pose>
-      <inertial>
-        <pose>0 0 0 0 0 0</pose>
-        <mass>0.005</mass>
-        <inertia>
-          <ixx>0.0001</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.0001</iyy>
-          <iyz>0</iyz>
-          <izz>0.0001</izz>
-        </inertia>
-      </inertial>
-      <collision name='rotor_3_collision'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <cylinder>
-            <length>0.009</length>
-            <radius>0.128</radius>
-          </cylinder>
-        </geometry>
-        <surface>
-          <contact>
-            <ode>
-				 <min_depth>0.001</min_depth>
-              <max_vel>0</max_vel>
-			</ode>
-          </contact>
-          <friction>
-            <ode/>
-          </friction>
-        </surface>
-      </collision>
-      <visual name='rotor_3_visual'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <scale>-1 1 1</scale>
-            <uri>{{ prop_mesh_file }}</uri>
-          </mesh>
-        </geometry>
-      </visual>
-    </link>
-    <joint name='rotor_3_joint' type='revolute'>
-      <child>rotor_3</child>
-      <parent>base_link</parent>
-      <axis>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-        </dynamics>
-      </axis>
-    </joint>
-    <!--} END ROTORS -->
+    {# ================================================================== #}
+    {# ||                compulsory sensor definitions                 || #}
+    {# ================================================================== #}
 
-    <!-- PLUGINS {-->
-    <!-- MOTOR PLUGINS {-->
-    <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel">
-      <jointName>rotor_0_joint</jointName>
-      <linkName>rotor_0</linkName>
-      <turningDirection>ccw</turningDirection>
-      <timeConstantUp>0.0125</timeConstantUp>
-      <timeConstantDown>0.025</timeConstantDown>
-      <maxRotVelocity>1000.0</maxRotVelocity>
-      <motorConstant>8.54858e-06</motorConstant>
-      <momentConstant>0.016</momentConstant>
-      <commandSubTopic>command/motor_speed</commandSubTopic>
-      <motorNumber>0</motorNumber>
-      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
-      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
-      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
-      <motorType>velocity</motorType>
-    </plugin>
-    <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel">
-      <jointName>rotor_1_joint</jointName>
-      <linkName>rotor_1</linkName>
-      <turningDirection>ccw</turningDirection>
-      <timeConstantUp>0.0125</timeConstantUp>
-      <timeConstantDown>0.025</timeConstantDown>
-      <maxRotVelocity>1000.0</maxRotVelocity>
-      <motorConstant>8.54858e-06</motorConstant>
-      <momentConstant>0.016</momentConstant>
-      <commandSubTopic>command/motor_speed</commandSubTopic>
-      <motorNumber>1</motorNumber>
-      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
-      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
-      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
-      <motorType>velocity</motorType>
-    </plugin>
-    <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel">
-      <jointName>rotor_2_joint</jointName>
-      <linkName>rotor_2</linkName>
-      <turningDirection>cw</turningDirection>
-      <timeConstantUp>0.0125</timeConstantUp>
-      <timeConstantDown>0.025</timeConstantDown>
-      <maxRotVelocity>1000.0</maxRotVelocity>
-      <motorConstant>8.54858e-06</motorConstant>
-      <momentConstant>0.016</momentConstant>
-      <commandSubTopic>command/motor_speed</commandSubTopic>
-      <motorNumber>2</motorNumber>
-      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
-      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
-      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
-      <motorType>velocity</motorType>
-    </plugin>
-    <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel">
-      <jointName>rotor_3_joint</jointName>
-      <linkName>rotor_3</linkName>
-      <turningDirection>cw</turningDirection>
-      <timeConstantUp>0.0125</timeConstantUp>
-      <timeConstantDown>0.025</timeConstantDown>
-      <maxRotVelocity>1000.0</maxRotVelocity>
-      <motorConstant>8.54858e-06</motorConstant>
-      <momentConstant>0.016</momentConstant>
-      <commandSubTopic>command/motor_speed</commandSubTopic>
-      <motorNumber>3</motorNumber>
-      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
-      <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
-      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
-      <motorType>velocity</motorType>
-    </plugin>
-    <!--} END MOTOR PLUGINS -->
+
 
   </model>
 </sdf>

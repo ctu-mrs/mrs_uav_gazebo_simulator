@@ -6,7 +6,6 @@ attach: false
 tmux_options: -f /etc/ctu-mrs/tmux.conf
 # you can modify these
 pre_window:
-  - export UAV_NAME=uav1
   - export RUN_TYPE=simulation
   - export UAV_TYPE=x500
   - export PLATFORM_CONFIG=`ros2 pkg prefix mrs_multirotor_simulator`/share/mrs_multirotor_simulator/config/mrs_uav_system/$UAV_TYPE.yaml
@@ -24,15 +23,23 @@ windows:
         - ros2 launch mrs_uav_gazebo_simulation simulation.launch.py gz_headless:=false
         - |
           sleep 5; && \
-          ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE'}"
+          ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 2 --$UAV_TYPE'}"
   - px4_api:
       layout: tiled
       panes:
-        - ros2 launch mrs_uav_px4_api api.py
+        - export UAV_NAME=uav1; ros2 launch mrs_uav_px4_api api.py
+        - export UAV_NAME=uav2; ros2 launch mrs_uav_px4_api api.py
   - core:
       layout: tiled
       panes:
-        - ros2 launch mrs_uav_core core.py
+        - export UAV_NAME=uav1;
+          ros2 launch mrs_uav_core core.py
+          platform_config:=$PLATFORM_CONFIG
+          world_config:=./config/world_config.yaml
+          custom_config:=./config/custom_config.yaml
+          network_config:=./config/network_config.yaml
+        - export UAV_NAME=uav2;
+          ros2 launch mrs_uav_core core.py
           platform_config:=$PLATFORM_CONFIG
           world_config:=./config/world_config.yaml
           custom_config:=./config/custom_config.yaml
@@ -40,15 +47,18 @@ windows:
   - status:
       layout: tiled
       panes:
-        - ros2 run mrs_uav_status status.sh
+        - export UAV_NAME=uav1; ros2 run mrs_uav_status status.sh
+        - export UAV_NAME=uav2; ros2 run mrs_uav_status status.sh
   - autostart:
       layout: tiled
       panes:
-        - ros2 launch mrs_uav_autostart automatic_start.py custom_config:=./custom_configs/automatic_start.yaml
+        - export UAV_NAME=uav1; ros2 launch mrs_uav_autostart automatic_start.py custom_config:=./custom_configs/automatic_start.yaml
+        - export UAV_NAME=uav2; ros2 launch mrs_uav_autostart automatic_start.py custom_config:=./custom_configs/automatic_start.yaml
   - takeoff:
       layout: tiled
       panes:
-        - 'history -s ./takeoff.sh'
+        - 'history -s ./takeoff.sh uav1'
+        - 'history -s ./takeoff.sh uav2'
         # - |
         #   history -s "ros2 service call /uav1/mavros/cmd/arming mavros_msgs/srv/CommandBool \"{value: true}\""
         # - |
@@ -59,4 +69,3 @@ windows:
       layout: tiled
       panes:
         - ros2 run rviz2 rviz2 -d ./rviz.rviz
-
