@@ -17,13 +17,13 @@ This package provides UAV model definitions for the Gazebo simulator and a custo
 | Model             | Spawn argument | Simulation                       |
 |-------------------|----------------|----------------------------------|
 | Holybro x500      | `--x500`       | ![](.fig/x500_simulation.jpg)    |
-| --F4F RoboFly--   | `--robofly`    | ![](.fig/robofly_simulation.jpg) |
-| --DJI f330--      | `--f330`       | ![](.fig/f330_simulation.jpg)    |
-| --DJI f450--      | `--f450`       | ![](.fig/f450_simulation.jpg)    |
-| --DJI f550--      | `--f550`       | ![](.fig/f550_simulation.jpg)    |
-| --Tarot t650--    | `--t650`       | ![](.fig/t650_simulation.jpg)    |
-| --T-Drones m690-- | `--m690`       | ![](.fig/m690_simulation.jpg)    |
-| --NAKI II--       | `--naki`       | ![](.fig/naki_simulation.jpg)    |
+<!-- | F4F RoboFly   | `--robofly`    | ![](.fig/robofly_simulation.jpg) | -->
+<!-- | DJI f330      | `--f330` | ![](.fig/f330_simulation.jpg) | -->
+<!-- | DJI f450      | `--f450` | ![](.fig/f450_simulation.jpg) | -->
+<!-- | DJI f550      | `--f550` | ![](.fig/f550_simulation.jpg) | -->
+<!-- | Tarot t650    | `--t650` | ![](.fig/t650_simulation.jpg) | -->
+<!-- | T-Drones m690 | `--m690` | ![](.fig/m690_simulation.jpg) | -->
+<!-- | NAKI II       | `--naki` | ![](.fig/naki_simulation.jpg) | -->
 
 ### Adding a custom UAV
 
@@ -36,9 +36,9 @@ The wiki page [https://ctu-mrs.github.io/docs/simulation/gazebo/gazebo/custom_dr
 Use one of the prepared Tmuxinator sessions in [`roscd mrs_uav_gazebo_simulation/tmux`](./ros_packages/mrs_uav_gazebo_simulation/tmux) as an example:
 
 - [one_drone](./tmux/one_drone)
-- [one_drone_3dlidar](./tmux/one_drone_3dlidar)
-- [one_drone_realsense](./tmux/one_drone_realsense)
-- [three_drones](./tmux/three_drones)
+<!-- - [one_drone_3dlidar](./tmux/one_drone_3dlidar) -->
+<!-- - [one_drone_realsense](./tmux/one_drone_realsense) -->
+<!-- - [three_drones](./tmux/three_drones) -->
 
 ## Using the MRS drone spawner in your simulations
 
