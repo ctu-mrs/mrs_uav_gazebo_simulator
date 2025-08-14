@@ -24,7 +24,7 @@ windows:
         - ros2 launch mrs_uav_gazebo_simulation simulation.launch.py gz_headless:=false
         - |
           sleep 5; && \
-          ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE'}"
+          ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE --enable-rangefinder'}"
   - px4_api:
       layout: tiled
       panes:
@@ -44,7 +44,7 @@ windows:
   - autostart:
       layout: tiled
       panes:
-        - ros2 launch mrs_uav_autostart automatic_start.py custom_config:=./custom_configs/automatic_start.yaml
+        - ros2 launch mrs_uav_autostart automatic_start.py custom_config:=./config/automatic_start.yaml
   - takeoff:
       layout: tiled
       panes:

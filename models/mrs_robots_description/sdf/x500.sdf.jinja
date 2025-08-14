@@ -574,103 +574,81 @@
     }}
     <!--}-->
 
+    {# ================================================================== #}
+    {# ||                compulsory sensor definitions                 || #}
+    {# ================================================================== #}
+
       <!-- PX4 sensors {-->
-      <sensor name="air_pressure_sensor" type="air_pressure">
-        <always_on>1</always_on>
-        <update_rate>50</update_rate>
-        <air_pressure>
-          <!-- Noise modeled after BMP390 -->
-          <pressure>
-            <noise type="gaussian">
-              <mean>0</mean>
-              <stddev>3</stddev>
-            </noise>
-          </pressure>
-        </air_pressure>
-      </sensor>
-      <sensor name="magnetometer_sensor" type="magnetometer">
-        <always_on>1</always_on>
-        <update_rate>100</update_rate>
-        <magnetometer>
-          <!-- TODO: update to fix units and coordinate system when we move past Harmonic -->
-          <!-- See https://github.com/gazebosim/gz-sim/pull/2460 -->
-          <!-- 3mgauss RMS: NOTE: noise is in tesla but sensor reports data in gauss -->
-          <!-- Noise modeled after IIS2MDC -->
-          <x>
-            <noise type="gaussian">
-              <stddev>0.0001</stddev>
-            </noise>
-          </x>
-          <y>
-            <noise type="gaussian">
-              <stddev>0.0001</stddev>
-            </noise>
-          </y>
-          <z>
-            <noise type="gaussian">
-              <stddev>0.0001</stddev>
-            </noise>
-          </z>
-        </magnetometer>
-      </sensor>
-      <sensor name="imu_sensor" type="imu">
-        <always_on>1</always_on>
-        <update_rate>250</update_rate>
-        <imu>
-          <angular_velocity>
-            <!-- Noise modeled after IIM42653 -->
-            <!-- 0.05 deg/s converted to rad/s -->
-            <x>
-              <noise type="gaussian">
-                <mean>0.0</mean>
-                <stddev>0.0008726646</stddev>
-              </noise>
-            </x>
-            <y>
-              <noise type="gaussian">
-                <mean>0.0</mean>
-                <stddev>0.0008726646</stddev>
-              </noise>
-            </y>
-            <z>
-              <noise type="gaussian">
-                <mean>0.0</mean>
-                <stddev>0.0008726646</stddev>
-              </noise>
-            </z>
-          </angular_velocity>
-          <linear_acceleration>
-            <!-- Noise modeled after IIM42653 -->
-            <!-- X & Y axis: 0.65 mg-rms converted to m/ss -->
-            <x>
-              <noise type="gaussian">
-                <mean>0.0</mean>
-                <stddev>0.00637</stddev>
-              </noise>
-            </x>
-            <y>
-              <noise type="gaussian">
-                <mean>0.0</mean>
-                <stddev>0.00637</stddev>
-              </noise>
-            </y>
-            <!-- Z axis: 0.70 mg-rms converted to m/ss-->
-            <z>
-              <noise type="gaussian">
-                <mean>0.0</mean>
-                <stddev>0.00686</stddev>
-              </noise>
-            </z>
-          </linear_acceleration>
-        </imu>
-      </sensor>
-      <sensor name="navsat_sensor" type="navsat">
-        <always_on>1</always_on>
-        <update_rate>30</update_rate>
-      </sensor>
-    <!--}-->
+
+      <!-- barometer {-->
+      <!-- Noise modeled after BMP390 -->
+      {{ generic.barometer_sensor_macro(
+        name = "air_pressure",
+        update_rate = 50,
+        noise_mean = 0,
+        noise_std = 3)
+      }}
+      <!--}-->
+
+      <!-- magnetometer {-->
+      <!-- Noise modeled after IIS2MDC -->
+      {{ generic.magnetometer_sensor_macro(
+        name = "magnetometer",
+        update_rate = 100,
+        noise_std_x = 0.0001,
+        noise_std_y = 0.0001,
+        noise_std_z = 0.0001)
+      }}
+      <!--}-->
+
+      <!-- GPS {-->
+      {{ generic.gps_sensor_macro(
+        name = "navsat",
+        update_rate = 10)
+      }}
+      <!--}-->
+
+      <!-- IMU {-->
+      <!-- Noise modeled after IIM42653 -->
+      {{ generic.imu_sensor_macro(
+        name = "imu",
+        update_rate = 250,
+        angular_velocity_noise_mean_x = 0.0,
+        angular_velocity_noise_std_x = 0.0008726646,
+        angular_velocity_noise_mean_y = 0.0,
+        angular_velocity_noise_std_y = 0.0008726646,
+        angular_velocity_noise_mean_z = 0.0,
+        angular_velocity_noise_std_z = 0.0008726646,
+        linear_acceleration_noise_mean_x = 0.0,
+        linear_acceleration_noise_std_x = 0.00637,
+        linear_acceleration_noise_mean_y = 0.0,
+        linear_acceleration_noise_std_y = 0.00637,
+        linear_acceleration_noise_mean_z = 0.0,
+        linear_acceleration_noise_std_z = 0.00686)
+      }}
+      <!--}-->
+
+      <!--}-->
 
     </link>
+
+    {# ================================================================== #}
+    {# ||                 optional sensor definitions                  || #}
+    {# ================================================================== #}
+
+    {# Garmin down {--> #}
+    {{ components.garmin_down_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0625,
+      z = -0.009,
+      roll = 0,
+      pitch = math.radians(90),
+      yaw = math.radians(-90),
+      mount = garmin_down_mount,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
 
     {# Propellers {--> #}
     {%- set prop_list = [
@@ -739,12 +717,6 @@
       spawner_args = spawner_args)
     }}
     {# <!--}--> #}
-
-    {# ================================================================== #}
-    {# ||                compulsory sensor definitions                 || #}
-    {# ================================================================== #}
-
-
 
   </model>
 </sdf>
