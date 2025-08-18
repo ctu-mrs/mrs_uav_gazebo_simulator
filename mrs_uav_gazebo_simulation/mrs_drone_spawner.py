@@ -163,7 +163,7 @@ class MrsDroneSpawner(Node):
         # Find launch files
         gazebo_simulation_path = get_package_share_directory('mrs_uav_gazebo_simulation')
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
-        self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch')
+        self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch.py')
         self.px4_fimrware_launch_path = os.path.join(gazebo_simulation_path, 'launch', 'run_simulation_firmware.launch.py')
 
         try:
@@ -241,13 +241,15 @@ class MrsDroneSpawner(Node):
         name = robot_params['name']
         self.get_logger().info(f'Launching mavros for {name}')
 
+        launch_arguments = {
+            'ID': str(robot_params['ID']),
+            'fcu_url': str(robot_params['mavlink_config']['fcu_url'])
+        }
+
         ld = LaunchDescription([
             IncludeLaunchDescription(
-                XMLLaunchDescriptionSource(self.mavros_launch_path),
-                launch_arguments={
-                    'ID': str(robot_params['ID']),
-                    'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
-                }.items(),
+                PythonLaunchDescriptionSource(self.mavros_launch_path),
+                launch_arguments=launch_arguments.items(),
             )
         ])
 

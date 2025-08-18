@@ -48,15 +48,15 @@ windows:
   - takeoff:
       layout: tiled
       panes:
-        - 'history -s ./takeoff.sh'
+        - 'history -s ./takeoff.sh $UAV_NAME'
         # - |
         #   history -s "ros2 service call /uav1/mavros/cmd/arming mavros_msgs/srv/CommandBool \"{value: true}\""
         # - |
         #   history -s "ros2 service call /uav1/mavros/cmd/takeoff mavros_msgs/srv/CommandTOL \"{min_pitch: 0.0, latitude: 47.3977279, longitude: 8.5455751, altitude: 1.0}\""
         # - |
         #   history -s "ros2 service call /uav1/mavros/cmd/land mavros_msgs/srv/CommandTOL \"{}\""
-  - rviz:
-      layout: tiled
-      panes:
-        - ros2 run rviz2 rviz2 -d ./rviz.rviz
+  # - rviz:
+      # layout: tiled
+      # panes:
+      #   - ros2 run rviz2 rviz2 -d ./rviz.rviz
 
