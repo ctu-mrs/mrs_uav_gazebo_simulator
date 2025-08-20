@@ -165,12 +165,12 @@ limitations under the License.
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
-    {%- set sensor_name = 'lidar0' -%}
+    {%- set sensor_name = 'lidar' -%}
 
     <!-- garmin down {-->
 
     <!-- sensor {-->
-    <link name="{{ sensor_name }}_link">
+    <link name="{{ sensor_name }}_sensor_link">
       <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
 
       {{ generic.zero_inertial_macro() }}
@@ -188,18 +188,15 @@ limitations under the License.
         yaw = 0)
       }}
 
-      {{ generic.gazebo_rangefinder_sensor_macro(
+      {{ generic.rangefinder_sensor_macro(
         name = sensor_name,
-        parent_frame_name = spawner_args['name'] + '/fcu',
-        sensor_frame_name = spawner_args['name'] + '/garmin',
-        topic = sensor_name,
         update_rate = spawner_args[spawner_keyword]['update_rate'],
+        sensor_link_name = sensor_name ~ "_sensor_link",
+        parent_link_name = parent_link,
         samples = 1,
-        fov = 0.03,
         min_distance = spawner_args[spawner_keyword]['min_range'],
         max_distance = spawner_args[spawner_keyword]['max_range'],
         resolution = 0.005,
-        noise = spawner_args[spawner_keyword]['noise'],
         x = x,
         y = y,
         z = z,
@@ -210,11 +207,8 @@ limitations under the License.
 
     </link>
 
-    <!-- NOTE: this joint is required by gazebo_mavlink_interface
-      It looks for a joint named ("lidar" + number) or a nested model named ("lidar" + number)
-    -->
-    <joint name='{{ sensor_name }}_joint' type='fixed'>
-      <child>{{ sensor_name }}_link</child>
+    <joint name='{{ sensor_name }}_sensor_joint' type='fixed'>
+      <child>{{ sensor_name }}_sensor_link</child>
       <parent>{{ parent_link }}</parent>
     </joint>
     <!--}-->

@@ -583,109 +583,134 @@ limitations under the License.
 {%- endmacro -%}
 <!--}-->
 
-{# =========================== base sensors ========================== #}
+{# ========================== gazebo plugins ========================= #}
 
-{# odometry_sensor_macro {--> #}
-{%- macro odometry_sensor_macro(odometry_sensor_name, parent_link, topic_name, noise, frame_name, update_rate, x, y, z, roll, pitch, yaw) -%}
-  <link name="{{ odometry_sensor_name }}_link">
-    <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
-    {{ zero_inertial_macro() }}
-  </link>
-  <joint name="{{ odometry_sensor_name }}_joint" type="revolute">
-    <parent>{{ parent_link }}</parent>
-    <child>{{ odometry_sensor_name }}_link</child>
-    <axis>
-      <xyz>0 0 1</xyz>
-      <limit>
-        <lower>0</lower>
-        <upper>0</upper>
-        <velocity>0</velocity>
-        <effort>0</effort>
-      </limit>
-      <use_parent_model_frame>1</use_parent_model_frame>
-    </axis>
-  </joint>
-  <plugin name="{{ odometry_sensor_name }}_plugin" filename="libgazebo_ros_p3d.so">
-    <alwaysOn>true</alwaysOn>
-    <bodyName>{{ odometry_sensor_name }}_link</bodyName>
-    <updateRate>{{ update_rate }}</updateRate>
-    <topicName>{{ topic_name }}</topicName>
-    <gaussianNoise>{{ noise }}</gaussianNoise>
-    <frameName>{{ frame_name }}</frameName>
-    <xyzOffset>{{ x }} {{ y }} {{ z }}</xyzOffset>
-    <rpyOffset>{{ roll }} {{ pitch }} {{ yaw }}</rpyOffset>
-  </plugin>
+{# gps_sensor_macro {--> #}
+{%- macro gps_sensor_macro(name, update_rate) -%}
+<sensor name="{{ name }}_sensor" type="navsat">
+  <always_on>1</always_on>
+  <update_rate>{{ update_rate }}</update_rate>
+</sensor>
 {%- endmacro -%}
 {# <!--}--> #}
 
-{# gazebo_rangefinder_sensor_macro {--> #}
-{%- macro gazebo_rangefinder_sensor_macro(name, parent_frame_name, sensor_frame_name, topic, update_rate, samples, fov, min_distance, max_distance, resolution, noise, x, y, z, roll, pitch, yaw) -%}
-  <sensor name="lidar_sensor" type='ray'>
-    <always_on>true</always_on>
-    <visualize>false</visualize>
-    <update_rate>{{ update_rate }}</update_rate>
-    <ray>
-      <scan>
-        <horizontal>
-          <samples>{{ samples }}</samples>
-          <resolution>1</resolution>
-          <min_angle>-{{ fov/2 }}</min_angle>
-          <max_angle>{{ fov/2 }}</max_angle>
-        </horizontal>
-        <vertical>
-          <samples>{{ samples }}</samples>
-          <resolution>1</resolution>
-          <min_angle>-{{ fov/2 }}</min_angle>
-          <max_angle>{{ fov/2 }}</max_angle>
-        </vertical>
-      </scan>
-      <range>
-        <min>{{ min_distance }}</min>
-        <max>{{ max_distance }}</max>
-        <resolution>{{ resolution }}</resolution>
-      </range>
-      <noise>
-        <type>gaussian</type>
-        <mean>0.0</mean>
-        <stddev>{{ noise }}</stddev>
+{# magnetometer_sensor_macro {--> #}
+{%- macro magnetometer_sensor_macro(name, update_rate, noise_std_x, noise_std_y, noise_std_z) -%}
+<sensor name="{{ name }}_sensor" type="magnetometer">
+  <always_on>1</always_on>
+  <update_rate>{{ update_rate }}</update_rate>
+  <magnetometer>
+    <!-- TODO: update to fix units and coordinate system when we move past Harmonic -->
+    <!-- See https://github.com/gazebosim/gz-sim/pull/2460 -->
+    <!-- 3mgauss RMS: NOTE: noise is in tesla but sensor reports data in gauss -->
+    <x>
+      <noise type="gaussian">
+        <stddev>{{ noise_std_x }}</stddev>
       </noise>
-    </ray>
-    <plugin name='lidar_plugin' filename='libgazebo_lidar_plugin.so'>
-      <robotNamespace></robotNamespace>
-      <maxDistance>{{ max_distance }}</maxDistance>
-      <minDistance>{{ min_distance }}</minDistance>
-      <topic>{{ topic }}</topic>
-      <fov>{{ fov }}</fov>
-      <x>{{ x }}</x>
-      <y>{{ y }}</y>
-      <z>{{ z }}</z>
-      <roll>{{ roll }}</roll>
-      <pitch>{{ pitch }}</pitch>
-      <yaw>{{ yaw }}</yaw>
-      <frameName>{{ sensor_frame_name }}</frameName>
-      <parentFrameName>{{ parent_frame_name }}</parentFrameName>
-    </plugin>
-  </sensor>
+    </x>
+    <y>
+      <noise type="gaussian">
+        <stddev>{{ noise_std_y }}</stddev>
+      </noise>
+    </y>
+    <z>
+      <noise type="gaussian">
+        <stddev>{{ noise_std_z }}</stddev>
+      </noise>
+    </z>
+  </magnetometer>
+</sensor>
 {%- endmacro -%}
+{# <!--}--> #}
+
+{# barometer_sensor_macro {--> #}
+{%- macro barometer_sensor_macro(name, update_rate, noise_mean, noise_std) -%}
+<sensor name="{{ name }}_sensor" type="air_pressure">
+  <always_on>1</always_on>
+  <update_rate>{{ update_rate }}</update_rate>
+  <air_pressure>
+    <pressure>
+      <noise type="gaussian">
+        <mean>{{ noise_mean }}</mean>
+        <stddev>{{ noise_std }}</stddev>
+      </noise>
+    </pressure>
+  </air_pressure>
+</sensor>
+{%- endmacro -%}
+{# <!--}--> #}
+
+{# imu_sensor_macro {--> #}
+{%- macro imu_sensor_macro(name, update_rate, angular_velocity_noise_mean_x, angular_velocity_noise_std_x, angular_velocity_noise_mean_y, angular_velocity_noise_std_y,angular_velocity_noise_mean_z, angular_velocity_noise_std_z, linear_acceleration_noise_mean_x, linear_acceleration_noise_std_x, linear_acceleration_noise_mean_y, linear_acceleration_noise_std_y, linear_acceleration_noise_mean_z, linear_acceleration_noise_std_z) -%}
+<sensor name="{{ name }}_sensor" type="imu">
+  <always_on>1</always_on>
+  <update_rate>{{ update_rate }}</update_rate>
+  <imu>
+    <angular_velocity>
+      <!-- 0.05 deg/s converted to rad/s -->
+      <x>
+        <noise type="gaussian">
+          <mean>{{ angular_velocity_noise_mean_x }}</mean>
+          <stddev>{{ angular_velocity_noise_std_x }}</stddev>
+        </noise>
+      </x>
+      <y>
+        <noise type="gaussian">
+          <mean>{{ angular_velocity_noise_mean_y }}</mean>
+          <stddev>{{ angular_velocity_noise_std_y }}</stddev>
+        </noise>
+      </y>
+      <z>
+        <noise type="gaussian">
+          <mean>{{ angular_velocity_noise_mean_z }}</mean>
+          <stddev>{{ angular_velocity_noise_std_z }}</stddev>
+        </noise>
+      </z>
+    </angular_velocity>
+    <linear_acceleration>
+      <!-- X & Y axis: 0.65 mg-rms converted to m/ss -->
+      <x>
+        <noise type="gaussian">
+          <mean>{{ linear_acceleration_noise_mean_x }}</mean>
+          <stddev>{{ linear_acceleration_noise_std_x }}</stddev>
+        </noise>
+      </x>
+      <y>
+        <noise type="gaussian">
+          <mean>{{ linear_acceleration_noise_mean_y }}</mean>
+          <stddev>{{ linear_acceleration_noise_std_y }}</stddev>
+        </noise>
+      </y>
+      <!-- Z axis: 0.70 mg-rms converted to m/ss-->
+      <z>
+        <noise type="gaussian">
+          <mean>{{ linear_acceleration_noise_mean_z }}</mean>
+          <stddev>{{ linear_acceleration_noise_std_z }}</stddev>
+        </noise>
+      </z>
+    </linear_acceleration>
+  </imu>
+</sensor>{%- endmacro -%}
 {# <!--}--> #}
 
 {# rangefinder_sensor_macro {--> #}
-{%- macro rangefinder_sensor_macro(name, parent_frame_name, sensor_frame_name, topic, update_rate, samples, fov, min_distance, max_distance, resolution, noise, x, y, z, roll, pitch, yaw) -%}
-<sensor name="{{ name }}_sensor" type='ray'>
+{%- macro rangefinder_sensor_macro(name, update_rate, sensor_link_name, parent_link_name, samples, min_distance, max_distance, resolution, x, y, z, roll, pitch, yaw) -%}
+  <sensor name="{{ name }}" type="gpu_lidar">
+  <pose relative_to="{{ parent_link_name }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
   <update_rate>{{ update_rate }}</update_rate>
-  <ray>
+  <lidar>
     <scan>
       <horizontal>
-      <samples>{{ samples }}</samples>
+        <samples>{{ samples }}</samples>
         <resolution>1</resolution>
-        <min_angle>-{{ fov/2 }}</min_angle>
-        <max_angle>{{ fov/2 }}</max_angle>
+        <min_angle>0</min_angle>
+        <max_angle>0</max_angle>
       </horizontal>
       <vertical>
         <samples>{{ samples }}</samples>
         <resolution>1</resolution>
-        <min_angle>-{{ fov/2 }}</min_angle>
-        <max_angle>{{ fov/2 }}</max_angle>
+        <min_angle>0</min_angle>
+        <max_angle>0</max_angle>
       </vertical>
     </scan>
     <range>
@@ -693,381 +718,10 @@ limitations under the License.
       <max>{{ max_distance }}</max>
       <resolution>{{ resolution }}</resolution>
     </range>
-  </ray>
-  <plugin name='{{ name }}_plugin' filename='libMrsGazeboCommonResources_RangefinderPlugin.so'>
-    <gaussianNoise>{{ noise }}</gaussianNoise>
-    <alwaysOn>true</alwaysOn>
-    <updateRate>{{ update_rate }}</updateRate>
-    <topicName>{{ topic }}</topicName>
-    <frameName>{{ sensor_frame_name }}</frameName>
-    <fov>{{ fov }}</fov>
-    <radiation>radiation</radiation>
-    <parentFrameName>{{ parent_frame_name }}</parentFrameName>
-    <x>{{ x }}</x>
-    <y>{{ y }}</y>
-    <z>{{ z }}</z>
-    <roll>{{ roll }}</roll>
-    <pitch>{{ pitch }}</pitch>
-    <yaw>{{ yaw }}</yaw>
-  </plugin>
+  </lidar>
+  <visualize>true</visualize>
+  <always_on>1</always_on>
 </sensor>
-{%- endmacro -%}
-{# <!--}--> #}
-
-{# imu_sensor_macro {--> #}
-{%- macro imu_sensor_macro(sensor_name, parent_link, update_rate, topic_name, frame_name, noise_mean, x, y, z, roll, pitch, yaw) -%}
-  <link name="{{ sensor_name }}_link">
-    <pose relative_to = "{{ parent_link }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
-    {{ zero_inertial_macro() }}
-    <sensor name="{{ sensor_name }}_sensor" type="imu">
-      <gravity>true</gravity>
-      <always_on>true</always_on>
-      <update_rate>{{ update_rate }}</update_rate>
-      <visualize>false</visualize>
-      <topic>__default_topic__</topic>
-      <plugin name="{{ sensor_name }}_plugin" filename="libgazebo_ros_imu_sensor.so">
-        <robotNamespace></robotNamespace>
-        <topicName>{{ topic_name }}</topicName>
-        <updateRateHZ>{{ update_rate }}</updateRateHZ>
-        <gaussianNoise>{{ noise_mean }}</gaussianNoise>
-        <xyzOffset>0 0 0</xyzOffset>
-        <rpyOffset>0 0 0</rpyOffset>
-        <frameName>{{ frame_name }}</frameName>
-      </plugin>
-    </sensor>
-  </link>
-
-  <joint name="{{ sensor_name }}_joint" type="fixed">
-    <parent>{{ parent_link }}</parent>
-    <child>{{ sensor_name }}_link</child>
-  </joint>
-{%- endmacro -%}
-{# <!--}--> #}
-
-{# teraranger_evo_macro {--> #}
-{%- macro teraranger_evo_macro(parent_link, id, visualize, frame_name, parent_frame_name, gaussian_noise, x, y, z, roll, pitch, yaw) -%}
-  <visual name="teraranger_evo_{{ id }}_visual">
-    <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
-    <geometry>
-      <mesh>
-        <uri>model://mrs_robots_description/meshes/sensors/teraranger_evo.stl</uri>
-        <scale>1 1 1</scale>
-      </mesh>
-    </geometry>
-      <material>
-        <script>
-          <name>Gazebo/Yellow</name>
-          <uri>file://media/materials/scripts/gazebo.material</uri>
-        </script>
-      </material>
-  </visual>
-  {{ rangefinder_sensor_macro(
-    name = 'teraranger_evo_' ~ id,
-    parent_frame_name = parent_frame_name,
-    sensor_frame_name = frame_name + '/range_' ~ id,
-    topic = '/' + frame_name + '/range_' ~ id,
-    update_rate = 120,
-    samples = 10,
-    fov = 0.035,
-    min_distance = 0.5,
-    max_distance = 60.0,
-    resolution = 1,
-    noise = noise,
-    x = x,
-    y = y,
-    z = z,
-    roll = roll,
-    pitch = pitch,
-    yaw = yaw)
-  }}
-{%- endmacro -%}
-{# <!--}--> #}
-
-{# ultrasionic_sensor_macro (URM37) {--> #}
-{%- macro ultrasonic_sensor_macro(namespace, parent_link, suffix, x, y, z, roll, pitch, yaw) -%}
-  <link name="ultrasound{{ suffix }}_link">
-    <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
-    {{ zero_inertial_macro() }}
-    {{ visual_mesh_macro(
-      name = 'ultrasound' + suffix,
-      mesh_file = 'model://mrs_robots_description/meshes/sensors/ultrasonic_URM37.dae',
-      mesh_scale = '1 1 1',
-      color = 'DarkGrey',
-      x = 0,
-      y = 0,
-      z = 0,
-      roll = 0,
-      pitch = 0,
-      yaw = 0)
-    }}
-    {{ rangefinder_sensor_macro(
-      name = 'ultrasound' ~ suffix,
-      parent_frame_name = namespace ~ '/fcu',
-      sensor_frame_name = namespace ~ '/ultrasound' ~ suffix,
-      topic = '/' ~ namespace ~ '/ultrasound' ~ suffix ~ '/range',
-      update_rate = 40,
-      samples = 5,
-      fov = 0.698131701,
-      min_distance = 0.04,
-      max_distance = 5.0,
-      resolution = 0.01,
-      noise = 0.04,
-      x = x,
-      y = y,
-      z = z,
-      roll = roll,
-      pitch = pitch,
-      yaw = yaw)
-    }}
-  </link>
-  <joint name="ultrasound{{ suffix }}_joint" type="fixed">
-    <parent>{{ parent_link }}</parent>
-    <child>ultrasound{{ suffix }}_link</child>
-  </joint>
-{%- endmacro -%}
-{# <!--}--} #}
-
-{# tf static publisher macro {--> #}
-{%- macro tf_static_macro(namespace, parent_link, child_link) -%}
-<plugin name="{{ parent_link }}_to_{{ child_link }}_tf_plugin" filename="libMrsGazeboCommonResources_LinkStaticTFPublisher.so">
-  <namespace>{{ namespace }}</namespace>
-  <parentLink>{{ parent_link }}</parentLink>
-  <childLink>{{ child_link }}</childLink>
-</plugin>
-{%- endmacro -%}
-{# <!--}--> #}
-
-{# ========================== gazebo plugins ========================= #}
-
-{# gazebo_gps_macro {--> #}
-{%- macro gazebo_gps_macro(gps_name, parent_link, update_rate, gps_noise, gps_xy_random_walk, gps_z_random_walk, gps_xy_noise_density, gps_z_noise_density, gps_vxy_noise_density, gps_vz_noise_density, x, y, z, roll, pitch, yaw) -%}
-<link name="{{ gps_name }}_link">
-  <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
-  {{ zero_inertial_macro() }}
-  <sensor name="gps_sensor" type="gps">
-    <plugin name="gps_plugin" filename="libgazebo_gps_plugin.so">
-      <robotNamespace/>
-      <update_rate>{{ update_rate }}</update_rate>
-      <gpsNoise>{{ gps_noise }}</gpsNoise>
-      <gpsXYRandomWalk>{{ gps_xy_random_walk }}</gpsXYRandomWalk>
-      <gpsZRandomWalk>{{ gps_z_random_walk }}</gpsZRandomWalk>
-      <gpsXYNoiseDensity>{{ gps_xy_noise_density }}</gpsXYNoiseDensity>
-      <gpsZNoiseDensity>{{ gps_z_noise_density }}</gpsZNoiseDensity>
-      <gpsVXYNoiseDensity>{{ gps_vxy_noise_density }}</gpsVXYNoiseDensity>
-      <gpsVZNoiseDensity>{{ gps_vz_noise_density }}</gpsVZNoiseDensity>
-      <topic>{{ gps_name }}</topic>
-    </plugin>
-  </sensor>
-</link>
-
-<joint name='{{ gps_name }}_joint' type='fixed'>
-  <child>{{ gps_name }}_link</child>
-  <parent>{{ parent_link }}</parent>
-</joint>
-{%- endmacro -%}
-{# <!--}--> #}
-
-{# gazebo_magnetometer_macro {--> #}
-{%- macro gazebo_magnetometer_macro(pub_rate, noise_density, random_walk, bias_correlation_time, mag_topic) -%}
-<plugin name="magnetometer_plugin" filename="libgazebo_magnetometer_plugin.so">
-  <robotNamespace/>
-  <pubRate>{{ pub_rate }}</pubRate>
-  <noiseDensity>{{ noise_density }}</noiseDensity>
-  <randomWalk>{{ random_walk }}</randomWalk>
-  <biasCorrelationTime>{{ bias_correlation_time }}</biasCorrelationTime>
-  <magTopic>{{ mag_topic }}</magTopic>
-</plugin>
-{%- endmacro -%}
-{# <!--}--> #}
-
-{# gazebo_barometer_macro {--> #}
-{%- macro gazebo_barometer_macro(baro_topic, pub_rate, baro_drift_pa_per_sec) -%}
-<plugin name="barometer_plugin" filename="libgazebo_barometer_plugin.so">
-  <robotNamespace/>
-  <pubRate>{{ pub_rate }}</pubRate>
-  <baroTopic>{{ baro_topic }}</baroTopic>
-  <baroDriftPaPerSec>{{ baro_drift_pa_per_sec }}</baroDriftPaPerSec>
-</plugin>
-{%- endmacro -%}
-{# <!--}--> #}
-
-{# gazebo_imu_macro {--> #}
-{%- macro gazebo_imu_macro(imu_name, parent_link, imu_topic, gyroscope_noise_density, gyroscope_random_walk, gyroscope_bias_correlation_time, gyroscope_turn_on_bias_sigma, accelerometer_noise_density, accelerometer_random_walk, accelerometer_bias_correlation_time, accelerometer_turn_on_bias_sigma, x, y, z, roll, pitch, yaw) -%}
-  <link name="{{ imu_name }}_link">
-    <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
-    {{ zero_inertial_macro() }}
-  </link>
-  <joint name="{{ imu_name }}_joint" type="revolute">
-    <parent>{{ parent_link }}</parent>
-    <child>{{ imu_name }}_link</child>
-    <axis>
-      <xyz>0 0 1</xyz>
-      <limit>
-        <upper>0</upper>
-        <lower>0</lower>
-        <effort>0</effort>
-        <velocity>0</velocity>
-      </limit>
-      <use_parent_model_frame>1</use_parent_model_frame>
-    </axis>
-  </joint>
-  <plugin filename="libgazebo_imu_plugin.so" name="{{ imu_name }}_plugin">
-  <!-- A good description of the IMU parameters can be found in the kalibr documentation:
-       https://github.com/ethz-asl/kalibr/wiki/IMU-Noise-Model-and-Intrinsics -->
-    <robotNamespace/> <!-- (string, required): ros namespace in which the messages are published -->
-    <linkName>{{ imu_name }}_link</linkName> <!-- (string, required): name of the body which holds the IMU sensor -->
-    <imuTopic>{{ imu_topic }}</imuTopic> <!-- (string): name of the sensor output topic and prefix of service names (defaults to imu) -->
-    <gyroscopeNoiseDensity>{{ gyroscope_noise_density }}</gyroscopeNoiseDensity> <!-- Gyroscope noise density (two-sided spectrum) [rad/s/sqrt(Hz)] -->
-    <gyroscopeRandomWalk>{{ gyroscope_random_walk }}</gyroscopeRandomWalk> <!-- Gyroscope bias random walk [rad/s/s/sqrt(Hz)] -->
-    <gyroscopeBiasCorrelationTime>{{ gyroscope_bias_correlation_time }}</gyroscopeBiasCorrelationTime> <!-- Gyroscope bias correlation time constant [s] -->
-    <gyroscopeTurnOnBiasSigma>{{ gyroscope_turn_on_bias_sigma }}</gyroscopeTurnOnBiasSigma> <!-- Gyroscope turn on bias standard deviation [rad/s] -->
-    <accelerometerNoiseDensity>{{ accelerometer_noise_density }}</accelerometerNoiseDensity> <!-- Accelerometer noise density (two-sided spectrum) [m/s^2/sqrt(Hz)] -->
-    <accelerometerRandomWalk>{{ accelerometer_random_walk }}</accelerometerRandomWalk> <!-- Accelerometer bias random walk. [m/s^2/s/sqrt(Hz)] -->
-    <accelerometerBiasCorrelationTime>{{ accelerometer_bias_correlation_time }}</accelerometerBiasCorrelationTime> <!-- Accelerometer bias correlation time constant [s] -->
-    <accelerometerTurnOnBiasSigma>{{ accelerometer_turn_on_bias_sigma }}</accelerometerTurnOnBiasSigma> <!-- Accelerometer turn on bias standard deviation [m/s^2] -->
-  </plugin>
-{%- endmacro -%}
-{# <!--}--> #}
-
-{# gazebo_groundtruth_macro {--> #}
-{%- macro gazebo_groundtruth_macro(home_latitude, home_longitude, home_altitude) -%}
-  <!-- only used by gazebo_mavlink_interface for HITL -->
-  <plugin name="gazebo_groundtruth_plugin" filename="libgazebo_groundtruth_plugin.so">
-    <robotNamespace/>
-    <!-- NOTE: these params are UNUSED if your gazebo world already defines spherical coordinates -->
-    <homeLatitude>{{ home_latitude }}</homeLatitude>
-    <homeLongitude>{{ home_longitude }}</homeLongitude>
-    <homeAltitude>{{ home_altitude }}</homeAltitude>
-  </plugin>
-{%- endmacro -%}
-{# <!--}--> #}
-
-{# gazebo_mavlink_interface_macro {--> #}
-{%- macro gazebo_mavlink_interface_macro(imu_topic, mag_topic, baro_topic, lidar_topic, mavlink_config) -%}
-<plugin name="mavlink_interface_plugin" filename="libgazebo_mavlink_interface.so">
-  <robotNamespace/>
-  <imuSubTopic>{{ imu_topic }}</imuSubTopic>
-  <magSubTopic>{{ mag_topic }}</magSubTopic>
-  <baroSubTopic>{{ baro_topic }}</baroSubTopic>
-  <lidarSubTopic>{{ lidar_topic }}</lidarSubTopic>
-  <mavlink_addr>INADDR_ANY</mavlink_addr>
-  <mavlink_udp_port>{{ mavlink_config['mavlink_udp_port'] }}</mavlink_udp_port>
-  <mavlink_tcp_port>{{ mavlink_config['mavlink_tcp_port'] }}</mavlink_tcp_port>
-  <serialEnabled>0</serialEnabled>
-  <serialDevice>/dev/ttyACM0</serialDevice>
-  <baudRate>921600</baudRate>
-  <qgc_addr>INADDR_ANY</qgc_addr>
-  <qgc_udp_port>{{ mavlink_config['qgc_udp_port'] }}</qgc_udp_port>
-  <sdk_addr>INADDR_ANY</sdk_addr>
-  <sdk_udp_port>{{ mavlink_config['sdk_udp_port'] }}</sdk_udp_port>
-  <hil_mode>0</hil_mode>
-  <hil_state_level>0</hil_state_level>
-  <send_vision_estimation>{{ mavlink_config['send_vision_estimation'] }}</send_vision_estimation>
-  <send_odometry>{{ mavlink_config['send_odometry'] }}</send_odometry>
-  <enable_lockstep>{{ mavlink_config['enable_lockstep'] }}</enable_lockstep>
-  <use_tcp>{{ mavlink_config['use_tcp'] }}</use_tcp>
-  <motorSpeedCommandPubTopic>/gazebo/command/motor_speed</motorSpeedCommandPubTopic>
-  <control_channels>
-    <channel name="rotor1">
-      <input_index>0</input_index>
-      <input_offset>0.0</input_offset>
-      <input_scaling>0.85</input_scaling>
-      <zero_position_disarmed>0</zero_position_disarmed>
-      <zero_position_armed>0.15</zero_position_armed>
-      <joint_control_type>velocity</joint_control_type>
-    </channel>
-    <channel name="rotor2">
-      <input_index>1</input_index>
-      <input_offset>0.0</input_offset>
-      <input_scaling>0.85</input_scaling>
-      <zero_position_disarmed>0</zero_position_disarmed>
-      <zero_position_armed>0.15</zero_position_armed>
-      <joint_control_type>velocity</joint_control_type>
-    </channel>
-    <channel name="rotor3">
-      <input_index>2</input_index>
-      <input_offset>0.0</input_offset>
-      <input_scaling>0.85</input_scaling>
-      <zero_position_disarmed>0</zero_position_disarmed>
-      <zero_position_armed>0.15</zero_position_armed>
-      <joint_control_type>velocity</joint_control_type>
-    </channel>
-    <channel name="rotor4">
-      <input_index>3</input_index>
-      <input_offset>0.0</input_offset>
-      <input_scaling>0.85</input_scaling>
-      <zero_position_disarmed>0</zero_position_disarmed>
-      <zero_position_armed>0.15</zero_position_armed>
-      <joint_control_type>velocity</joint_control_type>
-    </channel>
-    <channel name="rotor5">
-      <input_index>4</input_index>
-      <input_offset>0.0</input_offset>
-      <input_scaling>0.85</input_scaling>
-      <zero_position_disarmed>0</zero_position_disarmed>
-      <zero_position_armed>0.15</zero_position_armed>
-      <joint_control_type>velocity</joint_control_type>
-    </channel>
-    <channel name="rotor6">
-      <input_index>5</input_index>
-      <input_offset>0.0</input_offset>
-      <input_scaling>0.85</input_scaling>
-      <zero_position_disarmed>0</zero_position_disarmed>
-      <zero_position_armed>0.15</zero_position_armed>
-      <joint_control_type>velocity</joint_control_type>
-    </channel>
-    <channel name="rotor7">
-      <input_index>6</input_index>
-      <input_offset>0.0</input_offset>
-      <input_scaling>0.85</input_scaling>
-      <zero_position_disarmed>0</zero_position_disarmed>
-      <zero_position_armed>0.15</zero_position_armed>
-      <joint_control_type>velocity</joint_control_type>
-    </channel>
-    <channel name="rotor8">
-      <input_index>7</input_index>
-      <input_offset>0.0</input_offset>
-      <input_scaling>0.85</input_scaling>
-      <zero_position_disarmed>0</zero_position_disarmed>
-      <zero_position_armed>0.15</zero_position_armed>
-      <joint_control_type>velocity</joint_control_type>
-    </channel>
-  </control_channels>
-</plugin>
-{%- endmacro -%}
-{# <!--}--> #}
-
-{# gazebo_fluid_resistance_plugin_macro {--> #}
-{%- macro gazebo_fluid_resistance_plugin_macro(verbose, model_mass, parent_link, update_rate, uav_body_resistance_x, uav_body_resistance_y, uav_body_resistance_z) -%}
-<plugin name="gazebo_fluid_resistance_plugin" filename="libMrsGazeboCommonResources_FluidResistancePlugin.so">
-  <robotNamespace/>
-  <model_mass>{{ model_mass }}</model_mass>
-  <FluidResistanceTopicName>/fluid_resistance</FluidResistanceTopicName>
-  <NameLinkToApplyResistance>{{ parent_link }}</NameLinkToApplyResistance>
-  <rate>{{ update_rate }}</rate>
-  <res_x>{{ uav_body_resistance_x }}</res_x>
-  <res_y>{{ uav_body_resistance_y }}</res_y>
-  <res_z>{{ uav_body_resistance_z }}</res_z>
-  <verbose>{{ verbose }}</verbose>
-</plugin>
-{%- endmacro -%}
-{# <!--}--> #}
-
-{# TODO: UNUSED #}
-{# gazebo_wind_plugin_macro {--> #}
-{%- macro gazebo_wind_plugin_macro(xyz_offset, wind_direction, wind_force_mean, wind_gust_direction, wind_gust_duration, wind_gust_start, wind_gust_force_mean) -%}
-<plugin filename="libgazebo_wind_plugin.so" name="wind_plugin">
-  <frameId>base_link</frameId>
-  <linkName>base_link</linkName>
-  <robotNamespace/>
-  <xyzOffset>{{ xyz_offset }}</xyzOffset> <!-- [m] [m] [m] -->
-  <windDirection>{{ wind_direction }}</windDirection>
-  <windForceMean>{{ wind_force_mean }}</windForceMean> <!-- [N] -->
-  <windGustDirection>{{ wind_gust_direction }}</windGustDirection>
-  <windGustDuration>{{ wind_gust_duration }}</windGustDuration> <!-- [s] -->
-  <windGustStart>{{ wind_gust_start }}</windGustStart> <!-- [s] -->
-  <windGustForceMean>{{ wind_gust_force_mean }}</windGustForceMean> <!-- [N] -->
-</plugin>
 {%- endmacro -%}
 {# <!--}--> #}
 
