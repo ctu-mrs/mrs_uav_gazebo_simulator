@@ -16,6 +16,7 @@ import rclpy.exceptions
 import multiprocessing
 import xml.dom.minidom
 from time import time
+import tempfile
 
 from ament_index_python.packages import get_package_share_directory
 from mrs_uav_gazebo_simulation.utils.component_wrapper import ComponentWrapper
@@ -144,7 +145,7 @@ class MrsDroneSpawner(Node):
 
         # Configure resources and Jinja environment
         resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulation'), 'models')]
-        
+
         try:
             extra_resource_paths = self.get_parameter('extra_resource_paths').value
         except:
@@ -163,7 +164,11 @@ class MrsDroneSpawner(Node):
         # Find launch files
         gazebo_simulation_path = get_package_share_directory('mrs_uav_gazebo_simulation')
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
+        # self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
         self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch')
+        # self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch.py')
+        self.mavros_px4_config_path = os.path.join(px4_api_path, 'config')
+        self.mavros_px4_config_template_name = 'mavros_px4_config.jinja.yaml'
         self.px4_fimrware_launch_path = os.path.join(gazebo_simulation_path, 'launch', 'run_simulation_firmware.launch.py')
 
         try:
@@ -173,7 +178,7 @@ class MrsDroneSpawner(Node):
             raise RuntimeError(f'{err}')
 
         self.get_logger().info('Jinja templates loaded.')
-        
+
         # Setup ROS 2 communications
         self.spawn_server = self.create_service(StringSrv, 'spawn', self.callback_spawn)
         self.diagnostics_pub = self.create_publisher(GazeboSpawnerDiagnostics, 'diagnostics', 1)
@@ -197,7 +202,7 @@ class MrsDroneSpawner(Node):
         self.is_initialized = True
         self.get_logger().info('Initialized')
 
-    # #{ launch_px4_firmware 
+    # #{ launch_px4_firmware(self, robot_params)
     def launch_px4_firmware(self, robot_params):
         name = robot_params['name']
         self.get_logger().info(f'Launching PX4 firmware for {name}')
@@ -236,18 +241,31 @@ class MrsDroneSpawner(Node):
         return firmware_process
     # #}
 
-    # #{ launch_mavros
+    # #{ launch_mavros(self, robot_params)
     def launch_mavros(self, robot_params):
         name = robot_params['name']
         self.get_logger().info(f'Launching mavros for {name}')
 
+        launch_arguments = {
+            'ID': str(robot_params['ID']),
+            'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
+            'tgt_component': str(1),
+            'config_yaml': str(robot_params['mavros_px4_config']),
+            'namespace': name + '/mavros'
+        }
+
+
+        # ld = LaunchDescription([
+        #     IncludeLaunchDescription(
+        #         PythonLaunchDescriptionSource(self.mavros_launch_path),
+        #         launch_arguments=launch_arguments.items()
+        #     )
+        # ])
+
         ld = LaunchDescription([
             IncludeLaunchDescription(
                 XMLLaunchDescriptionSource(self.mavros_launch_path),
-                launch_arguments={
-                    'ID': str(robot_params['ID']),
-                    'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
-                }.items(),
+                launch_arguments=launch_arguments.items(),
             )
         ])
 
@@ -266,7 +284,7 @@ class MrsDroneSpawner(Node):
         return mavros_process
     # #}
 
-    # #{ spawn_gazebo_model 
+    # #{ spawn_gazebo_model(self, robot_params)
     def spawn_gazebo_model(self, robot_params):
         name = robot_params['name']
         sdf_content = self.render(robot_params)
@@ -277,10 +295,10 @@ class MrsDroneSpawner(Node):
 
         if self.save_sdf_files:
             time_str = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
-            
+
             filename = f"mrs_drone_spawner_{name}_{time_str}.sdf"
-            filepath = os.path.join('/tmp', filename)
-            
+            filepath = os.path.join(tempfile.gettempdir(), filename)
+
             with open(filepath, 'w') as output_file:
                 output_file.write(sdf_content)
                 self.get_logger().info(f'Model for {name} written to {filepath}')
@@ -291,7 +309,7 @@ class MrsDroneSpawner(Node):
         request.entity_factory.pose.position.x = robot_params['spawn_pose']['x']
         request.entity_factory.pose.position.y = robot_params['spawn_pose']['y']
         request.entity_factory.pose.position.z = robot_params['spawn_pose']['z']
-        
+
         q_w = math.cos(robot_params['spawn_pose']['heading'] / 2.0)
         q_z = math.sin(robot_params['spawn_pose']['heading'] / 2.0)
         request.entity_factory.pose.orientation.w = q_w
@@ -303,7 +321,7 @@ class MrsDroneSpawner(Node):
         self.gazebo_spawn_future.add_done_callback(lambda future: self.service_response_callback_spawn_gazebo_model(future, robot_params))
     # #}
 
-    # #{ service_response_callback_spawn_gazebo_model
+    # #{ service_response_callback_spawn_gazebo_model(self, future, robot_params)
     def service_response_callback_spawn_gazebo_model(self, future, robot_params):
         # This function is called automatically when the service response arrives.
         try:
@@ -344,7 +362,7 @@ class MrsDroneSpawner(Node):
             return
     # #}
 
-    # #{ delete_gazebo_model
+    # #{ delete_gazebo_model(self, name)
     def delete_gazebo_model(self, name):
         self.get_logger().info(f'Requesting delete for model {name}')
         request = DeleteEntity.Request()
@@ -353,8 +371,8 @@ class MrsDroneSpawner(Node):
         self.gazebo_delete_future = self.gazebo_delete_proxy.call_async(request)
         self.gazebo_delete_future.add_done_callback(lambda future: self.service_response_callback_delete_gazebo_model(future, name))
     # #}
-    
-    # #{ service_response_callback_spawn_gazebo_model
+
+    # #{ service_response_callback_spawn_gazebo_model(self, future, name)
     def service_response_callback_delete_gazebo_model(self, future, name):
         # This function is called automatically when the service response arrives.
         try:
@@ -364,43 +382,43 @@ class MrsDroneSpawner(Node):
                 self.get_logger().info(f'Model {name} deleted successfully.')
             else:
                 self.get_logger().error(f'Failed to delete model {name}. Error: {future.exception()}')
-            
+
             self.gazebo_delete_future = None
 
         except Exception as e:
             self.get_logger().error(f'Failed to delete model {name}. Error: {e}')
             self.gazebo_spawn_future = None
     # #}
-    
-    # #{ callback_spawn
-    def callback_spawn(self, req, res):
+
+    # #{ callback_spawn(self, request, response)
+    def callback_spawn(self, request, response):
         if not self.gazebo_spawn_proxy.wait_for_service(timeout_sec=5.0):
             service_name = self.gazebo_spawn_proxy.service_name
             self.get_logger().error(f'Gazebo spawn service "{service_name}" not available.')
-            res.success = False
-            res.message =  f'Gazebo spawn service "{service_name}" not available.'
-            return res
+            response.success = False
+            response.message =  f'Gazebo spawn service "{service_name}" not available.'
+            return response
 
         self.spawn_called = True
-        self.get_logger().info(f'Spawn called with args "{req.value}"')
-        res.success = False
+        self.get_logger().info(f'Spawn called with args "{request.value}"')
+        response.success = False
 
         params_dict = None
         already_assigned_ids = copy.deepcopy(self.assigned_ids)
         try:
-            params_dict = self.parse_user_input(req.value)
+            params_dict = self.parse_user_input(request.value)
         except Exception as e:
             self.get_logger().warn(f'While parsing user input: {e}')
-            res.message = str(e.args[0])
+            response.message = str(e.args[0])
             self.assigned_ids = already_assigned_ids
-            return res
+            return response
 
         help_text = self.get_help_text(params_dict)
         if help_text is not None:
             self.get_logger().info(help_text)
-            res.message = help_text.replace('\n', ' ').replace('\t', ' ')
-            res.success = True
-            return res
+            response.message = help_text.replace('\n', ' ').replace('\t', ' ')
+            response.success = True
+            return response
 
         self.get_logger().info(f'Spawner params assigned "{params_dict}"')
 
@@ -411,12 +429,12 @@ class MrsDroneSpawner(Node):
                 robot_params = self.get_jinja_params_for_one_robot(params_dict, i, ID)
                 self.vehicle_queue.append(robot_params)
 
-        res.success = True
-        res.message = f'Launch sequence queued for {len(params_dict["ids"])} robots'
-        return res
+        response.success = True
+        response.message = f'Launch sequence queued for {len(params_dict["ids"])} robots'
+        return response
     # #}
 
-    # #{ callback_action_timer
+    # #{ callback_action_timer(self)
     def callback_action_timer(self):
         # Check for an ongoing request and if it has timed out
         if self.gazebo_spawn_future is not None and not self.gazebo_spawn_future.done() and self.gazebo_spawn_request_start_time is not None:
@@ -431,12 +449,12 @@ class MrsDroneSpawner(Node):
                 self.processing = False
                 return
             robot_params = self.vehicle_queue.pop(0)
-            
+
         self.spawn_gazebo_model(robot_params)
 
     # #}
 
-    # #{ callback_diagnostics_timer
+    # #{ callback_diagnostics_timer(self)
     def callback_diagnostics_timer(self):
         diagnostics = GazeboSpawnerDiagnostics()
         diagnostics.spawn_called = self.spawn_called
@@ -1128,6 +1146,7 @@ class MrsDroneSpawner(Node):
         del robot_params['spawn_poses']
 
         robot_params['mavlink_config'] = self.get_mavlink_config_for_robot(ID)
+        robot_params['mavros_px4_config'] = self.generate_mavros_px4_config(robot_params['name'])
 
         return robot_params
     # #}
@@ -1151,6 +1170,28 @@ class MrsDroneSpawner(Node):
         mavlink_config['fcu_url'] = f'udp://127.0.0.1:{udp_offboard_port_remote}@127.0.0.1:{udp_offboard_port_local}'
 
         return mavlink_config
+    # #}
+
+    # #{ generate_mavros_px4_config(self, uav_name)
+    def generate_mavros_px4_config(self, uav_name):
+
+        jinja_env = jinja2.Environment(
+                loader=jinja2.FileSystemLoader(self.mavros_px4_config_path),
+                autoescape=False)
+
+        template = jinja_env.get_template(self.mavros_px4_config_template_name)
+
+        rendered_template = template.render(uav_name=uav_name)
+
+        time_str = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
+        filename = f'mavros_px4_config_{uav_name}_{time_str}.yaml'
+        filepath = os.path.join(tempfile.gettempdir(), filename)
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(rendered_template)
+            self.get_logger().info(f'Mavros PX4 config for {uav_name} written to {filepath}')
+
+        return filepath
     # #}
 
 def main(args=None):
