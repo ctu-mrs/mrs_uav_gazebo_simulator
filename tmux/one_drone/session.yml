@@ -28,7 +28,7 @@ windows:
   - px4_api:
       layout: tiled
       panes:
-        - ros2 launch mrs_uav_px4_api api.py simulation:=true
+        - ros2 launch mrs_uav_px4_api api.py
   - core:
       layout: tiled
       panes:
