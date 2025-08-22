@@ -164,16 +164,13 @@ class MrsDroneSpawner(Node):
         # Find launch files
         gazebo_simulation_path = get_package_share_directory('mrs_uav_gazebo_simulation')
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
-<<<<<<< HEAD
-        # self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
-        self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch')
+        self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
+        # self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch')
         # self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch.py')
         self.mavros_px4_config_path = os.path.join(px4_api_path, 'config')
         self.mavros_px4_config_template_name = 'mavros_px4_config.jinja.yaml'
-=======
-        self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch.py')
->>>>>>> origin/ros2
         self.px4_fimrware_launch_path = os.path.join(gazebo_simulation_path, 'launch', 'run_simulation_firmware.launch.py')
+        self.mavros_plugin_list = os.path.join(self.mavros_px4_config_path, 'mavros_plugins.yaml')
 
         try:
             self.jinja_templates = self.build_template_database()
@@ -251,33 +248,19 @@ class MrsDroneSpawner(Node):
         self.get_logger().info(f'Launching mavros for {name}')
 
         launch_arguments = {
-            'ID': str(robot_params['ID']),
-<<<<<<< HEAD
             'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
+            'gcs_url': "",
+            'tgt_system': str(robot_params['ID'] + 1),
             'tgt_component': str(1),
+            'pluginlists_yaml': self.mavros_plugin_list,
             'config_yaml': str(robot_params['mavros_px4_config']),
-            'namespace': name + '/mavros'
+            'namespace': name + '/mavros',
+            'use_sim_time': 'true'
         }
-
-
-        # ld = LaunchDescription([
-        #     IncludeLaunchDescription(
-        #         PythonLaunchDescriptionSource(self.mavros_launch_path),
-        #         launch_arguments=launch_arguments.items()
-        #     )
-        # ])
 
         ld = LaunchDescription([
             IncludeLaunchDescription(
                 XMLLaunchDescriptionSource(self.mavros_launch_path),
-=======
-            'fcu_url': str(robot_params['mavlink_config']['fcu_url'])
-        }
-
-        ld = LaunchDescription([
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(self.mavros_launch_path),
->>>>>>> origin/ros2
                 launch_arguments=launch_arguments.items(),
             )
         ])
