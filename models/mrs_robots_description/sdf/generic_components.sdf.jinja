@@ -552,7 +552,7 @@ limitations under the License.
     {{ visual_mesh_textured_macro("prop_" ~ motor_number ~ "_first", mesh_file_1, mesh_scale, 0, 0, 0, 0, 0, 0) }}
     {{ visual_mesh_macro("prop_" ~ motor_number ~ "_second", mesh_file_2, mesh_scale, color, 0, 0, meshes_z_offset, 0, 0, 0) }}
     {{ collision_cylinder_macro(
-      name = "prop_{{ motor_number }}_link",
+      name = "prop_" ~ motor_number ~ "_link",
       collision_length = 2 * radius,
       collision_radius = 0.01,
       x = 0,

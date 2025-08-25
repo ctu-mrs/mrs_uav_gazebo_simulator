@@ -21,30 +21,31 @@ param set-default BAT1_V_EMPTY 3.6
 param set-default BAT1_V_CHARGED 4.2
 
 # NOTE: the index order does not match the gazebo model!
+# CA params use the FRD coordinates (X+ is in front of the center of mass (CoM), Y+ is right of CoM, Z+ is below CoM)
 
 param set-default CA_ROTOR0_PX 0.1812
 param set-default CA_ROTOR0_PY 0.1812
-param set-default CA_ROTOR0_PZ 0.057
-# param set-default CA_ROTOR0_CT 14.715
-# param set-default CA_ROTOR0_KM 0.28
+param set-default CA_ROTOR0_PZ -0.057
+# param set-default CA_ROTOR0_CT 7.5
+param set-default CA_ROTOR0_KM 0.07
 
 param set-default CA_ROTOR1_PX -0.1812
 param set-default CA_ROTOR1_PY -0.1812
-param set-default CA_ROTOR1_PZ 0.057
-# param set-default CA_ROTOR1_CT 14.715
-# param set-default CA_ROTOR1_KM  0.28
+param set-default CA_ROTOR1_PZ -0.057
+# param set-default CA_ROTOR1_CT 7.5
+param set-default CA_ROTOR1_KM 0.07
 
 param set-default CA_ROTOR2_PX 0.1812
 param set-default CA_ROTOR2_PY -0.1812
-param set-default CA_ROTOR2_PZ 0.057
-# param set-default CA_ROTOR2_CT 14.715
-# param set-default CA_ROTOR2_KM -0.28
+param set-default CA_ROTOR2_PZ -0.057
+# param set-default CA_ROTOR2_CT 7.5
+param set-default CA_ROTOR2_KM -0.07
 
 param set-default CA_ROTOR3_PX -0.1812
 param set-default CA_ROTOR3_PY 0.1812
-param set-default CA_ROTOR3_PZ 0.057
-# param set-default CA_ROTOR3_CT 14.715
-# param set-default CA_ROTOR3_KM -0.28
+param set-default CA_ROTOR3_PZ -0.057
+# param set-default CA_ROTOR3_CT 7.5
+param set-default CA_ROTOR3_KM -0.07
 
 param set-default SIM_GZ_EC_FUNC1 101
 param set-default SIM_GZ_EC_FUNC2 102
@@ -61,4 +62,4 @@ param set-default SIM_GZ_EC_MAX2 1000
 param set-default SIM_GZ_EC_MAX3 1000
 param set-default SIM_GZ_EC_MAX4 1000
 
-# param set-default MPC_THR_HOVER 0.6
+param set-default MPC_THR_HOVER 0.47
