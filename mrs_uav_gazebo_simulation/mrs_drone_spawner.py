@@ -249,7 +249,7 @@ class MrsDroneSpawner(Node):
 
         launch_arguments = {
             'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
-            'gcs_url': "",
+            'gcs_url': str(robot_params['mavlink_config']['gcs_url']),
             'tgt_system': str(robot_params['ID'] + 1),
             'tgt_component': str(1),
             'pluginlists_yaml': self.mavros_plugin_list,
@@ -1167,6 +1167,7 @@ class MrsDroneSpawner(Node):
         mavlink_config['udp_qgc_port_remote'] = udp_qgc_port_remote
         mavlink_config['udp_qgc_port_local'] = udp_qgc_port_local
         mavlink_config['fcu_url'] = f'udp://127.0.0.1:{udp_offboard_port_remote}@127.0.0.1:{udp_offboard_port_local}'
+        mavlink_config['gcs_url'] = ''
 
         return mavlink_config
     # #}
