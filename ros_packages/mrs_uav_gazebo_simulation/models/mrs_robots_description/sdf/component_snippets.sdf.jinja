@@ -2478,15 +2478,40 @@ limitations under the License.
       yaw = -math.radians(90))
     }}
     <!--}-->
-
+    
     <!-- static tf {-->
   {{ generic.tf_static_macro(
      namespace = spawner_args['name'] + '/',
      parent_link = sensor_name + "_link",
      child_link = sensor_name + "_imu_link")
   }}
-  {# <!--}--> #}
-
+    
+    <!-- imu_hector {-->
+    {{ generic.gazeboros_imu_macro(
+      imu_name = sensor_name + '_imu_hector',
+      update_rate = spawner_args[spawner_keyword]['imu_rate'],
+      parent_link = sensor_name + '_link',
+      imu_ros_topic = '/' + spawner_args['name'] + '/' + sensor_name + '/imu_hector',
+      imu_gz_topic = '/imu_hector',
+      imu_bridge_gz_topic = spawner_args['name'] + '/imu_hector',
+      gyroscope_noise_density = 0.00018665,
+      gyroscope_random_walk = 0.000038785,
+      gyroscope_bias_correlation_time = 1000.0,
+      gyroscope_turn_on_bias_sigma = 0.0087,
+      accelerometer_noise_density = 0.00186,
+      accelerometer_random_walk = 0.006,
+      accelerometer_bias_correlation_time = 300.0,
+      accelerometer_turn_on_bias_sigma = 0.1960,
+      x = 0,
+      y = 0,
+      z = 0,
+      roll = -math.radians(90),
+      pitch = 0,
+      yaw = -math.radians(90),
+      frame_name = spawner_args['name'] + '/' + sensor_name + '_imu_hector')
+    }}
+    <!--}-->      
+    
     <!-- mount {-->
     {{ mount if mount }}
     <!--}-->
