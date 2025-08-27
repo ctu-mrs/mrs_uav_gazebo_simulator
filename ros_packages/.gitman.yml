@@ -2,7 +2,7 @@ location: .gitman
 sources:
   - repo: https://github.com/ctu-mrs/mrs_gazebo_common_resources.git
     name: mrs_gazebo_common_resources
-    rev: master
+    rev: feature/imu_bridge_plugin
     type: git
     params:
     sparse_paths:
@@ -38,7 +38,7 @@ sources:
       - git submodule update --init --recursive
   - repo: https://github.com/ctu-mrs/px4_sitl_gazebo.git
     name: mavlink_sitl_gazebo
-    rev: firmware_1.13.2-deb
+    rev: feature/new_imu_publisher 
     type: git
     params:
     sparse_paths:
