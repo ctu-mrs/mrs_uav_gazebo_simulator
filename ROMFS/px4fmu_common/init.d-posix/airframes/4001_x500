@@ -15,8 +15,8 @@ param set-default SIM_GZ_EN 1
 param set-default CA_AIRFRAME 0
 param set-default CA_ROTOR_COUNT 4
 
-param set-default BAT1_N_CELLS 6
-param set-default BAT1_CAPACITY 8000
+param set-default BAT1_N_CELLS 4
+param set-default BAT1_CAPACITY 6800
 param set-default BAT1_V_EMPTY 3.6
 param set-default BAT1_V_CHARGED 4.2
 
@@ -27,25 +27,25 @@ param set-default CA_ROTOR0_PX 0.1812
 param set-default CA_ROTOR0_PY 0.1812
 param set-default CA_ROTOR0_PZ -0.057
 # param set-default CA_ROTOR0_CT 7.5
-param set-default CA_ROTOR0_KM 0.07
+param set-default CA_ROTOR0_KM 0.08
 
 param set-default CA_ROTOR1_PX -0.1812
 param set-default CA_ROTOR1_PY -0.1812
 param set-default CA_ROTOR1_PZ -0.057
 # param set-default CA_ROTOR1_CT 7.5
-param set-default CA_ROTOR1_KM 0.07
+param set-default CA_ROTOR1_KM 0.08
 
 param set-default CA_ROTOR2_PX 0.1812
 param set-default CA_ROTOR2_PY -0.1812
 param set-default CA_ROTOR2_PZ -0.057
 # param set-default CA_ROTOR2_CT 7.5
-param set-default CA_ROTOR2_KM -0.07
+param set-default CA_ROTOR2_KM -0.08
 
 param set-default CA_ROTOR3_PX -0.1812
 param set-default CA_ROTOR3_PY 0.1812
 param set-default CA_ROTOR3_PZ -0.057
 # param set-default CA_ROTOR3_CT 7.5
-param set-default CA_ROTOR3_KM -0.07
+param set-default CA_ROTOR3_KM -0.08
 
 param set-default SIM_GZ_EC_FUNC1 101
 param set-default SIM_GZ_EC_FUNC2 102
@@ -63,3 +63,12 @@ param set-default SIM_GZ_EC_MAX3 1000
 param set-default SIM_GZ_EC_MAX4 1000
 
 param set-default MPC_THR_HOVER 0.47
+
+# param set-default MC_ROLLRATE_P 0.09
+# param set-default MC_PITCHRATE_P 0.09
+# param set-default MC_ROLLRATE_I 0.04
+# param set-default MC_PITCHRATE_I 0.04
+# param set-default MC_ROLLRATE_D 0.0025
+# param set-default MC_PITCHRATE_D 0.0025
+# param set-default MC_ROLLRATE_FF 0.0
+# param set-default MC_PITCHRATE_FF 0.0

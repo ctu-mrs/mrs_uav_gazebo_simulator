@@ -64,7 +64,7 @@ limitations under the License.
 {# macro to add the lowest mass and intertia that gazebo allows #}
 {%- macro zero_inertial_macro() -%}
   <inertial>
-    <mass>0.00001</mass>
+    <mass>0.001</mass>
     <inertia>
       <ixx>1e-7</ixx>
       <ixy>0</ixy>

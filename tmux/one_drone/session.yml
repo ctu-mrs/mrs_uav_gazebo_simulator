@@ -28,11 +28,12 @@ windows:
   - px4_api:
       layout: tiled
       panes:
-        - ros2 launch mrs_uav_px4_api api.py
+        - sleep 8; ros2 launch mrs_uav_px4_api api.py
   - core:
       layout: tiled
       panes:
-        - ros2 launch mrs_uav_core core.py
+        - waitForHwApi;
+          ros2 launch mrs_uav_core core.py
           platform_config:=$PLATFORM_CONFIG
           world_config:=./config/world_config.yaml
           custom_config:=./config/custom_config.yaml
@@ -40,11 +41,11 @@ windows:
   - status:
       layout: tiled
       panes:
-        - ros2 run mrs_uav_status status.sh
+        - waitForCore; ros2 run mrs_uav_status status.sh
   - autostart:
       layout: tiled
       panes:
-        - ros2 launch mrs_uav_autostart automatic_start.py custom_config:=./config/automatic_start.yaml
+        - waitForCore; ros2 launch mrs_uav_autostart automatic_start.py custom_config:=./config/automatic_start.yaml
   - takeoff:
       layout: tiled
       panes:
@@ -55,7 +56,11 @@ windows:
         #   history -s "ros2 service call /uav1/mavros/cmd/takeoff mavros_msgs/srv/CommandTOL \"{min_pitch: 0.0, latitude: 47.3977279, longitude: 8.5455751, altitude: 1.0}\""
         # - |
         #   history -s "ros2 service call /uav1/mavros/cmd/land mavros_msgs/srv/CommandTOL \"{}\""
-  - rviz:
-      layout: tiled
-      panes:
-        - ros2 run rviz2 rviz2 -d ./rviz.rviz
+  # - rviz:
+  #     layout: tiled
+  #     panes:
+  #       - waitForCore; ros2 run rviz2 rviz2 -d ./rviz.rviz
+  # - QGroundControl:
+  #     layout: tiled
+  #     panes:
+  #       - cd ~/Downloads && ./QGroundControl-x86_64.AppImage
