@@ -25,13 +25,13 @@
 
   {# Motor constants {--> #}
   {%- set rotor_velocity_slowdown_sim = 20 -%} {# slowdown ratio, only affects visuals #}
-  {%- set motor_constant = 0.0000167 -%} {# [N / (rad/s)^2], max thurst at max power #}
-  {%- set moment_constant = 0.08 -%} {# [m] #}
+  {%- set motor_constant = '1.67e-5' -%} {# [N / (rad/s)^2], max thurst at max power #}
+  {%- set moment_constant = 0.06 -%} {# [m] #}
   {%- set time_constant_up = 0.0125 -%} {# [s] #}
   {%- set time_constant_down = 0.025 -%} {# [s] #}
-  {%- set max_rot_velocity = 1100 -%} {# [rad/s] #}
-  {%- set rotor_drag_coefficient = 0.00017 -%} {# N / (m/s)^2 #}
-  {%- set rolling_moment_coefficient = 0.000002 -%} {# N*m / (m/s^2)
+  {%- set max_rot_velocity = 1100 -%} {# [rad/s] max rotation speed #}
+  {%- set rotor_drag_coefficient = '1.75e-4' -%} {# N / (m/s)^2 #}
+  {%- set rolling_moment_coefficient = '1.0e-6' -%} {# N*m / (m/s^2)
   {# <!--}--> #}
 
   {# Inertia constants {--> #}
