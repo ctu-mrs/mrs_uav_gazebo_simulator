@@ -27,7 +27,7 @@ def generate_launch_description():
     )
 
     declare_spawner_config_arg = DeclareLaunchArgument(
-        'spawner_config', 
+        'spawner_config',
         default_value = PathJoinSubstitution([
                 pkg_mrs_uav_gazebo_simulation, 'config', 'spawner_params.yaml'
             ]),
@@ -47,6 +47,11 @@ def generate_launch_description():
     declare_gz_headless_arg = DeclareLaunchArgument(
         'gz_headless', default_value = 'false',
         description='Run gz in headless mode'
+    )
+
+    declare_gz_verbose_arg = DeclareLaunchArgument(
+        'gz_verbose', default_value = 'false',
+        description='Run gz in verbose mode'
     )
 
     declare_gz_sim_server_config_path_arg =  DeclareLaunchArgument(
@@ -69,6 +74,11 @@ def generate_launch_description():
     # Check if we should run gz in headless mode
     gz_args.append(PythonExpression([
         "'' if '", LaunchConfiguration('gz_headless'), "' == 'false' else ' -s'",
+    ]))
+
+    # Check if we should run gz in verbose mode
+    gz_args.append(PythonExpression([
+        "'' if '", LaunchConfiguration('gz_verbose'), "' == 'false' else ' -v'",
     ]))
 
     ## | ----------------------- Gazebo sim  ---------------------- |
