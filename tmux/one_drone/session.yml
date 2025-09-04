@@ -21,7 +21,7 @@ windows:
   - gazebo:
       layout: tiled
       panes:
-        - ros2 launch mrs_uav_gazebo_simulation simulation.launch.py gz_headless:=false
+        - ros2 launch mrs_uav_gazebo_simulation simulation.launch.py gz_headless:=false gz_verbose:=true
         - |
           sleep 5; && \
           ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE --enable-rangefinder'}"
@@ -56,11 +56,7 @@ windows:
         #   history -s "ros2 service call /uav1/mavros/cmd/takeoff mavros_msgs/srv/CommandTOL \"{min_pitch: 0.0, latitude: 47.3977279, longitude: 8.5455751, altitude: 1.0}\""
         # - |
         #   history -s "ros2 service call /uav1/mavros/cmd/land mavros_msgs/srv/CommandTOL \"{}\""
-  # - rviz:
-  #     layout: tiled
-  #     panes:
-  #       - waitForCore; ros2 run rviz2 rviz2 -d ./rviz.rviz
-  # - QGroundControl:
-  #     layout: tiled
-  #     panes:
-  #       - cd ~/Downloads && ./QGroundControl-x86_64.AppImage
+  - rviz:
+      layout: tiled
+      panes:
+        - waitForCore; ros2 run rviz2 rviz2 -d ./rviz.rviz
