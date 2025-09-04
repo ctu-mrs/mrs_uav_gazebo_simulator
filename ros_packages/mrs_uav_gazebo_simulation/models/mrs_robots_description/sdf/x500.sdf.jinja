@@ -1041,6 +1041,13 @@
     }}
     {# <!--}--> #}
 
+  {# Tracking camera {--> #}
+  {{ generic.tracking_camera_plugin_macro(
+    target_name = spawner_args['name'],
+    )
+  }}
+  {# <!--}--> #}
+
     {# ====================== conditional components ==================== #}
 
     {# lidar mount / gps antenna visuals {--> #}

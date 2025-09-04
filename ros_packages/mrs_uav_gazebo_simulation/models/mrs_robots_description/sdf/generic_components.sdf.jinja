@@ -1688,4 +1688,13 @@ limitations under the License.
 {%- endmacro -%}
 {# <!--}--> #}
 
+{# tracking_camera_plugin_macro {--> #}
+{%- macro tracking_camera_plugin_macro(target_name) -%}
+<plugin name="tracking_camera_plugin" filename="libMrsGazeboCommonResources_TrackingCameraPlugin.so">
+  <robotNamespace/>
+      <targetName>{{ target_name }}</targetName>
+</plugin>
+{%- endmacro -%}
+{# <!--}--> #}
+
 </sdf>

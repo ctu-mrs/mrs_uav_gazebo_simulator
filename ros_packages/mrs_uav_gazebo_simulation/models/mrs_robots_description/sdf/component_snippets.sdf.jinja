@@ -3067,55 +3067,6 @@ limitations under the License.
 {%- endmacro -%}
 {# <!--}--> #}
 
-{# ground_gimbaled_camera_macro {--> #}
-{%- macro ground_gimbaled_camera_macro(camera_name, parent_link, mount, spawner_args) -%}
-
-  {%- set spawner_keyword = 'enable-ground-gimbaled-camera' -%}
-  {%- set spawner_description = 'Add a camera mounted to the ground and following the UAV [1920x1080 60hz]' -%}
-  {%- set spawner_default_args = {'update_rate': 60, 'noise_stddev': 0.0, 'x': '0.0', 'y': '0.0', 'z': '1.0', 'hfov': 1.5, 'pitch': '0.32'} -%}
-
-  {%- if spawner_keyword in spawner_args.keys() -%}
-    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
-
-    <!-- ground gimbaled camera {-->
-    <link name='camera_link'>
-
-        <sensor name='camera_sensor' type='camera'>
-          <pose>{{x}} {{y}} {{z}} 0 {{pitch}} 0</pose> <!-- Initial position (overwritten by plugin) -->
-          <camera>
-            <horizontal_fov>{{hfov}}</horizontal_fov>
-            <image>
-              <width>1920</width>
-              <height>1080</height>
-            </image>
-            <clip>
-              <near>0.1</near>
-              <far>200</far>
-            </clip>
-          </camera>
-          <always_on>true</always_on>
-          <update_rate>{{update_rate}}</update_rate>
-          <visualize>false</visualize>
-        </sensor>
-
-        <!-- Attach plugin -->
-        <plugin name="ground_gimbaled_camera" filename="libMrsGazeboCommonResources_GroundGimbaledCamera.so">
-        <!-- TODO: get name dynamically -->
-          <target_model>uav1</target_model>
-        </plugin>
-
-  </link>
-
-    <!-- mount {-->
-    {{ mount if mount }}
-    <!--}-->
-
-    <!--}-->
-
-  {%- endif -%}
-{%- endmacro -%}
-{# <!--}--> #}
-
 {# ==================== Unsupported components ==================== #}
 
 {# TODO: not supported in the current version #}
