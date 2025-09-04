@@ -20,8 +20,19 @@ param set-default BAT1_CAPACITY 6800
 param set-default BAT1_V_EMPTY 3.6
 param set-default BAT1_V_CHARGED 4.2
 
-# NOTE: the index order does not match the gazebo model!
-# CA params use the FRD coordinates (X+ is in front of the center of mass (CoM), Y+ is right of CoM, Z+ is below CoM)
+# NOTES:
+
+# The CA_ROTOR* parameters replaced the PX4 mixers
+# It is now simpler to configure new models, but keep in mind these points:
+
+## 1) CA_ROTOR*_P* params use the FRD coordinates (X+ is in front of the center of mass (CoM), Y+ is right of CoM, Z+ is below CoM)
+## The index order does NOT match the jinja model
+
+## 2) CA_ROTOR*_CT is thrust output scaling - multiplier of the output SIGNAL
+## It is NOT the motor constant from the jinja model
+
+## 3) CA_ROTOR*_KM is the moment ratio between roll/pitch and yaw
+## It should match the moment constant from the jinja model
 
 param set-default CA_ROTOR0_PX 0.1812
 param set-default CA_ROTOR0_PY 0.1812
@@ -63,12 +74,3 @@ param set-default SIM_GZ_EC_MAX3 1000
 param set-default SIM_GZ_EC_MAX4 1000
 
 param set-default MPC_THR_HOVER 0.47
-
-# param set-default MC_ROLLRATE_P 0.09
-# param set-default MC_PITCHRATE_P 0.09
-# param set-default MC_ROLLRATE_I 0.04
-# param set-default MC_PITCHRATE_I 0.04
-# param set-default MC_ROLLRATE_D 0.0025
-# param set-default MC_PITCHRATE_D 0.0025
-# param set-default MC_ROLLRATE_FF 0.0
-# param set-default MC_PITCHRATE_FF 0.0
