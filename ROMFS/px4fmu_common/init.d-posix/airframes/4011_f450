@@ -9,6 +9,7 @@
 
 . ${R}etc/init.d/rc.mc_defaults
 
-param set-default MAV_TYPE 2
+PX4_SIMULATOR=${PX4_SIMULATOR:=gz}
+PX4_GZ_WORLD=${PX4_GZ_WORLD:=default}
 
-set MIXER quad_x
+param set-default SIM_GZ_EN 1
