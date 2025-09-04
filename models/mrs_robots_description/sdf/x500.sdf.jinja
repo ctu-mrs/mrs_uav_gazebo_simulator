@@ -13,12 +13,12 @@
   {%- set body_radius = 0.1 -%} {# [m] #}
   {%- set body_height = 0.1 -%} {# [m] #}
   {%- set mass_prop = 0.016076923076923075 -%} {# [kg] #}
-  {%- set radius_rotor = 0.1751 -%} {# [m] #}
-  {%- set rotor_height = 0.002 -%} {# [m] #}
+  {%- set prop_radius = 0.1751 -%} {# [m] #}
+  {%- set prop_height = 0.002 -%} {# [m] #}
 
   {%- set motor_mesh_z_offset = -0.0086 -%} {# [m] #}
-  {%- set rotor_xy_offset = 0.1812 -%} {# [m] #}
-  {%- set rotor_z_offset = 0.057 -%} {# [m] #}
+  {%- set prop_xy_offset = 0.1812 -%} {# [m] #}
+  {%- set prop_z_offset = 0.057 -%} {# [m] #}
 
   {%- set root = 'base_link' -%}
   {# <!--}--> #}
@@ -98,12 +98,12 @@
   {%- set body_iyz = 0 -%}
   {%- set body_izz = (mass * inertia_body_radius * inertia_body_radius) / 2 -%}
 
-  {%- set prop_ixx = mass_prop * ( 3 * radius_rotor * radius_rotor + rotor_height * rotor_height) / 12 -%}
+  {%- set prop_ixx = mass_prop * ( 3 * prop_radius * prop_radius + prop_height * prop_height) / 12 -%}
   {%- set prop_ixy = 0 -%}
   {%- set prop_ixz = 0 -%}
-  {%- set prop_iyy = mass_prop * ( 3 * radius_rotor * radius_rotor + rotor_height * rotor_height) / 12  -%}
+  {%- set prop_iyy = mass_prop * ( 3 * prop_radius * prop_radius + prop_height * prop_height) / 12  -%}
   {%- set prop_iyz = 0 -%}
-  {%- set prop_izz = (mass_prop * radius_rotor * radius_rotor) / 2 -%}
+  {%- set prop_izz = (mass_prop * prop_radius * prop_radius) / 2 -%}
   {# <!--}--> #}
 
   <model name="{{ spawner_args['name'] }}">
@@ -657,9 +657,9 @@
     {
     'motor_number': 0,
     'direction': 'ccw',
-    'x': rotor_xy_offset,
-    'y': -rotor_xy_offset,
-    'z': rotor_z_offset,
+    'x': prop_xy_offset,
+    'y': -prop_xy_offset,
+    'z': prop_z_offset,
     'mesh_files': [prop_mesh_file, motor_top_mesh_file],
     'mesh_scale': mesh_scale_prop_ccw,
     'color': 'Grey'
@@ -667,9 +667,9 @@
     {
     'motor_number': 1,
     'direction': 'ccw',
-    'x': -rotor_xy_offset,
-    'y': rotor_xy_offset,
-    'z': rotor_z_offset,
+    'x': -prop_xy_offset,
+    'y': prop_xy_offset,
+    'z': prop_z_offset,
     'mesh_files': [prop_mesh_file, motor_top_mesh_file],
     'mesh_scale': mesh_scale_prop_ccw,
     'color': 'Grey'
@@ -677,9 +677,9 @@
     {
     'motor_number': 2,
     'direction': 'cw',
-    'x': rotor_xy_offset,
-    'y': rotor_xy_offset,
-    'z': rotor_z_offset,
+    'x': prop_xy_offset,
+    'y': prop_xy_offset,
+    'z': prop_z_offset,
     'mesh_files': [prop_mesh_file, motor_top_mesh_file],
     'mesh_scale': mesh_scale_prop_cw,
     'color': 'Grey'
@@ -687,9 +687,9 @@
     {
     'motor_number': 3,
     'direction': 'cw',
-    'x': -rotor_xy_offset,
-    'y': -rotor_xy_offset,
-    'z': rotor_z_offset,
+    'x': -prop_xy_offset,
+    'y': -prop_xy_offset,
+    'z': prop_z_offset,
     'mesh_files': [prop_mesh_file, motor_top_mesh_file],
     'mesh_scale': mesh_scale_prop_cw,
     'color': 'Grey'
@@ -703,7 +703,7 @@
       moment_constant = moment_constant,
       parent = root,
       mass = mass_prop,
-      radius = radius_rotor,
+      radius = prop_radius,
       time_constant_up = time_constant_up,
       time_constant_down = time_constant_down,
       max_rot_velocity = max_rot_velocity,
