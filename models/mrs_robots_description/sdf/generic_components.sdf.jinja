@@ -91,14 +91,7 @@ limitations under the License.
     </inertia>
   </inertial>
   <collision name="base_link_collision">
-    <pose>
-      <x>0</x>
-      <y>0</y>
-      <z>{{ - body_height / 2 }}</z>
-      <roll>0</roll>
-      <pitch>0</pitch>
-      <yaw>0</yaw>
-    </pose>
+    <pose>0 0 {{ -body_height / 2 }} 0 0 0</pose>
     <geometry>
       <cylinder>
         <length>{{ body_height }}</length>
@@ -528,7 +521,6 @@ limitations under the License.
         <spring_reference>0</spring_reference>
         <spring_stiffness>0</spring_stiffness>
       </dynamics>
-      <use_parent_model_frame>1</use_parent_model_frame>
     </axis>
   </joint>
 {%- endmacro -%}
@@ -577,7 +569,6 @@ limitations under the License.
         <spring_reference>0</spring_reference>
         <spring_stiffness>0</spring_stiffness>
       </dynamics>
-      <use_parent_model_frame>1</use_parent_model_frame>
     </axis>
   </joint>
 {%- endmacro -%}
