@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<sdf version="1.6">
+<sdf version="1.10">
 
   {%- import 'mrs_robots_description/sdf/component_snippets.sdf.jinja' as components -%}
   {%- import 'mrs_robots_description/sdf/generic_components.sdf.jinja' as generic -%}
@@ -576,10 +576,6 @@
     }}
     <!--}-->
 
-    {# ================================================================== #}
-    {# ||                compulsory sensor definitions                 || #}
-    {# ================================================================== #}
-
       <!-- PX4 sensors {-->
 
       <!-- barometer {-->
@@ -633,24 +629,6 @@
       <!--}-->
 
     </link>
-
-    {# ================================================================== #}
-    {# ||                 optional sensor definitions                  || #}
-    {# ================================================================== #}
-
-    {# Garmin down {--> #}
-    {{ components.garmin_down_macro(
-      parent_link = root,
-      x = 0.0,
-      y = 0.0625,
-      z = -0.009,
-      roll = 0,
-      pitch = math.radians(90),
-      yaw = math.radians(-90),
-      mount = garmin_down_mount,
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
 
     {# Propellers {--> #}
     {%- set prop_list = [
@@ -716,6 +694,24 @@
       prop_iyy = prop_iyy,
       prop_iyz = prop_iyz,
       prop_izz = prop_izz,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# ================================================================== #}
+    {# ||                 optional sensor definitions                  || #}
+    {# ================================================================== #}
+
+    {# Garmin down {--> #}
+    {{ components.garmin_down_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0625,
+      z = -0.009,
+      roll = 0,
+      pitch = math.radians(90),
+      yaw = math.radians(-90),
+      mount = garmin_down_mount,
       spawner_args = spawner_args)
     }}
     {# <!--}--> #}
