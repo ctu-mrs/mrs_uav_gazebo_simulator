@@ -12,6 +12,8 @@ PX4_GZ_WORLD=${PX4_GZ_WORLD:=default}
 
 param set-default SIM_GZ_EN 1
 
+param set-default MAV_TYPE 2
+
 param set-default CA_AIRFRAME 0
 param set-default CA_ROTOR_COUNT 4
 

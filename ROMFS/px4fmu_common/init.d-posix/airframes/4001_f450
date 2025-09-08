@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# @name DJI F330 SITL
+# @name DJI F450 SITL
 #
 # @type Quadcopter x
 #
@@ -8,6 +8,9 @@
 #
 
 . ${R}etc/init.d/rc.mc_defaults
+
+PX4_SIMULATOR=${PX4_SIMULATOR:=gz}
+PX4_GZ_WORLD=${PX4_GZ_WORLD:=default}
 
 param set-default SIM_GZ_EN 1
 
@@ -35,27 +38,27 @@ param set-default BAT1_V_CHARGED 4.2
 ## 3) CA_ROTOR*_KM is the moment ratio between roll/pitch and yaw
 ## It should match the moment constant from the jinja model
 
-param set-default CA_ROTOR0_PX 0.1167
-param set-default CA_ROTOR0_PY 0.1167
-param set-default CA_ROTOR0_PZ -0.052
+param set-default CA_ROTOR0_PX 0.1626
+param set-default CA_ROTOR0_PY 0.1626
+param set-default CA_ROTOR0_PZ -0.012
 param set-default CA_ROTOR0_CT 1.0
 param set-default CA_ROTOR0_KM 0.06
 
-param set-default CA_ROTOR1_PX -0.1167
-param set-default CA_ROTOR1_PY -0.1167
-param set-default CA_ROTOR1_PZ -0.052
+param set-default CA_ROTOR1_PX -0.1626
+param set-default CA_ROTOR1_PY -0.1626
+param set-default CA_ROTOR1_PZ -0.012
 param set-default CA_ROTOR1_CT 1.0
 param set-default CA_ROTOR1_KM 0.06
 
-param set-default CA_ROTOR2_PX 0.1167
-param set-default CA_ROTOR2_PY -0.1167
-param set-default CA_ROTOR2_PZ -0.052
+param set-default CA_ROTOR2_PX 0.1626
+param set-default CA_ROTOR2_PY -0.1626
+param set-default CA_ROTOR2_PZ -0.012
 param set-default CA_ROTOR2_CT 1.0
 param set-default CA_ROTOR2_KM -0.06
 
-param set-default CA_ROTOR3_PX -0.1167
-param set-default CA_ROTOR3_PY 0.1167
-param set-default CA_ROTOR3_PZ -0.052
+param set-default CA_ROTOR3_PX -0.1626
+param set-default CA_ROTOR3_PY 0.1626
+param set-default CA_ROTOR3_PZ -0.012
 param set-default CA_ROTOR3_CT 1.0
 param set-default CA_ROTOR3_KM -0.06
 
@@ -74,4 +77,4 @@ param set-default SIM_GZ_EC_MAX2 1000
 param set-default SIM_GZ_EC_MAX3 1000
 param set-default SIM_GZ_EC_MAX4 1000
 
-param set-default MPC_THR_HOVER 0.55
+param set-default MPC_THR_HOVER 0.57
