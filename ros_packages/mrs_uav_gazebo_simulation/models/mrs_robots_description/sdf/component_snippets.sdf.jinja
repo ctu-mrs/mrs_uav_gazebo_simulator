@@ -1962,7 +1962,7 @@ limitations under the License.
 {# <!--}--> #}
 
 {# servo_camera_macro {--> #}
-{%- macro servo_camera_macro(parent, offset_pitch_link_x, offset_pitch_link_y, offset_pitch_link_z, offset_pitch_link_yaw, offset_pitch_link_roll, offset_pitch_link_pitch, offset_roll_link_x, offset_roll_link_y, offset_roll_link_z, offset_roll_link_yaw, offset_roll_link_roll, offset_roll_link_pitch, tilt_update_rate, max_pitch, min_pitch, max_pitch_rate, max_roll, min_roll, max_roll_rate, compensate_tilt_roll, compensate_tilt_pitch, parent_frame_name, sensor_base_frame_name, camera_frame_name, camera_update_rate, horizontal_fov, img_width, img_height, roll_link_mesh_file, pitch_link_mesh_file, mesh_scale, spawner_args) -%}
+{%- macro servo_camera_macro(parent, offset_pitch_link_x, offset_pitch_link_y, offset_pitch_link_z, offset_pitch_link_yaw, offset_pitch_link_roll, offset_pitch_link_pitch, offset_roll_link_x, offset_roll_link_y, offset_roll_link_z, offset_roll_link_yaw, offset_roll_link_roll, offset_roll_link_pitch, offset_yaw_link_x, offset_yaw_link_y, offset_yaw_link_z, offset_yaw_link_yaw, offset_yaw_link_roll, offset_yaw_link_pitch, tilt_update_rate, max_pitch, min_pitch, max_pitch_rate, max_roll, min_roll, max_roll_rate, max_yaw, min_yaw, max_yaw_rate, compensate_tilt_roll, compensate_tilt_pitch, compensate_tilt_yaw, parent_frame_name, frame_namespace, camera_update_rate, horizontal_fov, img_width, img_height, roll_link_mesh_file, pitch_link_mesh_file, yaw_link_mesh_file, mesh_scale, spawner_args) -%}
 
   {%- set spawner_keyword = 'enable-servo-camera' -%}
   {%- set spawner_description = 'Add a camera on virtual servo to the vehicle' -%}
@@ -1974,8 +1974,34 @@ limitations under the License.
     <!-- Servo camera {-->
 
     <!-- gimbal visuals {-->
-    <link name="servo_camera_gimbal_link">
-      <pose relative_to = "servo_camera_roll_joint"> 0 0 0 0 0 0</pose>
+    <link name="servo_camera_gimbal_yaw_link">
+      <pose relative_to = "servo_camera_yaw_joint">0 0 0 0 0 0</pose>
+      {{ generic.zero_inertial_macro() }}
+      <visual name="visual">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          {%- if yaw_link_mesh_file == '' -%}
+          <box>
+            <size>0.01 0.01 0.01</size>
+          </box>
+          {%- else -%}
+          <mesh>
+            <uri>{{ yaw_link_mesh_file }}</uri>
+            <scale>{{ mesh_scale }}</scale>
+          </mesh>
+          {%- endif -%}
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Black</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name="servo_camera_gimbal_roll_link">
+      <pose relative_to = "servo_camera_roll_joint">0 0 0 0 0 0</pose>
       {{ generic.zero_inertial_macro() }}
       <visual name="visual">
         <pose>0 0 0 0 0 0</pose>
@@ -2053,7 +2079,7 @@ limitations under the License.
           <cameraName>servo_camera</cameraName>
           <imageTopicName>image_raw</imageTopicName>
           <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-          <frameName>{{ camera_frame_name }}</frameName>
+          <frameName>{{ frame_namespace }}/camera_optical_frame</frameName>
           <hackBaseline>0.0</hackBaseline>
           <distortionK1>0.0</distortionK1>
           <distortionK2>0.0</distortionK2>
@@ -2066,34 +2092,78 @@ limitations under the License.
           <roll>0.0</roll>
           <pitch>0.0</pitch>
           <yaw>0.0</yaw>
-          <parentFrameName>{{ parent_frame_name }}</parentFrameName>
-          <sensorBaseFrameName>{{ sensor_base_frame_name }}</sensorBaseFrameName>
+          <parentFrameName>{{ frame_namespace }}/pitch</parentFrameName>
+          <sensorBaseFrameName>{{ frame_namespace }}/camera_frame</sensorBaseFrameName>
         </plugin>
       </sensor>
     </link>
 
     <plugin name="servo_camera_plugin" filename="libMrsGazeboCommonResources_ServoCameraPlugin.so">
       <update_rate>{{ tilt_update_rate }}</update_rate>
-      <max_pitch_rate>{{ max_pitch_rate }}</max_pitch_rate>
-      <max_pitch>{{ max_pitch }}</max_pitch>
-      <min_pitch>{{ min_pitch }}</min_pitch>
-      <max_roll_rate>{{ max_roll_rate }}</max_roll_rate>
-      <max_roll>{{ max_roll }}</max_roll>
-      <min_roll>{{ min_roll }}</min_roll>
-      <joint_name_pitch>servo_camera_pitch_joint</joint_name_pitch>
-      <joint_name_roll>servo_camera_roll_joint</joint_name_roll>
-      <parent_link_pitch>servo_camera_gimbal_link</parent_link_pitch>
-      <parent_link_roll>{{ parent }}</parent_link_roll>
-      <compensate_tilt_roll>{{ compensate_tilt_roll }}</compensate_tilt_roll>
-      <compensate_tilt_pitch>{{ compensate_tilt_pitch }}</compensate_tilt_pitch>
+      <parent_frame_name>{{ parent_frame_name }}</parent_frame_name>
+      <yaw>
+        <max_rate>{{ max_yaw_rate }}</max_rate>
+        <max_angle>{{ max_yaw }}</max_angle>
+        <min_angle>{{ min_yaw }}</min_angle>
+        <joint_name>servo_camera_yaw_joint</joint_name>
+        <parent_link>{{ parent }}</parent_link>
+        <frame_name>{{ frame_namespace }}/yaw</frame_name>
+        <compensate_tilt>{{ compensate_tilt_yaw }}</compensate_tilt>
+        <offset_x>{{ offset_yaw_link_x }}</offset_x>
+        <offset_y>{{ offset_yaw_link_y }}</offset_y>
+        <offset_z>{{ offset_yaw_link_z }}</offset_z>
+      </yaw>
+      <roll>
+        <max_rate>{{ max_roll_rate }}</max_rate>
+        <max_angle>{{ max_roll }}</max_angle>
+        <min_angle>{{ min_roll }}</min_angle>
+        <joint_name>servo_camera_roll_joint</joint_name>
+        <parent_link>servo_camera_gimbal_yaw_link</parent_link>
+        <frame_name>{{ frame_namespace }}/roll</frame_name>
+        <compensate_tilt>{{ compensate_tilt_roll }}</compensate_tilt>
+        <offset_x>{{ offset_roll_link_x }}</offset_x>
+        <offset_y>{{ offset_roll_link_y }}</offset_y>
+        <offset_z>{{ offset_roll_link_z }}</offset_z>
+      </roll>
+      <pitch>
+        <max_rate>{{ max_pitch_rate }}</max_rate>
+        <max_angle>{{ max_pitch }}</max_angle>
+        <min_angle>{{ min_pitch }}</min_angle>
+        <joint_name>servo_camera_pitch_joint</joint_name>
+        <parent_link>servo_camera_gimbal_roll_link</parent_link>
+        <frame_name>{{ frame_namespace }}/pitch</frame_name>
+        <compensate_tilt>{{ compensate_tilt_pitch }}</compensate_tilt>
+        <offset_x>{{ offset_pitch_link_x }}</offset_x>
+        <offset_y>{{ offset_pitch_link_y }}</offset_y>
+        <offset_z>{{ offset_pitch_link_z }}</offset_z>
+      </pitch>
     </plugin>
     <!--}-->
 
     <!-- camera joints {-->
-    <joint name="servo_camera_roll_joint" type="revolute">
+    <joint name="servo_camera_yaw_joint" type="revolute">
       <parent>{{ parent }}</parent>
-      <child>servo_camera_gimbal_link</child>
-      <pose relative_to = "{{ parent }}">{{ offset_roll_link_x }} {{ offset_roll_link_y }} {{ offset_roll_link_z }} {{ offset_roll_link_roll }} {{ offset_roll_link_pitch }} {{ offset_roll_link_yaw }}</pose>
+      <child>servo_camera_gimbal_yaw_link</child>
+      <pose relative_to = "{{ parent }}">{{ offset_yaw_link_x }} {{ offset_yaw_link_y }} {{ offset_yaw_link_z }} {{ offset_yaw_link_roll }} {{ offset_yaw_link_pitch }} {{ offset_yaw_link_yaw }}</pose>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.0</lower>
+          <upper>3.0</upper>
+          <effort>1</effort>
+          <velocity>10</velocity>
+        </limit>
+        <dynamics>
+          <damping>0.0</damping>
+          <friction>0.0</friction>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <joint name="servo_camera_roll_joint" type="revolute">
+      <parent>servo_camera_gimbal_yaw_link</parent>
+      <child>servo_camera_gimbal_roll_link</child>
+      <pose relative_to = "servo_camera_yaw_joint">{{ offset_roll_link_x }} {{ offset_roll_link_y }} {{ offset_roll_link_z }} {{ offset_roll_link_roll }} {{ offset_roll_link_pitch }} {{ offset_roll_link_yaw }}</pose>
       <axis>
         <xyz>1 0 0</xyz>
         <limit>
@@ -2110,7 +2180,7 @@ limitations under the License.
     </joint>
 
     <joint name="servo_camera_pitch_joint" type="revolute">
-      <parent>servo_camera_gimbal_link</parent>
+      <parent>servo_camera_gimbal_roll_link</parent>
       <child>servo_camera_link</child>
       <pose relative_to = "servo_camera_roll_joint">{{ offset_pitch_link_x }} {{ offset_pitch_link_y }} {{ offset_pitch_link_z }} {{ offset_pitch_link_roll }} {{ offset_pitch_link_pitch }} {{ offset_pitch_link_yaw }}</pose>
       <axis>
@@ -3088,6 +3158,52 @@ limitations under the License.
 
 {%- endmacro -%}
 <!--}-->
+
+{# third_person_camera_macro {--> #}
+{%- macro third_person_camera_macro(camera_name, parent_link, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-third-person-camera' -%}
+  {%- set spawner_description = 'Add a third person camera following the UAV mode [1920x1080 60hz]' -%}
+  {%- set spawner_default_args = {'update_rate': 60, 'noise_stddev': 0.0, 'x': '-1.5', 'y': '0.0', 'z': '0.5', 'hfov': 1.5, 'pitch': '0.32'} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    <!-- third person camera {-->
+
+    <!-- sensor {-->
+    {{ generic.camera_macro_meshless(
+      parent_link = parent_link,
+      camera_name = camera_name,
+      parent_frame_name = spawner_args['name'] + '/fcu',
+      camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
+      sensor_base_frame_name = spawner_args['name'] + '/' + camera_name,
+      frame_rate = spawner_args[spawner_keyword]['update_rate'],
+      horizontal_fov = spawner_args[spawner_keyword]['hfov'],
+      image_width = 1920,
+      image_height = 1080,
+      min_distance = 0.02,
+      max_distance = 80,
+      noise_mean = 0.0,
+      noise_stddev = spawner_args[spawner_keyword]['noise_stddev'],
+      x = spawner_args[spawner_keyword]['x'],
+      y = spawner_args[spawner_keyword]['y'],
+      z = spawner_args[spawner_keyword]['z'],
+      roll = 0,
+      pitch = spawner_args[spawner_keyword]['pitch'],
+      yaw = 0)
+    }}
+    <!--}-->
+
+    <!-- mount {-->
+    {{ mount if mount }}
+    <!--}-->
+
+    <!--}-->
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}
 
 {# ==================== Unsupported components ==================== #}
 
