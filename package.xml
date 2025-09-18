@@ -12,22 +12,22 @@
 
   <license>BSD 3-Clause</license>
 
-  <buildtool_depend>ament_python</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
 
   <depend>rclpy</depend>
-  <depend>python3_jinja2</depend>
+  <depend>python3-jinja2</depend>
   <depend>ros_gz</depend>
   <depend>px4</depend>
   <depend>mavros</depend>
   <depend>std_msgs</depend>
   <depend>mrs_msgs</depend>
   <depend>mrs_uav_px4_api</depend>
-  <depend>mrs_uav_gazebo_common_resources</depend>
+  <depend>mrs_gazebo_common_resources</depend>
   
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
-  <test_depend>python3_pytest</test_depend>
+  <test_depend>python3-pytest</test_depend>
 
   <export>
     <build_type>ament_python</build_type>

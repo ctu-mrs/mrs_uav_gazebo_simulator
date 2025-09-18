@@ -63,8 +63,8 @@ windows:
   - rviz:
       layout: tiled
       panes:
-        - waitForCore; ros2 run rviz2 rviz2 -d ./rviz.rviz
+        - export UAV_NAME=uav1; waitForCore; ros2 run rviz2 rviz2 -d ./rviz.rviz
   - layout:
       layout: tiled
       panes:
-        - waitForCore; sleep 2; ~/.i3/layout_manager.sh ./layout.json
+        - export UAV_NAME=uav1; waitForCore; sleep 2; ~/.i3/layout_manager.sh ./layout.json
