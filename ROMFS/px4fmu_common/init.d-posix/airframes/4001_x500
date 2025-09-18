@@ -65,6 +65,9 @@ param set-default SIM_GZ_EC_FUNC2 102
 param set-default SIM_GZ_EC_FUNC3 103
 param set-default SIM_GZ_EC_FUNC4 104
 
+# use the full available throttle range 0 - 1000
+# the simulated ESC signal is cropped to integers :(
+# this throttle mapping gives the highest signal resolution
 param set-default SIM_GZ_EC_MIN1 0
 param set-default SIM_GZ_EC_MIN2 0
 param set-default SIM_GZ_EC_MIN3 0
