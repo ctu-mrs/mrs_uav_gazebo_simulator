@@ -107,7 +107,8 @@ limitations under the License.
         ixz = prop_ixz,
         iyy = prop_iyy,
         iyz = prop_iyz,
-        izz = prop_izz)
+        izz = prop_izz,
+        robot_namespace = spawner_args['name'])
       }}
       <!--}-->
     {%- elif prop_params['mesh_files'] | length == 2 -%}
@@ -142,7 +143,8 @@ limitations under the License.
         ixz = prop_ixz,
         iyy = prop_iyy,
         iyz = prop_iyz,
-        izz = prop_izz)
+        izz = prop_izz,
+        robot_namespace = spawner_args['name'])
       }}
       <!--}-->
     {%- endif -%}
