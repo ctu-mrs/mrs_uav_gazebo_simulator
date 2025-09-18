@@ -9,7 +9,7 @@
   {# ================================================================== #}
 
   {# Robot parameters and arguments {--> #}
-  {%- set mass = 1.95 -%} {# [kg] #}
+  {%- set mass = 1.94 -%} {# [kg] #}
   {%- set body_radius = 0.1 -%} {# [m] #}
   {%- set body_height = 0.1 -%} {# [m] #}
   {%- set mass_prop = 0.016076923076923075 -%} {# [kg] #}
@@ -24,12 +24,12 @@
   {# <!--}--> #}
 
   {# Motor constants {--> #}
-  {%- set rotor_velocity_slowdown_sim = 15 -%} {# slowdown ratio, only affects simulation visuals #}
-  {%- set motor_constant = '1.67e-5' -%} {# [N / (rad/s)^2], compute from max desired thurst at max power #}
+  {%- set rotor_velocity_slowdown_sim = 10 -%} {# slowdown ratio, only affects simulation visuals #}
+  {%- set motor_constant = '4.2e-5' -%} {# [N / (rad/s)^2], compute from max desired thurst at max power #}
   {%- set moment_constant = 0.06 -%} {# [m] ratio between rolling/pitching moment and yawing moment, increase for faster yaw #}
   {%- set time_constant_up = 0.0125 -%} {# [s] how fast props gain speed when throttle goes up #}
   {%- set time_constant_down = 0.025 -%} {# [s] how fast props lose speed when throttle goes down #}
-  {%- set max_rot_velocity = 1100 -%} {# [rad/s] max real propeller rotation velocity #}
+  {%- set max_rot_velocity = 780 -%} {# [rad/s] max real propeller rotation velocity #}
 
   {# this should only affect agile drones #}
   {%- set rotor_drag_coefficient = '1.0e-4' -%} {# N / (m/s)^2 how much thrust is lost due to air drag #}
