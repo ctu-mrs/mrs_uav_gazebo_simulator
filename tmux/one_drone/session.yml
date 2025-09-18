@@ -23,17 +23,15 @@ windows:
       panes:
         - ros2 launch mrs_uav_gazebo_simulation simulation.launch.py gz_headless:=false gz_verbose:=true
         - |
-          sleep 5; && \
-          ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE --enable-rangefinder'}"
+          waitForGazebo; ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE --enable-rangefinder'}"
   - px4_api:
       layout: tiled
       panes:
-        - sleep 8; ros2 launch mrs_uav_px4_api api.py
+        - sleep 10; ros2 launch mrs_uav_px4_api api.py
   - core:
       layout: tiled
       panes:
-        - waitForHwApi;
-          ros2 launch mrs_uav_core core.py
+        - ros2 launch mrs_uav_core core.py
           platform_config:=$PLATFORM_CONFIG
           world_config:=./config/world_config.yaml
           custom_config:=./config/custom_config.yaml
@@ -41,21 +39,15 @@ windows:
   - status:
       layout: tiled
       panes:
-        - waitForCore; ros2 run mrs_uav_status status.sh
+        - ros2 run mrs_uav_status status.sh
   - autostart:
       layout: tiled
       panes:
-        - waitForCore; ros2 launch mrs_uav_autostart automatic_start.py custom_config:=./config/automatic_start.yaml
+        - ros2 launch mrs_uav_autostart automatic_start.py custom_config:=./config/automatic_start.yaml
   - takeoff:
       layout: tiled
       panes:
-        - 'history -s ./takeoff.sh $UAV_NAME'
-        # - |
-        #   history -s "ros2 service call /uav1/mavros/cmd/arming mavros_msgs/srv/CommandBool \"{value: true}\""
-        # - |
-        #   history -s "ros2 service call /uav1/mavros/cmd/takeoff mavros_msgs/srv/CommandTOL \"{min_pitch: 0.0, latitude: 47.3977279, longitude: 8.5455751, altitude: 1.0}\""
-        # - |
-        #   history -s "ros2 service call /uav1/mavros/cmd/land mavros_msgs/srv/CommandTOL \"{}\""
+        - waitForCore; ./takeoff.sh uav1
   - rviz:
       layout: tiled
       panes:
