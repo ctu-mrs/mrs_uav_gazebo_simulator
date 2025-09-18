@@ -22,22 +22,24 @@ windows:
       panes:
         - ros2 launch mrs_uav_gazebo_simulation simulation.launch.py gz_headless:=false gz_verbose:=true
         - |
-          waitForGazebo; ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 2 --$UAV_TYPE --enable-rangefinder'}"
+          waitForGazebo; sleep 5; ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 2 --$UAV_TYPE --enable-rangefinder'}"
   - px4_api:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; sleep 10; ros2 launch mrs_uav_px4_api api.py
-        - export UAV_NAME=uav2; sleep 10; ros2 launch mrs_uav_px4_api api.py
+        - export UAV_NAME=uav1; ros2 launch mrs_uav_px4_api api.py
+        - export UAV_NAME=uav2; ros2 launch mrs_uav_px4_api api.py
   - core:
       layout: tiled
       panes:
         - export UAV_NAME=uav1;
+          waitForHwApi; sleep 10;
           ros2 launch mrs_uav_core core.py
           platform_config:=$PLATFORM_CONFIG
           world_config:=./config/world_config.yaml
           custom_config:=./config/custom_config.yaml
           network_config:=./config/network_config.yaml
         - export UAV_NAME=uav2;
+          waitForHwApi; sleep 10;
           ros2 launch mrs_uav_core core.py
           platform_config:=$PLATFORM_CONFIG
           world_config:=./config/world_config.yaml
@@ -56,9 +58,13 @@ windows:
   - takeoff:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; waitForCore; ./takeoff.sh
-        - export UAV_NAME=uav2; waitForCore; ./takeoff.sh
+        - export UAV_NAME=uav1; waitForCore; sleep 10; ./takeoff.sh
+        - export UAV_NAME=uav2; waitForCore; sleep 10; ./takeoff.sh
   - rviz:
       layout: tiled
       panes:
-        - ros2 run rviz2 rviz2 -d ./rviz.rviz
+        - waitForCore; ros2 run rviz2 rviz2 -d ./rviz.rviz
+  - layout:
+      layout: tiled
+      panes:
+        - waitForCore; sleep 2; ~/.i3/layout_manager.sh ./layout.json
