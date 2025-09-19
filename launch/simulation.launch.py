@@ -14,7 +14,7 @@ def generate_launch_description():
     # Package Directories
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
     pkg_mrs_common_gazebo_resources = get_package_share_directory('mrs_gazebo_common_resources')
-    pkg_mrs_uav_gazebo_simulation = get_package_share_directory('mrs_uav_gazebo_simulation')
+    pkg_mrs_uav_gazebo_simulator = get_package_share_directory('mrs_uav_gazebo_simulator')
 
 
     # Launch arguments declaration
@@ -29,7 +29,7 @@ def generate_launch_description():
     declare_spawner_config_arg = DeclareLaunchArgument(
         'spawner_config',
         default_value = PathJoinSubstitution([
-                pkg_mrs_uav_gazebo_simulation, 'config', 'spawner_params.yaml'
+                pkg_mrs_uav_gazebo_simulator, 'config', 'spawner_params.yaml'
             ]),
         description='Configuration file for the custom spawner.'
     )
@@ -57,7 +57,7 @@ def generate_launch_description():
     declare_gz_sim_server_config_path_arg =  DeclareLaunchArgument(
         'GZ_SIM_SERVER_CONFIG_PATH',
         default_value=PathJoinSubstitution([
-            pkg_mrs_uav_gazebo_simulation, 'config/gazebo_server.config'
+            pkg_mrs_uav_gazebo_simulator, 'config/gazebo_server.config'
         ]),
         description='Custom Gazebo server configuration file'
     )
@@ -122,7 +122,7 @@ def generate_launch_description():
     drone_spawner = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
-                pkg_mrs_uav_gazebo_simulation, 'launch', 'mrs_drone_spawner.launch.py'
+                pkg_mrs_uav_gazebo_simulator, 'launch', 'mrs_drone_spawner.launch.py'
             ])
         ),
         launch_arguments={

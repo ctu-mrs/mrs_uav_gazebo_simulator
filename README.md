@@ -1,4 +1,4 @@
-# MRS UAV Gazebo Simulation
+# MRS UAV Gazebo Simulator
 
 This package provides UAV model definitions for the Gazebo simulator and a custom spawning mechanism that assembles the drones dynamically from provided arguments.
 
@@ -37,7 +37,7 @@ The wiki page [https://ctu-mrs.github.io/docs/simulation/gazebo/gazebo/custom_dr
 
 ## Starting the simulation
 
-Use one of the prepared Tmuxinator sessions in [`roscd mrs_uav_gazebo_simulation/tmux`](./ros_packages/mrs_uav_gazebo_simulation/tmux) as an example:
+Use one of the prepared Tmuxinator sessions in [`roscd mrs_uav_gazebo_simulator/tmux`](./ros_packages/mrs_uav_gazebo_simulator/tmux) as an example:
 
 - [one_drone](./tmux/one_drone)
 <!-- - [one_drone_3dlidar](./tmux/one_drone_3dlidar) -->
@@ -53,7 +53,7 @@ The drone models are dynamically created in runtime using the [MRS drone spawner
 To start the example Gazebo world call:
 
 ```bash
-ros2 launch mrs_uav_gazebo_simulation simulation.launch world_name:=grass_plane.world gui:=true
+ros2 launch mrs_uav_gazebo_simulator simulation.launch world_name:=grass_plane.world gui:=true
 ```
 
 At this point the Gazebo world will only contain the environment with grass plane but with no vehicles yet.
@@ -63,7 +63,7 @@ At this point the Gazebo world will only contain the environment with grass plan
 The `simulation.launch` will automatically start the `mrs_drone_spawner` as a ROS node. If you use a custom launch file to start Gazebo, you can launch the spawner separately:
 
 ```bash
-roslaunch mrs_uav_gazebo_simulation mrs_drone_spawner.launch
+roslaunch mrs_uav_gazebo_simulator mrs_drone_spawner.launch
 ```
 
 The `mrs_drone_spawner` will perform the following tasks:

@@ -29,7 +29,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'ROMFS_PATH',
             default_value=PathJoinSubstitution([
-                FindPackageShare('mrs_uav_gazebo_simulation'), 'ROMFS'
+                FindPackageShare('mrs_uav_gazebo_simulator'), 'ROMFS'
             ]),
             description='Path to the PX4 ROMFS directory.'
         ),

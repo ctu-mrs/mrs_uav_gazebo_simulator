@@ -2,9 +2,9 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   
-  <name>mrs_uav_gazebo_simulation</name>
+  <name>mrs_uav_gazebo_simulator</name>
   <version>2.0.0</version>
-  <description>The MRS UAV Gazebo simulation package.</description>
+  <description>The MRS UAV Gazebo simulator package.</description>
 
   <maintainer email="vojtech.spurny@fel.cvut.cz">Vojtech Spurny</maintainer>
   <maintainer email="petr.stibinger@fel.cvut.cz">Petr Stibinger</maintainer>

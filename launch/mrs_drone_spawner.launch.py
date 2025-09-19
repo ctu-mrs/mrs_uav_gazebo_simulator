@@ -14,7 +14,7 @@ def generate_launch_description():
     ld = launch.LaunchDescription()
 
     # Package Directories
-    pkg_mrs_uav_gazebo_simulation = get_package_share_directory('mrs_uav_gazebo_simulation')
+    pkg_mrs_uav_gazebo_simulator = get_package_share_directory('mrs_uav_gazebo_simulator')
 
     # Launch arguments declaration
     ld.add_action(DeclareLaunchArgument(
@@ -26,7 +26,7 @@ def generate_launch_description():
     ld.add_action(DeclareLaunchArgument(
         'spawner_params',
         default_value = PathJoinSubstitution([
-            pkg_mrs_uav_gazebo_simulation, 'config', 'spawner_params.yaml'
+            pkg_mrs_uav_gazebo_simulator, 'config', 'spawner_params.yaml'
         ]),
         description='Path to the default spawner configuration file. The path can be absolute, starting with "/" or relative to the current working directory',
     ))
@@ -52,7 +52,7 @@ def generate_launch_description():
     ld.add_action(
             Node(
                 name='mrs_drone_spawner',
-                package='mrs_uav_gazebo_simulation',
+                package='mrs_uav_gazebo_simulator',
                 executable='mrs_drone_spawner',
                 output="screen",
                 arguments=['--ros-args', '--log-level', log_level],

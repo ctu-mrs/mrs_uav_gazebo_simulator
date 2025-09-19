@@ -19,8 +19,8 @@ from time import time
 import tempfile
 
 from ament_index_python.packages import get_package_share_directory
-from mrs_uav_gazebo_simulation.utils.component_wrapper import ComponentWrapper
-from mrs_uav_gazebo_simulation.utils.template_wrapper import TemplateWrapper
+from mrs_uav_gazebo_simulator.utils.component_wrapper import ComponentWrapper
+from mrs_uav_gazebo_simulator.utils.template_wrapper import TemplateWrapper
 
 # ROS 2 Imports
 from launch import LaunchDescription, LaunchService
@@ -144,7 +144,7 @@ class MrsDroneSpawner(Node):
             raise RuntimeError(f'Could not load required param. {e}')
 
         # Configure resources and Jinja environment
-        resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulation'), 'models')]
+        resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]
 
         try:
             extra_resource_paths = self.get_parameter('extra_resource_paths').value
@@ -162,7 +162,7 @@ class MrsDroneSpawner(Node):
         self.jinja_env = self.configure_jinja2_environment(resource_paths)
 
         # Find launch files
-        gazebo_simulation_path = get_package_share_directory('mrs_uav_gazebo_simulation')
+        gazebo_simulation_path = get_package_share_directory('mrs_uav_gazebo_simulator')
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
         self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
         # self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch')
