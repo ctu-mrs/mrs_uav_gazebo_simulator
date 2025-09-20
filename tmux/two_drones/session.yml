@@ -26,21 +26,21 @@ windows:
   - px4_api:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; ros2 launch mrs_uav_px4_api api.py
-        - export UAV_NAME=uav2; ros2 launch mrs_uav_px4_api api.py
+        - export UAV_NAME=uav1; ros2 launch mrs_uav_px4_api api.launch.py
+        - export UAV_NAME=uav2; ros2 launch mrs_uav_px4_api api.launch.py
   - core:
       layout: tiled
       panes:
         - export UAV_NAME=uav1;
           waitForHwApi; sleep 10;
-          ros2 launch mrs_uav_core core.py
+          ros2 launch mrs_uav_core core.launch.py
           platform_config:=$PLATFORM_CONFIG
           world_config:=./config/world_config.yaml
           custom_config:=./config/custom_config.yaml
           network_config:=./config/network_config.yaml
         - export UAV_NAME=uav2;
           waitForHwApi; sleep 10;
-          ros2 launch mrs_uav_core core.py
+          ros2 launch mrs_uav_core core.launch.py
           platform_config:=$PLATFORM_CONFIG
           world_config:=./config/world_config.yaml
           custom_config:=./config/custom_config.yaml
@@ -53,8 +53,8 @@ windows:
   - autostart:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; ros2 launch mrs_uav_autostart automatic_start.py custom_config:=./config/automatic_start.yaml
-        - export UAV_NAME=uav2; ros2 launch mrs_uav_autostart automatic_start.py custom_config:=./config/automatic_start.yaml
+        - export UAV_NAME=uav1; ros2 launch mrs_uav_autostart automatic_start.launch.py custom_config:=./config/automatic_start.yaml
+        - export UAV_NAME=uav2; ros2 launch mrs_uav_autostart automatic_start.launch.py custom_config:=./config/automatic_start.yaml
   - takeoff:
       layout: tiled
       panes:
