@@ -15,7 +15,7 @@ from rclpy.node import Node
 import rclpy.exceptions
 import multiprocessing
 import xml.dom.minidom
-from time import time
+import time
 import tempfile
 
 from ament_index_python.packages import get_package_share_directory
@@ -126,6 +126,8 @@ class MrsDroneSpawner(Node):
 
         self.declare_parameter('jinja_templates.suffix', '.sdf.jinja')
         self.declare_parameter('jinja_templates.save_rendered_sdf', True)
+        
+        self.declare_parameter('firmware_launch_delay', 0.0)
 
         self.declare_parameter('extra_resource_paths', [])
 
@@ -138,6 +140,8 @@ class MrsDroneSpawner(Node):
 
             self.template_suffix = self.get_parameter('jinja_templates.suffix').value
             self.save_sdf_files = self.get_parameter('jinja_templates.save_rendered_sdf').value
+            
+            self.firmware_launch_delay = float(self.get_parameter('firmware_launch_delay').value)
 
         except rclpy.exceptions.ParameterNotDeclaredException as e:
             self.get_logger().error(f'Could not load required param. {e}')
@@ -205,6 +209,11 @@ class MrsDroneSpawner(Node):
 
     # #{ launch_px4_firmware(self, robot_params)
     def launch_px4_firmware(self, robot_params):
+
+        if self.firmware_launch_delay > 0:
+            self.get_logger().info(f'Waiting for {self.firmware_launch_delay} s before launching firmware')
+            time.sleep(self.firmware_launch_delay)
+
         name = robot_params['name']
         self.get_logger().info(f'Launching PX4 firmware for {name}')
 
@@ -333,8 +342,8 @@ class MrsDroneSpawner(Node):
             mavros_process = None
 
             try:
-                firmware_process = self.launch_px4_firmware(robot_params)
                 mavros_process = self.launch_mavros(robot_params)
+                firmware_process = self.launch_px4_firmware(robot_params)
 
             except Exception as e:
                 self.get_logger().error(f"Failed during spawn sequence for {robot_params['name']}: {e}")
@@ -437,7 +446,7 @@ class MrsDroneSpawner(Node):
     def callback_action_timer(self):
         # Check for an ongoing request and if it has timed out
         if self.gazebo_spawn_future is not None and not self.gazebo_spawn_future.done() and self.gazebo_spawn_request_start_time is not None:
-            if time() - self.gazebo_spawn_request_start_time > 5.0:
+            if time.time() - self.gazebo_spawn_request_start_time > 5.0:
                 self.get_logger().error('Service call timed out!')
                 self.gazebo_spawn_future = None # Reset state to allow a new request
             else:
