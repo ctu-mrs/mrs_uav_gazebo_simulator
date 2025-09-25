@@ -24,7 +24,7 @@ This package provides UAV model definitions for the Gazebo simulator and a custo
 | DJI f550      | `--f550`       | ![](.fig/f550_simulation.jpg)    |
 | F4F RoboFly   | `--robofly`    | ![](.fig/robofly_simulation.jpg) |
 | T-Drones m690 | `--m690`       | ![](.fig/m690_simulation.jpg)    |
-<!-- | Tarot t650    | `--t650` | ![](.fig/t650_simulation.jpg) | -->
+| Tarot t650    | `--t650`       | ![](.fig/t650_simulation.jpg)    |
 <!-- | NAKI II       | `--naki` | ![](.fig/naki_simulation.jpg) | -->
 
 
