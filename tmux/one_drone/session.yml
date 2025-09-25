@@ -31,7 +31,7 @@ windows:
   - core:
       layout: tiled
       panes:
-        - waitForHwApi; sleep 10; ros2 launch mrs_uav_core core.launch.py
+        - waitForHwApi; ros2 launch mrs_uav_core core.launch.py
           platform_config:=$PLATFORM_CONFIG
           world_config:=./config/world_config.yaml
           custom_config:=./config/custom_config.yaml
@@ -47,7 +47,7 @@ windows:
   - takeoff:
       layout: tiled
       panes:
-        - waitForCore; sleep 10; ./takeoff.sh
+        - waitForCore; ./takeoff.sh
   - rviz:
       layout: tiled
       panes:
