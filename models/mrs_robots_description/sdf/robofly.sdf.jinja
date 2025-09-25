@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<sdf version='1.6'>
+<sdf version='1.10'>
 
   {%- import 'mrs_robots_description/sdf/component_snippets.sdf.jinja' as components -%}
   {%- import 'mrs_robots_description/sdf/generic_components.sdf.jinja' as generic -%}
@@ -12,7 +12,7 @@
   {%- set mass = 0.8 -%} {# [kg] #}
   {%- set prop_mass = 0.002 -%} {# [kg] #}
   {%- set body_radius = 0.15 -%} {# [m] #}
-  {%- set body_height = 0.15 -%} {# [m] #}
+  {%- set body_height = 0.1 -%} {# [m] #}
   {%- set mass_prop = 0.005 -%} {# [kg] #}
   {%- set prop_radius = 0.0635 -%} {# [m] #}
   {%- set prop_height = 0.01 -%} {# [m] #}
@@ -22,14 +22,16 @@
   {# <!--}--> #}
 
   {# Motor constants {--> #}
-  {%- set rotor_velocity_slowdown_sim = 0.0159236 -%}
-  {%- set motor_constant = 14.291 -%} {# [kg.m/s^2] #}
-  {%- set moment_constant = 0.016 -%} {# [m] #}
-  {%- set time_constant_up = 1.0 / 120.0 -%} {# [s] #}
-  {%- set time_constant_down = 1.0 / 80.0 -%} {# [s] #}
-  {%- set max_rot_velocity = 1 -%} {# [rad/s] #}
-  {%- set rotor_drag_coefficient = 0.001 -%} {# orig 8.06428e-04 #}
-  {%- set rolling_moment_coefficient = '1.0e-6' -%}
+  {%- set rotor_velocity_slowdown_sim = 20 -%} {# slowdown ratio, only affects simulation visuals #}
+  {%- set motor_constant = '6.7e-6' -%} {# [N / (rad/s)^2], compute from max desired thurst at max power #}
+  {%- set moment_constant = 0.017 -%} {# [m] ratio between rolling/pitching moment and yawing moment, increase for faster yaw #}
+  {%- set time_constant_up = 0.0125 -%} {# [s] how fast props gain speed when throttle goes up #}
+  {%- set time_constant_down = 0.025 -%} {# [s] how fast props lose speed when throttle goes down #}
+  {%- set max_rot_velocity = 2300 -%} {# [rad/s] max real propeller rotation velocity #}
+
+  {# this should only affect agile drones #}
+  {%- set rotor_drag_coefficient = '1.0e-4' -%} {# N / (m/s)^2 how much thrust is lost due to air drag #}
+  {%- set rolling_moment_coefficient = '1.0e-6' -%} {# N*m / (m/s^2) rolling moment caused by dragging propellers through the air during forward flight #}
   {# <!--}--> #}
 
   {# Inertia constants {--> #}
@@ -76,21 +78,6 @@
 
     <link name="{{ root }}">
 
-      <!-- Body physics {-->
-      {{ generic.multirotor_physics_macro(
-        mass = mass,
-        body_radius = body_radius,
-        body_height = body_height,
-        rotor_velocity_slowdown_sim = rotor_velocity_slowdown_sim,
-        ixx = body_ixx,
-        ixy = body_ixy,
-        ixz = body_ixz,
-        iyy = body_iyy,
-        iyz = body_iyz,
-        izz = body_izz)
-      }}
-      <!--}-->
-
       <!-- Body visuals {-->
 
       <!-- Body {-->
@@ -110,19 +97,77 @@
 
       <!--}-->
 
-    </link>
+      <!-- Body physics {-->
+      {{ generic.multirotor_physics_macro(
+        mass = mass,
+        body_radius = body_radius,
+        body_height = body_height,
+        ixx = body_ixx,
+        ixy = body_ixy,
+        ixz = body_ixz,
+        iyy = body_iyy,
+        iyz = body_iyz,
+        izz = body_izz)
+      }}
+      <!--}-->
 
-  {# Air drag {--> #}
-  {{ generic.gazebo_fluid_resistance_plugin_macro(
-    model_mass = mass,
-    verbose = true,
-    parent_link = root,
-    uav_body_resistance_x = 0.1,
-    uav_body_resistance_y = 0.1,
-    uav_body_resistance_z = 0.2,
-    )
-  }}
-  {# <!--}--> #}
+    {# ================================================================== #}
+    {# ||                compulsory sensor definitions                 || #}
+    {# ================================================================== #}
+
+      <!-- PX4 sensors {-->
+
+      <!-- barometer {-->
+      <!-- Noise modeled after BMP390 -->
+      {{ generic.barometer_sensor_macro(
+        name = "air_pressure",
+        update_rate = 50,
+        noise_mean = 0,
+        noise_std = 3)
+      }}
+      <!--}-->
+
+      <!-- magnetometer {-->
+      <!-- Noise modeled after IIS2MDC -->
+      {{ generic.magnetometer_sensor_macro(
+        name = "magnetometer",
+        update_rate = 100,
+        noise_std_x = 0.0001,
+        noise_std_y = 0.0001,
+        noise_std_z = 0.0001)
+      }}
+      <!--}-->
+
+      <!-- GPS {-->
+      {{ generic.gps_sensor_macro(
+        name = "navsat",
+        update_rate = 10)
+      }}
+      <!--}-->
+
+      <!-- IMU {-->
+      <!-- Noise modeled after IIM42653 -->
+      {{ generic.imu_sensor_macro(
+        name = "imu",
+        update_rate = 250,
+        angular_velocity_noise_mean_x = 0.0,
+        angular_velocity_noise_std_x = 0.0008726646,
+        angular_velocity_noise_mean_y = 0.0,
+        angular_velocity_noise_std_y = 0.0008726646,
+        angular_velocity_noise_mean_z = 0.0,
+        angular_velocity_noise_std_z = 0.0008726646,
+        linear_acceleration_noise_mean_x = 0.0,
+        linear_acceleration_noise_std_x = 0.00637,
+        linear_acceleration_noise_mean_y = 0.0,
+        linear_acceleration_noise_std_y = 0.00637,
+        linear_acceleration_noise_mean_z = 0.0,
+        linear_acceleration_noise_std_z = 0.00686)
+      }}
+      <!--}-->
+
+      <!--}-->
+
+    </link>
 
     {# Propellers {--> #}
     {%- set prop_list = [
@@ -190,203 +235,6 @@
       prop_izz = prop_izz,
       spawner_args = spawner_args)
     }}
-    {# <!--}--> #}
-
-    {# ================================================================== #}
-    {# ||                compulsory sensor definitions                 || #}
-    {# ================================================================== #}
-
-    <!-- Pixhawk {-->
-    {%- set imu_topic = '/imu' -%}
-    {%- set mag_topic = '/mag' -%}
-    {%- set baro_topic = '/baro' -%}
-    {%- set lidar_topic = '/lidar' -%}
-
-    <!-- Gazebo ground truth {-->
-    {{ generic.gazebo_groundtruth_macro(
-      home_latitude = 0,
-      home_longitude = 0,
-      home_altitude = 0)
-    }}
-    <!--}-->
-
-    <!-- GPS {-->
-    {{ generic.gazebo_gps_macro(
-      gps_name = 'gps0',
-      parent_link = root,
-      update_rate = 10,
-      gps_noise = true,
-      gps_xy_random_walk = 2.0,
-      gps_z_random_walk = 4.0,
-      gps_xy_noise_density = '2.0e-4',
-      gps_z_noise_density = '4.0e-4',
-      gps_vxy_noise_density = 0.2,
-      gps_vz_noise_density = 0.4,
-      x = 0,
-      y = 0,
-      z = 0,
-      roll = 0,
-      pitch = 0,
-      yaw = 0)
-    }}
-    <!--}-->
-
-    <!-- Magnetometer {-->
-    {{ generic.gazebo_magnetometer_macro(
-      pub_rate = 100,
-      noise_density = 0.0004,
-      random_walk = 0.0000064,
-      bias_correlation_time = 600,
-      mag_topic = mag_topic)
-    }}
-    <!--}-->
-
-    <!-- Barometer {-->
-    {{ generic.gazebo_barometer_macro(
-      baro_topic = baro_topic,
-      pub_rate = 50,
-      baro_drift_pa_per_sec = 0)
-    }}
-    <!--}-->
-
-    <!-- Mavlink interface {-->
-    {{ generic.gazebo_mavlink_interface_macro(
-      imu_topic = imu_topic,
-      mag_topic = mag_topic,
-      baro_topic = baro_topic,
-      lidar_topic = lidar_topic,
-      mavlink_config = spawner_args['mavlink_config'])
-    }}
-    <!--}-->
-
-    <!-- IMU {-->
-    <!-- NOTE: IMU has to be last, otherwise the simulation is extremely slow! -->
-    {{ generic.gazebo_imu_macro(
-      imu_name = 'imu',
-      parent_link = root,
-      imu_topic = '/imu',
-      gyroscope_noise_density = 0.00018665,
-      gyroscope_random_walk = 0.000038785,
-      gyroscope_bias_correlation_time = 1000.0,
-      gyroscope_turn_on_bias_sigma = 0.0087,
-      accelerometer_noise_density = 0.00186,
-      accelerometer_random_walk = 0.006,
-      accelerometer_bias_correlation_time = 300.0,
-      accelerometer_turn_on_bias_sigma = 0.1960,
-      x = 0,
-      y = 0,
-      z = 0,
-      roll = 0,
-      pitch = 0,
-      yaw = 0)
-    }}
-    <!--}-->
-
-    <!--}-->
-
-    {# ================================================================== #}
-    {# ||                  optional sensor definitions                 || #}
-    {# ================================================================== #}
-
-    {# Ground truth {--> #}
-    {{ components.ground_truth_macro(
-      parent_link = root,
-      x = 0,
-      y = 0,
-      z = 0,
-      roll = 0,
-      pitch = 0,
-      yaw = 0,
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
-
-    {# ========================== camera sensors ======================== #}
-
-    {# camera_front {--> #}
-
-    {%- macro camera_front_macro(spawner_args) -%}
-
-      {%- set spawner_keyword = 'enable-camera-front' -%}
-      {%- set spawner_description = 'Enable front-facing camera' -%}
-      {%- set spawner_default_args = {'rate': 20, 'noise': 0.007} -%}
-
-      {%- if spawner_keyword in spawner_args.keys() -%}
-        {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
-
-        {{ generic.camera_macro_meshless(
-          camera_name = 'camera_front',
-          parent_link = root,
-          camera_frame_name = spawner_args['name'] + '/camera_front_optical',
-          parent_frame_name = spawner_args['name'] + '/fcu',
-          sensor_base_frame_name = spawner_args['name'] + '/camera_front',
-          frame_rate = rate,
-          horizontal_fov = 0.79622,
-          image_width = 728,
-          image_height = 544,
-          min_distance = 0.02,
-          max_distance = 80,
-          noise_mean = 0.0,
-          noise_stddev = spawner_args[spawner_keyword]['noise'],
-          x = 0.1,
-          y = 0.0,
-          z = 0.02143,
-          roll = 0,
-          pitch = 0,
-          yaw = 0)
-        }}
-
-      {%- endif -%}
-
-    {%- endmacro -%}
-
-    {{ camera_front_macro(
-      spawner_args = spawner_args)
-    }}
-
-    {# <!--}--> #}
-
-    {# camera_down {--> #}
-
-    {%- macro camera_down_macro(spawner_args) -%}
-
-      {%- set spawner_keyword = 'enable-camera-down' -%}
-      {%- set spawner_description = 'Enable down-facing camera' -%}
-      {%- set spawner_default_args = {'rate': 20, 'noise': 0.007} -%}
-
-      {%- if spawner_keyword in spawner_args.keys() -%}
-        {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
-
-        {{ generic.camera_macro_meshless(
-          camera_name = 'camera_down',
-          parent_link = root,
-          camera_frame_name = spawner_args['name'] + '/camera_down_optical',
-          parent_frame_name = spawner_args['name'] + '/fcu',
-          sensor_base_frame_name = spawner_args['name'] + '/camera_down',
-          frame_rate = rate,
-          horizontal_fov = 1.5476,
-          image_width = 1280,
-          image_height = 800,
-          min_distance = 0.02,
-          max_distance = 80,
-          noise_mean = 0.0,
-          noise_stddev = spawner_args[spawner_keyword]['noise'],
-          x = 0.0821,
-          y = 0.0,
-          z = -0.01,
-          roll = 3.14,
-          pitch = 1.57,
-          yaw = 0.0)
-        }}
-
-      {%- endif -%}
-
-    {%- endmacro -%}
-
-    {{ camera_down_macro(
-      spawner_args = spawner_args)
-    }}
-
     {# <!--}--> #}
 
   </model>
