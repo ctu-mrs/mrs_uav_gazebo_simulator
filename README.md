@@ -53,7 +53,7 @@ The drone models are dynamically created in runtime using the [MRS drone spawner
 To start the example Gazebo world call:
 
 ```bash
-ros2 launch mrs_uav_gazebo_simulator simulation.launch.py world_file:=grass_plane.world gz_headless:=false
+ros2 launch mrs_uav_gazebo_simulator simulation.launch.py world_file:=$(ros2 pkg prefix mrs_gazebo_common_resources)/share/mrs_gazebo_common_resources/worlds/grass_plane.world gz_headless:=false
 ```
 
 At this point the Gazebo world will only contain the environment with grass plane but with no vehicles yet.
