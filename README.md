@@ -53,17 +53,17 @@ The drone models are dynamically created in runtime using the [MRS drone spawner
 To start the example Gazebo world call:
 
 ```bash
-ros2 launch mrs_uav_gazebo_simulator simulation.launch world_name:=grass_plane.world gui:=true
+ros2 launch mrs_uav_gazebo_simulator simulation.launch.py world_file:=$(ros2 pkg prefix mrs_gazebo_common_resources)/share/mrs_gazebo_common_resources/worlds/grass_plane.world gz_headless:=false
 ```
 
 At this point the Gazebo world will only contain the environment with grass plane but with no vehicles yet.
 
 ### Spawning the UAVs
 
-The `simulation.launch` will automatically start the `mrs_drone_spawner` as a ROS node. If you use a custom launch file to start Gazebo, you can launch the spawner separately:
+The `simulation.launch` will automatically start the `mrs_drone_spawner` as a ROS2 node. If you use a custom launch file to start Gazebo, you can launch the spawner separately:
 
 ```bash
-roslaunch mrs_uav_gazebo_simulator mrs_drone_spawner.launch
+ros2 launch mrs_uav_gazebo_simulator mrs_drone_spawner.launch.py
 ```
 
 The `mrs_drone_spawner` will perform the following tasks:
@@ -81,28 +81,28 @@ The service takes one string argument, which specifies the vehicle ID, type and 
 Example: spawn a single vehicle with ID 1, type X500, with a down-facing laser rangefinder:
 
 ```bash
-rosservice call /mrs_drone_spawner/spawn "1 --x500 --enable-rangefinder"
+ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "value: 1 --x500 --enable-rangefinder"
 ```
 
 To display the basic use manual for the spawner, call the service with the argument ` --help`. **NOTE**: String argument cannot start with a dash. Add a space before the dashes to avoid errors. The service call returns the full help text, but the formatting may be broken. Please refer to the terminal running `simulation` or `mrs_drone_spawner` where the help text is also printed with proper formatting.
 
 ```bash
-rosservice call /mrs_drone_spawner/spawn " --help"
+ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "value: --help"
 ```
 
 You can also display a manual for a specific platform. This will list all the components that can be equipped to the selected platform, and their brief description.
 ```bash
-rosservice call /mrs_drone_spawner/spawn " --x500 --help"
+ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "value: --x500 --help"
 ```
 
 Multiple vehicles may be spawned with one service call:
 ```bash
-rosservice call /mrs_drone_spawner/spawn "1 2 3 4 5 --t650 --enable-bluefox-camera --enable-rangefinder"
+ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "value: 1 2 3 4 5 --t650 --enable-bluefox-camera --enable-rangefinder"
 ```
 
 The default parameters of some components may be reconfigured by adding `param:=value` after the component keyword. Multiple params may be used at the same time:
 ```bash
-rosservice call /mrs_drone_spawner/spawn "1 --x500 --enable-rangefinder --enable-ouster model:=OS0-32 use_gpu:=True horizontal_samples:=128 update_rate:=10"
+ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "value: 1 --x500 --enable-rangefinder --enable-ouster model:=OS0-32 use_gpu:=True horizontal_samples:=128 update_rate:=10"
 ```
 The list of components and their reconfigurable parameters can be displayed using the platform-specific help.
 
