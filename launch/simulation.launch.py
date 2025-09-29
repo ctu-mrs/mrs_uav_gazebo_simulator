@@ -140,6 +140,7 @@ def generate_launch_description():
             declare_bridge_debug_arg,
             declare_gz_sim_server_config_path_arg,
             declare_gz_headless_arg,
+            declare_gz_verbose_arg,
             # Environment variables
             set_gz_config_env_var,
             # Nodes and Launches
