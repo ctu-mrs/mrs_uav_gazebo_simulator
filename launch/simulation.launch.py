@@ -101,6 +101,7 @@ def generate_launch_description():
     bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
+        name='ros_gz_bridge',
         arguments=[
             # Clock (IGN -> ROS2)
             '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
