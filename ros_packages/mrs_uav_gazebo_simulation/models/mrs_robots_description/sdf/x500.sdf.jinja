@@ -814,6 +814,22 @@
     {{ ouster }}
     {# <!--}--> #}
 
+    {# Livox {--> #}
+    {%- set livox = components.livox_macro(
+      parent_link = root,
+      sensor_name = 'mid360',
+      x = 0.0,
+      y = 0.0,
+      z = 0.13,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ livox }}
+    {# <!--}--> #}
+
     {# ========================== camera sensors ======================== #}
 
     {# Realsense placements {--> #}
@@ -942,7 +958,7 @@
     {# <!--}--> #}
 
     {# <!--}--> #}
-    
+
     {# third person camera {--> #}
     {%- set third_person_camera = components.third_person_camera_macro(
       camera_name = 'third_person_camera',
@@ -1044,7 +1060,7 @@
     {# ====================== conditional components ==================== #}
 
     {# lidar mount / gps antenna visuals {--> #}
-    {%- if rplidar | replace('\s', '') | length != 0 or ouster | replace('\s', '') | length != 0 -%}
+    {%- if rplidar | replace('\s', '') | length != 0 or ouster | replace('\s', '') | length != 0 or livox | replace('\s', '') | length != 0 -%}
       <!-- lidar mount {-->
       {{ lidar_mount }}
       <!--}-->
