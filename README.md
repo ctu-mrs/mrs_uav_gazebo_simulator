@@ -33,11 +33,11 @@ This package provides UAV model definitions for the Gazebo simulator and a custo
 
 A custom drone model can be added from an external package.
 Please look at [mrs_gazebo_custom_drone_example](https://github.com/ctu-mrs/mrs_gazebo_custom_drone_example) for an example.
-The wiki page [https://ctu-mrs.github.io/docs/simulation/gazebo/gazebo/custom_drone.html](https://ctu-mrs.github.io/docs/simulation/gazebo/gazebo/custom_drone.html) contains a detailed description of all the important steps and configuration parts.
+The [custom drone](https://ctu-mrs.github.io/docs/simulations/gazebo/custom_drone) wiki page contains a detailed description of all the important steps and configuration parts.
 
 ## Starting the simulation
 
-Use one of the prepared Tmuxinator sessions in [`roscd mrs_uav_gazebo_simulator/tmux`](./ros_packages/mrs_uav_gazebo_simulator/tmux) as an example:
+Use one of the prepared Tmuxinator sessions in [`roscd mrs_uav_gazebo_simulator/tmux`](./tmux) as an example:
 
 - [one_drone](./tmux/one_drone)
 <!-- - [one_drone_3dlidar](./tmux/one_drone_3dlidar) -->
@@ -46,7 +46,7 @@ Use one of the prepared Tmuxinator sessions in [`roscd mrs_uav_gazebo_simulator/
 
 ## Using the MRS drone spawner in your simulations
 
-The drone models are dynamically created in runtime using the [MRS drone spawner](https://ctu-mrs.github.io/docs/simulation/gazebo/gazebo/drone_spawner.html). The UAV platforms can be additionally equipped by adding [components](models/mrs_robots_description/sdf/component_snippets.sdf.jinja) (rangefinders, LiDARs, cameras, plugins etc.).
+The drone models are dynamically created in runtime using the [MRS drone spawner](https://ctu-mrs.github.io/docs/simulations/gazebo/drone_spawner). The UAV platforms can be additionally equipped by adding [components](models/mrs_robots_description/sdf/component_snippets.sdf.jinja) (rangefinders, LiDARs, cameras, plugins etc.).
 
 ### Start the Gazebo simulator
 
@@ -106,4 +106,4 @@ ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "value: 1 --x500 
 ```
 The list of components and their reconfigurable parameters can be displayed using the platform-specific help.
 
-For more details, please refer to the [MRS drone spawner](https://ctu-mrs.github.io/docs/simulation/gazebo/gazebo/drone_spawner.html) page.
+For more details, please refer to the [MRS drone spawner](https://ctu-mrs.github.io/docs/simulations/gazebo/drone_spawner) page.
