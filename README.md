@@ -60,7 +60,7 @@ At this point the Gazebo world will only contain the environment with grass plan
 
 ### Spawning the UAVs
 
-The `simulation.launch` will automatically start the `mrs_drone_spawner` as a ROS2 node. If you use a custom launch file to start Gazebo, you can launch the spawner separately:
+The `simulation.launch.py` will automatically start the `mrs_drone_spawner` as a ROS2 node. If you use a custom launch file to start Gazebo, you can launch the spawner separately:
 
 ```bash
 ros2 launch mrs_uav_gazebo_simulator mrs_drone_spawner.launch.py
