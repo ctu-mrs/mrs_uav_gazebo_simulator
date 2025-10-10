@@ -21,7 +21,7 @@ def generate_launch_description():
     declare_world_file_arg = DeclareLaunchArgument(
         'world_file',
         default_value = PathJoinSubstitution([
-                pkg_mrs_common_gazebo_resources, 'worlds', 'grass_plane.world'
+                pkg_mrs_common_gazebo_resources, 'worlds', 'grass_plane.sdf'
             ]),
         description='Path to the SDF world file'
     )
