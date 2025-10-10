@@ -265,9 +265,9 @@ class MrsDroneSpawner(Node):
             'config_yaml': str(robot_params['mavros_px4_config']),
             'namespace': name + '/mavros',
             'use_sim_time': 'true',
-            'base_link_frame_id': name + '/fcu',
-            'odom_frame_id': name + '/local_origin',
-            'map_frame_id': name + '/utm_origin'
+            'base_link_frame_id': name + '/base_link',
+            'odom_frame_id': name + '/odom',
+            'map_frame_id': name + '/map'
         }
 
         ld = LaunchDescription([
