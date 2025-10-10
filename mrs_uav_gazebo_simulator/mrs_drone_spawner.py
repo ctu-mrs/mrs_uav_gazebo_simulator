@@ -17,6 +17,7 @@ import multiprocessing
 import xml.dom.minidom
 import time
 import tempfile
+import yaml
 
 from ament_index_python.packages import get_package_share_directory
 from mrs_uav_gazebo_simulator.utils.component_wrapper import ComponentWrapper
@@ -130,8 +131,7 @@ class MrsDroneSpawner(Node):
         self.declare_parameter('gazebo_models.spacing', 5.0)
 
         self.declare_parameter('jinja_templates.suffix', '.sdf.jinja')
-        self.declare_parameter('jinja_templates.save_rendered_sdf', True)
-        
+
         self.declare_parameter('firmware_launch_delay', 0.0)
 
         self.declare_parameter('extra_resource_paths', [])
@@ -144,8 +144,7 @@ class MrsDroneSpawner(Node):
             self.model_spacing = self.get_parameter('gazebo_models.spacing').value
 
             self.template_suffix = self.get_parameter('jinja_templates.suffix').value
-            self.save_sdf_files = self.get_parameter('jinja_templates.save_rendered_sdf').value
-            
+
             self.firmware_launch_delay = float(self.get_parameter('firmware_launch_delay').value)
 
         except rclpy.exceptions.ParameterNotDeclaredException as e:
@@ -169,26 +168,26 @@ class MrsDroneSpawner(Node):
                 resource_paths.append(rpath)
 
         self.jinja_env = self.configure_jinja2_environment(resource_paths)
-        
+
         time_str = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         tempfile_folder = f'mrs_gazebo_simulator_{time_str}'
         self.tempfile_folder = os.path.join(tempfile.gettempdir(), tempfile_folder)
-        
+
         try:
             os.makedirs(self.tempfile_folder, exist_ok=False)
         except Exception as e:
             raise RuntimeError(f"Error creating directory {self.tempfile_folder}: {e}")
 
         # Find launch files
-        gazebo_simulation_path = get_package_share_directory('mrs_uav_gazebo_simulator')
-        self.uav_ros_gz_bridge_launch_path = os.path.join(gazebo_simulation_path, 'launch', 'uav_ros_gz_bridge.launch.py')
-        self.uav_ros_gz_bridge_config_path = os.path.join(gazebo_simulation_path, 'config')
+        gazebo_simulator_path = get_package_share_directory('mrs_uav_gazebo_simulator')
+        self.uav_ros_gz_bridge_launch_path = os.path.join(gazebo_simulator_path, 'launch', 'uav_ros_gz_bridge.launch.py')
+        self.uav_ros_gz_bridge_config_path = os.path.join(gazebo_simulator_path, 'config')
         self.uav_ros_gz_bridge_config_template_name = 'uav_ros_gz_bridge_config.jinja.yaml'
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
         self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
         self.mavros_px4_config_path = os.path.join(px4_api_path, 'config')
         self.mavros_px4_config_template_name = 'mavros_px4_config.jinja.yaml'
-        self.px4_fimrware_launch_path = os.path.join(gazebo_simulation_path, 'launch', 'run_simulation_firmware.launch.py')
+        self.px4_fimrware_launch_path = os.path.join(gazebo_simulator_path, 'launch', 'run_simulation_firmware.launch.py')
         self.mavros_plugin_list = os.path.join(self.mavros_px4_config_path, 'mavros_plugins.yaml')
 
         try:
@@ -316,13 +315,13 @@ class MrsDroneSpawner(Node):
             self.get_logger().error('Template did not render, spawn failed.')
             return
 
-        if self.save_sdf_files:
-            filename = f"mrs_drone_spawner_{name}.sdf"
-            filepath = os.path.join(self.tempfile_folder, filename)
+        filename = f'mrs_drone_spawner_{name}.sdf'
+        filepath = os.path.join(self.tempfile_folder, filename)
 
-            with open(filepath, 'w') as output_file:
-                output_file.write(sdf_content)
-                self.get_logger().info(f'Model for {name} written to {filepath}')
+        with open(filepath, 'w') as output_file:
+            output_file.write(sdf_content)
+            self.get_logger().info(f'Model for {name} written to {filepath}')
+            robot_params['sdf_filepath'] = filepath
 
         request = SpawnEntity.Request()
         request.entity_factory.name = name
@@ -343,18 +342,18 @@ class MrsDroneSpawner(Node):
     # #}
 
     # #{ launch_uav_ros_gz_bridge(self, robot_params)
-    def launch_uav_ros_gz_bridge(self, robot_params):
+    def launch_uav_ros_gz_bridge(self, robot_params, attached_sensors):
         name = robot_params['name']
         self.get_logger().info(f'Launching ros_gz_bridge for {name}')
 
-        camera_image_topic_list = []
-        for camera_name in robot_params['camera_names_list']:
-            camera_image_topic_list.append(f'/{name}/{camera_name}/image_raw')
+        if len(attached_sensors['camera_topics']) < 1:
+            self.get_logger().info(f'No camera attached, not creating ros_gz_bridge for camera topics')
+            return
 
         launch_arguments = {
             'namespace': name,
             'ros_gz_bridge_config': str(robot_params['ros_gz_bridge_config']),
-            'ros_gz_image_topics': " ".join(camera_image_topic_list),
+            'ros_gz_image_topics': ' '.join(attached_sensors['camera_topics']),
             'bridge_debug': 'false',
         }
 
@@ -393,14 +392,15 @@ class MrsDroneSpawner(Node):
             firmware_process = None
             mavros_process = None
 
+            attached_sensors = self.get_attached_sensors(robot_params)
+
             try:
-                if robot_params['camera_names_list']:
-                    ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params)
+                ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params, attached_sensors)
                 mavros_process = self.launch_mavros(robot_params)
                 firmware_process = self.launch_px4_firmware(robot_params)
 
             except Exception as e:
-                self.get_logger().error(f"Failed during spawn sequence for {robot_params['name']}: {e}")
+                self.get_logger().error(f'Failed during spawn sequence for {robot_params["name"]}: {e}')
                 self.delete_gazebo_model(robot_params['name'])
                 if firmware_process and firmware_process.is_alive():
                     firmware_process.terminate()
@@ -422,7 +422,7 @@ class MrsDroneSpawner(Node):
             self.gazebo_spawn_future = None
 
         except Exception as e:
-            self.get_logger().error(f"Spawning failed for {robot_params['name']} with error: {e}, aborting launch sequence.")
+            self.get_logger().error(f'Spawning failed for {robot_params["name"]} with error: {e}, aborting launch sequence.')
             self.assigned_ids.remove(robot_params['ID'])
             self.gazebo_spawn_future = None
             return
@@ -542,14 +542,14 @@ class MrsDroneSpawner(Node):
     def get_ros_package_name(self, filepath):
         '''Return the name of a ros package that contains a given filepath'''
 
-        package_share_pattern = r"^(.*?share/[^/]+)"
+        package_share_pattern = r'^(.*?share/[^/]+)'
         match_result = re.match(package_share_pattern, filepath)
         if match_result is not None:
             package_share_path = match_result.group(0)
         else:
             package_share_path = None
 
-        package_name_pattern = r"share/([^/]+)"
+        package_name_pattern = r'share/([^/]+)'
         search_result = re.search(package_name_pattern, filepath)
         if search_result is not None:
             package_name = search_result.group(1)
@@ -557,14 +557,14 @@ class MrsDroneSpawner(Node):
             package_name = None
 
         if package_share_path is None or package_name is None:
-            self.get_logger().error(f"Package name or share path could not be determined from filepath '{filepath}'")
+            self.get_logger().error(f'Package name or share path could not be determined from filepath "{filepath}"')
             return None
 
         share_path_from_ament_index = get_package_share_directory(package_name)
 
         # sanity check
         if share_path_from_ament_index != package_share_path:
-            self.get_logger().error(f"Share path for package '{package_name}' not registered in ament index. Is the resource package installed and sourced?")
+            self.get_logger().error(f'Share path for package "{package_name}" not registered in ament index. Is the resource package installed and sourced?')
             return None
 
         return package_name
@@ -749,13 +749,13 @@ class MrsDroneSpawner(Node):
     def render(self, spawner_args):
         '''
         Renders a jinja template into a sdf, creates a formatted xml
-        Input has to specify the template name in spawner_args["model"]
+        Input has to specify the template name in spawner_args['model']
         :param spawner_args: a dict to be passed into the template as variables, format {component_name (string): args (list or dict)}
         :return: content of the xml file as a string or None
         '''
 
         params = {
-            "spawner_args": spawner_args
+            'spawner_args': spawner_args
         }
 
         try:
@@ -778,7 +778,7 @@ class MrsDroneSpawner(Node):
             root = xml.dom.minidom.parseString(rendered_template)
         except Exception as e:
             self.get_logger().error(f'XML error: "{e}"')
-            fd, filepath = tempfile.mkstemp(prefix='mrs_drone_spawner_' + datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S_"), suffix='_DUMP_' + str(model_name) + '.sdf')
+            fd, filepath = tempfile.mkstemp(prefix='mrs_drone_spawner_' + datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_'), suffix='_DUMP_' + str(model_name) + '.sdf')
             with os.fdopen(fd, 'w') as output_file:
                 output_file.write(rendered_template)
                 self.get_logger().info(f'Malformed XML for model {model_name} dumped to {filepath}')
@@ -1210,7 +1210,7 @@ class MrsDroneSpawner(Node):
         del robot_params['help']
         del robot_params['ids']
         del robot_params['spawn_poses']
-        
+
         robot_params['camera_names_list'] = self.generate_all_camera_names(robot_params)
 
         robot_params['mavlink_config'] = self.get_mavlink_config_for_robot(ID)
@@ -1263,6 +1263,28 @@ class MrsDroneSpawner(Node):
         return filepath
     # #}
 
+    # #{ get_attached_sensors(self, robot_params)
+    def get_attached_sensors(self,robot_params):
+
+        attached_sensors = {
+            'camera_topics': []
+        }
+
+        # not using try-catch, it's already done during the sdf's generation
+        xmldoc = xml.dom.minidom.parse(robot_params['sdf_filepath'])
+        sensor_blocks = xmldoc.getElementsByTagName('sensor')
+
+        for sensor in sensor_blocks:
+            self.get_logger().info(f'Found a sensor block')
+            if sensor.getAttribute('type') == 'camera':
+                topic = sensor.getElementsByTagName('topic')
+                if topic:
+                    topic_name = '/' + topic[0].firstChild.data
+                    attached_sensors['camera_topics'].append(topic_name)
+
+        return attached_sensors
+    # #}
+
     # #{ generate_uav_ros_gz_config(self, uav_name)
     def generate_uav_ros_gz_config(self, robot_params):
         uav_name = robot_params['name']
@@ -1296,11 +1318,11 @@ class MrsDroneSpawner(Node):
         all_camera_names = []
         for key in robot_params:
             topic_list = PARAMETER_CAMERA_NAMES_MAP.get(key, [])
-            
+
             if topic_list:
                 for topic in topic_list:
                     all_camera_names.append(topic)
-        
+
         return all_camera_names
     # #}
 
