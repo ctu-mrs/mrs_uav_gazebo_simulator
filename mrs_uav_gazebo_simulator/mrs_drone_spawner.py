@@ -112,6 +112,15 @@ def exit_handler():
     print('[INFO] [MrsDroneSpawner]: Exited gracefully')
 # #}
 
+PARAMETER_CAMERA_NAMES_MAP = {
+    "enable-camera": [
+        "camera"
+    ],
+    "enable-realsense": [
+        "realsense/color",
+        "realsense/depth",
+    ]
+}
 
 class MrsDroneSpawner(Node):
 
@@ -164,13 +173,23 @@ class MrsDroneSpawner(Node):
                 resource_paths.append(rpath)
 
         self.jinja_env = self.configure_jinja2_environment(resource_paths)
+        
+        time_str = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        tempfile_folder = f'mrs_gazebo_simulator_{time_str}'
+        self.tempfile_folder = os.path.join(tempfile.gettempdir(), tempfile_folder)
+        
+        try:
+            os.makedirs(self.tempfile_folder, exist_ok=False)
+        except Exception as e:
+            raise RuntimeError(f"Error creating directory {self.tempfile_folder}: {e}")
 
         # Find launch files
         gazebo_simulation_path = get_package_share_directory('mrs_uav_gazebo_simulator')
+        self.uav_ros_gz_bridge_launch_path = os.path.join(gazebo_simulation_path, 'launch', 'uav_ros_gz_bridge.launch.py')
+        self.uav_ros_gz_bridge_config_path = os.path.join(gazebo_simulation_path, 'config')
+        self.uav_ros_gz_bridge_config_template_name = 'uav_ros_gz_bridge_config.jinja.yaml'
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
         self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
-        # self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch')
-        # self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros_gazebo_simulation.launch.py')
         self.mavros_px4_config_path = os.path.join(px4_api_path, 'config')
         self.mavros_px4_config_template_name = 'mavros_px4_config.jinja.yaml'
         self.px4_fimrware_launch_path = os.path.join(gazebo_simulation_path, 'launch', 'run_simulation_firmware.launch.py')
@@ -277,7 +296,7 @@ class MrsDroneSpawner(Node):
             )
         ])
 
-        self.get_logger().info(f'robot_params: {robot_params}')
+        self.get_logger().info(f'launch_arguments: {launch_arguments}')
         launch_service = LaunchService(debug=False)
         launch_service.include_launch_description(ld)
         mavros_process = multiprocessing.Process(target=launch_service.run)
@@ -302,10 +321,8 @@ class MrsDroneSpawner(Node):
             return
 
         if self.save_sdf_files:
-            time_str = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
-
-            filename = f"mrs_drone_spawner_{name}_{time_str}.sdf"
-            filepath = os.path.join(tempfile.gettempdir(), filename)
+            filename = f"mrs_drone_spawner_{name}.sdf"
+            filepath = os.path.join(self.tempfile_folder, filename)
 
             with open(filepath, 'w') as output_file:
                 output_file.write(sdf_content)
@@ -329,6 +346,44 @@ class MrsDroneSpawner(Node):
         self.gazebo_spawn_future.add_done_callback(lambda future: self.service_response_callback_spawn_gazebo_model(future, robot_params))
     # #}
 
+    # #{ launch_uav_ros_gz_bridge(self, robot_params)
+    def launch_uav_ros_gz_bridge(self, robot_params):
+        name = robot_params['name']
+        self.get_logger().info(f'Launching ros_gz_bridge for {name}')
+
+        camera_image_topic_list = []
+        for camera_name in robot_params['camera_names_list']:
+            camera_image_topic_list.append(f'/{name}/{camera_name}/image_raw')
+
+        launch_arguments = {
+            'namespace': name,
+            'ros_gz_bridge_config': str(robot_params['ros_gz_bridge_config']),
+            'ros_gz_image_topics': " ".join(camera_image_topic_list),
+            'bridge_debug': 'false',
+        }
+
+        ld = LaunchDescription([
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(self.uav_ros_gz_bridge_launch_path),
+                launch_arguments=launch_arguments.items(),
+            )
+        ])
+
+        self.get_logger().info(f'launch_arguments: {launch_arguments}')
+        launch_service = LaunchService(debug=False)
+        launch_service.include_launch_description(ld)
+        ros_gz_bridge_process = multiprocessing.Process(target=launch_service.run)
+
+        try:
+            ros_gz_bridge_process.start()
+        except Exception as e:
+            self.get_logger().error(f'Could not start ros_gz_bridge for {name}. Node failed to launch: {e}')
+            raise CouldNotLaunch('ros_gz_bridge failed to launch')
+
+        self.get_logger().info(f'ros_gz_bridge for {name} launched')
+        return ros_gz_bridge_process
+    # #}
+
     # #{ service_response_callback_spawn_gazebo_model(self, future, robot_params)
     def service_response_callback_spawn_gazebo_model(self, future, robot_params):
         # This function is called automatically when the service response arrives.
@@ -338,10 +393,12 @@ class MrsDroneSpawner(Node):
             if not response.success:
                 raise CouldNotSpawn(f'Call failed')
 
+            ros_gz_bridge_process = None
             firmware_process = None
             mavros_process = None
 
             try:
+                ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params)
                 mavros_process = self.launch_mavros(robot_params)
                 firmware_process = self.launch_px4_firmware(robot_params)
 
@@ -352,12 +409,15 @@ class MrsDroneSpawner(Node):
                     firmware_process.terminate()
                 if mavros_process and mavros_process.is_alive():
                     mavros_process.terminate()
+                if ros_gz_bridge_process and ros_gz_bridge_process.is_alive():
+                    ros_gz_bridge_process.terminate()
                 self.assigned_ids.remove(robot_params['ID'])
                 self.gazebo_spawn_future = None
                 return
 
             glob_running_processes.append(firmware_process)
             glob_running_processes.append(mavros_process)
+            glob_running_processes.append(ros_gz_bridge_process)
 
             self.get_logger().info(f'Vehicle {robot_params["name"]} successfully spawned')
             self.active_vehicles.append(robot_params['name'])
@@ -1152,9 +1212,12 @@ class MrsDroneSpawner(Node):
         del robot_params['help']
         del robot_params['ids']
         del robot_params['spawn_poses']
+        
+        robot_params['camera_names_list'] = self.generate_all_camera_names(robot_params)
 
         robot_params['mavlink_config'] = self.get_mavlink_config_for_robot(ID)
         robot_params['mavros_px4_config'] = self.generate_mavros_px4_config(robot_params['name'])
+        robot_params['ros_gz_bridge_config'] = self.generate_uav_ros_gz_config(robot_params)
 
         return robot_params
     # #}
@@ -1192,15 +1255,55 @@ class MrsDroneSpawner(Node):
 
         rendered_template = template.render(uav_name=uav_name)
 
-        time_str = datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
-        filename = f'mavros_px4_config_{uav_name}_{time_str}.yaml'
-        filepath = os.path.join(tempfile.gettempdir(), filename)
+        filename = f'mavros_px4_config_{uav_name}.yaml'
+        filepath = os.path.join(self.tempfile_folder, filename)
 
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(rendered_template)
             self.get_logger().info(f'Mavros PX4 config for {uav_name} written to {filepath}')
 
         return filepath
+    # #}
+
+    # #{ generate_uav_ros_gz_config(self, uav_name)
+    def generate_uav_ros_gz_config(self, robot_params):
+        uav_name = robot_params['name']
+
+        jinja_env = jinja2.Environment(
+                loader=jinja2.FileSystemLoader(self.uav_ros_gz_bridge_config_path),
+                autoescape=False)
+
+        template = jinja_env.get_template(self.uav_ros_gz_bridge_config_template_name)
+
+        camera_info_topic_list = []
+        for camera_name in robot_params['camera_names_list']:
+            camera_info_topic_list.append(f'/{uav_name}/{camera_name}/camera_info')
+
+        rendered_template = template.render(
+                camera_info_topic_list = camera_info_topic_list
+                )
+
+        filename = f'ros_gz_bridge_config_{uav_name}.yaml'
+        filepath = os.path.join(self.tempfile_folder, filename)
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(rendered_template)
+            self.get_logger().info(f'ros_gz_bridge config for {uav_name} written to {filepath}')
+
+        return filepath
+    # #}
+
+    # #{ generate_all_camera_names(self, robot_params)
+    def generate_all_camera_names(self,robot_params):
+        all_camera_names = []
+        for key in robot_params:
+            topic_list = PARAMETER_CAMERA_NAMES_MAP.get(key, [])
+            
+            if topic_list:
+                for topic in topic_list:
+                    all_camera_names.append(topic)
+        
+        return all_camera_names
     # #}
 
 def main(args=None):

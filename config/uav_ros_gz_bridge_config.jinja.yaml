@@ -1,0 +1,8 @@
+# gz topic published by Sensors plugin (Camera)
+{% for topic in camera_info_topic_list %}
+- ros_topic_name: "{{ topic }}"
+  gz_topic_name: "{{ topic }}"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+{% endfor %}
