@@ -721,7 +721,7 @@ limitations under the License.
 {# ========================== camera sensors ========================= #}
 
 {# camera_macro {--> #}
-{%- macro camera_macro(parent_link, camera_name, camera_frame_name, sensor_base_frame_name, frame_rate, parent_frame_name, horizontal_fov, image_width, image_height, min_distance, max_distance, noise_mean, noise_stddev, mesh_file, mesh_scale, color, visual_x, visual_y, visual_z, visual_roll, visual_pitch, visual_yaw, x, y, z, roll, pitch, yaw) -%}
+{%- macro camera_macro(parent_link, camera_name, camera_frame_name, camera_topic_name, frame_rate, horizontal_fov, image_width, image_height, min_distance, max_distance, noise_mean, noise_stddev, mesh_file, mesh_scale, color, visual_x, visual_y, visual_z, visual_roll, visual_pitch, visual_yaw, x, y, z, roll, pitch, yaw) -%}
 <link name="{{ camera_name }}_link">
   <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
   {{ zero_inertial_macro() }}
@@ -738,8 +738,13 @@ limitations under the License.
     yaw = visual_yaw)
   }}
   <sensor name="{{ camera_name }}_sensor" type="camera">
+    <always_on>true</always_on>
+    <visualize>true</visualize>
+    <topic>{{ camera_topic_name }}/image_raw</topic>
+    <gz_frame_id>{{ camera_frame_name }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
-    <camera>
+
+    <camera name="{{ camera_name }}">
       <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
       <image>
         <width>{{ image_width }}</width>
@@ -758,28 +763,6 @@ limitations under the License.
         <stddev>{{ noise_stddev }}</stddev>
       </noise>
     </camera>
-    <plugin name="{{ camera_name }}_plugin" filename="libMrsGazeboCommonResources_CameraPlugin.so">
-      <alwaysOn>true</alwaysOn>
-      <updateRate>{{ frame_rate }}</updateRate>
-      <cameraName>{{ camera_name }}</cameraName>
-      <imageTopicName>image_raw</imageTopicName>
-      <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-      <frameName>/{{ camera_frame_name }}</frameName>
-      <hackBaseline>0.0</hackBaseline>
-      <distortionK1>0.0</distortionK1>
-      <distortionK2>0.0</distortionK2>
-      <distortionK3>0.0</distortionK3>
-      <distortionT1>0.0</distortionT1>
-      <distortionT2>0.0</distortionT2>
-      <parentFrameName>{{ parent_frame_name }}</parentFrameName>
-      <sensorBaseFrameName>{{ sensor_base_frame_name }}</sensorBaseFrameName>
-      <x>{{ x }}</x>
-      <y>{{ y }}</y>
-      <z>{{ z }}</z>
-      <roll>{{ roll }}</roll>
-      <pitch>{{ pitch }}</pitch>
-      <yaw>{{ yaw }}</yaw>
-    </plugin>
   </sensor>
 </link>
 

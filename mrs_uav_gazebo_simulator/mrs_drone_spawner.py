@@ -113,13 +113,9 @@ def exit_handler():
 # #}
 
 PARAMETER_CAMERA_NAMES_MAP = {
-    "enable-camera": [
-        "camera"
+    "enable-bluefox-camera": [
+        "bluefox"
     ],
-    "enable-realsense": [
-        "realsense/color",
-        "realsense/depth",
-    ]
 }
 
 class MrsDroneSpawner(Node):
@@ -398,7 +394,8 @@ class MrsDroneSpawner(Node):
             mavros_process = None
 
             try:
-                ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params)
+                if robot_params['camera_names_list']:
+                    ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params)
                 mavros_process = self.launch_mavros(robot_params)
                 firmware_process = self.launch_px4_firmware(robot_params)
 
@@ -417,7 +414,8 @@ class MrsDroneSpawner(Node):
 
             glob_running_processes.append(firmware_process)
             glob_running_processes.append(mavros_process)
-            glob_running_processes.append(ros_gz_bridge_process)
+            if ros_gz_bridge_process is not None:
+                glob_running_processes.append(ros_gz_bridge_process)
 
             self.get_logger().info(f'Vehicle {robot_params["name"]} successfully spawned')
             self.active_vehicles.append(robot_params['name'])
