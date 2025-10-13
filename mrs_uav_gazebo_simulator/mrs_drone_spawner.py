@@ -113,12 +113,6 @@ def exit_handler():
     print('[INFO] [MrsDroneSpawner]: Exited gracefully')
 # #}
 
-PARAMETER_CAMERA_NAMES_MAP = {
-    "enable-bluefox-camera": [
-        "bluefox"
-    ],
-}
-
 class MrsDroneSpawner(Node):
 
     def __init__(self):
@@ -342,18 +336,17 @@ class MrsDroneSpawner(Node):
     # #}
 
     # #{ launch_uav_ros_gz_bridge(self, robot_params)
-    def launch_uav_ros_gz_bridge(self, robot_params, attached_sensors):
-        name = robot_params['name']
-        self.get_logger().info(f'Launching ros_gz_bridge for {name}')
+    def launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics):
+        self.get_logger().info(f'Launching ros_gz_bridge for {uav_name}')
 
-        if len(attached_sensors['camera_topics']) < 1:
-            self.get_logger().info(f'No camera attached, not creating ros_gz_bridge for camera topics')
+        if len(sensor_topics['image_topics']) < 1:
+            self.get_logger().info(f'No image publisher attached, not creating ros_gz_bridge for image topics')
             return
 
         launch_arguments = {
-            'namespace': name,
-            'ros_gz_bridge_config': str(robot_params['ros_gz_bridge_config']),
-            'ros_gz_image_topics': ' '.join(attached_sensors['camera_topics']),
+            'namespace': uav_name,
+            'ros_gz_bridge_config': str(ros_gz_bridge_config),
+            'ros_gz_image_topics': ' '.join(sensor_topics['image_topics']),
             'bridge_debug': 'false',
         }
 
@@ -372,10 +365,10 @@ class MrsDroneSpawner(Node):
         try:
             ros_gz_bridge_process.start()
         except Exception as e:
-            self.get_logger().error(f'Could not start ros_gz_bridge for {name}. Node failed to launch: {e}')
+            self.get_logger().error(f'Could not start ros_gz_bridge for {uav_name}. Node failed to launch: {e}')
             raise CouldNotLaunch('ros_gz_bridge failed to launch')
 
-        self.get_logger().info(f'ros_gz_bridge for {name} launched')
+        self.get_logger().info(f'ros_gz_bridge for {uav_name} launched')
         return ros_gz_bridge_process
     # #}
 
@@ -392,10 +385,10 @@ class MrsDroneSpawner(Node):
             firmware_process = None
             mavros_process = None
 
-            attached_sensors = self.get_attached_sensors(robot_params)
+            ros_gz_bridge_config, sensor_topics = self.generate_uav_ros_gz_config(robot_params)
 
             try:
-                ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params, attached_sensors)
+                ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params['name'], ros_gz_bridge_config, sensor_topics)
                 mavros_process = self.launch_mavros(robot_params)
                 firmware_process = self.launch_px4_firmware(robot_params)
 
@@ -1211,11 +1204,8 @@ class MrsDroneSpawner(Node):
         del robot_params['ids']
         del robot_params['spawn_poses']
 
-        robot_params['camera_names_list'] = self.generate_all_camera_names(robot_params)
-
         robot_params['mavlink_config'] = self.get_mavlink_config_for_robot(ID)
         robot_params['mavros_px4_config'] = self.generate_mavros_px4_config(robot_params['name'])
-        robot_params['ros_gz_bridge_config'] = self.generate_uav_ros_gz_config(robot_params)
 
         return robot_params
     # #}
@@ -1264,10 +1254,10 @@ class MrsDroneSpawner(Node):
     # #}
 
     # #{ get_attached_sensors(self, robot_params)
-    def get_attached_sensors(self,robot_params):
+    def get_attached_sensors(self, robot_params):
 
         attached_sensors = {
-            'camera_topics': []
+            'cameras': []
         }
 
         # not using try-catch, it's already done during the sdf's generation
@@ -1275,12 +1265,13 @@ class MrsDroneSpawner(Node):
         sensor_blocks = xmldoc.getElementsByTagName('sensor')
 
         for sensor in sensor_blocks:
-            self.get_logger().info(f'Found a sensor block')
             if sensor.getAttribute('type') == 'camera':
+                camera = {}
                 topic = sensor.getElementsByTagName('topic')
                 if topic:
-                    topic_name = '/' + topic[0].firstChild.data
-                    attached_sensors['camera_topics'].append(topic_name)
+                    camera['image_topic'] = '/' + topic[0].firstChild.data
+                    camera['camera_info_topic'] = camera['image_topic'].replace('image_raw', 'camera_info')
+                    attached_sensors['cameras'].append(camera)
 
         return attached_sensors
     # #}
@@ -1295,13 +1286,20 @@ class MrsDroneSpawner(Node):
 
         template = jinja_env.get_template(self.uav_ros_gz_bridge_config_template_name)
 
+        attached_sensors = self.get_attached_sensors(robot_params)
+
+        sensor_topics = {}
+
         camera_info_topic_list = []
-        for camera_name in robot_params['camera_names_list']:
-            camera_info_topic_list.append(f'/{uav_name}/{camera_name}/camera_info')
+        image_topic_list = []
+        for camera in attached_sensors['cameras']:
+            camera_info_topic_list.append(camera['camera_info_topic'])
+            image_topic_list.append(camera['image_topic'])
+
 
         rendered_template = template.render(
-                camera_info_topic_list = camera_info_topic_list
-                )
+            camera_info_topic_list = camera_info_topic_list
+        )
 
         filename = f'ros_gz_bridge_config_{uav_name}.yaml'
         filepath = os.path.join(self.tempfile_folder, filename)
@@ -1310,20 +1308,9 @@ class MrsDroneSpawner(Node):
             f.write(rendered_template)
             self.get_logger().info(f'ros_gz_bridge config for {uav_name} written to {filepath}')
 
-        return filepath
-    # #}
+        sensor_topics['image_topics'] = image_topic_list
 
-    # #{ generate_all_camera_names(self, robot_params)
-    def generate_all_camera_names(self,robot_params):
-        all_camera_names = []
-        for key in robot_params:
-            topic_list = PARAMETER_CAMERA_NAMES_MAP.get(key, [])
-
-            if topic_list:
-                for topic in topic_list:
-                    all_camera_names.append(topic)
-
-        return all_camera_names
+        return filepath, sensor_topics
     # #}
 
 def main(args=None):
