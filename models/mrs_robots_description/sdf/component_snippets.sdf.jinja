@@ -1467,7 +1467,7 @@ limitations under the License.
 {%- macro bluefox_camera_front_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
 
   {%- set spawner_keyword = 'enable-bluefox-camera-front' -%}
-  {%- set spawner_description = 'Add bluefox camera to the vehicle [752x480 @ 50hz], pointing forward' -%}
+  {%- set spawner_description = 'Add bluefox camera to the vehicle [752x480 @ 50hz], pointing front' -%}
   {%- set spawner_default_args = {'update_rate': 100, 'noise': 0.0} -%}
 
   {%- if spawner_keyword in spawner_args.keys() -%}
@@ -1479,9 +1479,8 @@ limitations under the License.
     {{ generic.camera_macro(
       parent_link = parent_link,
       camera_name = camera_name,
-      parent_frame_name = spawner_args['name'] + '/fcu',
       camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
-      sensor_base_frame_name = spawner_args['name'] + '/' + camera_name,
+      camera_topic_name = spawner_args['name'] + '/' + camera_name,
       frame_rate = spawner_args[spawner_keyword]['update_rate'],
       horizontal_fov = 2.1,
       image_width = 752,

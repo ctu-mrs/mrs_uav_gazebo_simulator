@@ -737,6 +737,19 @@
     {{ bluefox_camera }}
     {# <!--}--> #}
 
+    {# bluefox (front) {--> #}
+    {%- set bluefox_camera_front = components.bluefox_camera_front_macro(
+      camera_name = 'bluefox_front',
+      parent_link = root,
+      x = 0.10,
+      y = 0.0,
+      z = 0.0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ bluefox_camera_front }}
+    {# <!--}--> #}
+
     {# bluefox reverse {--> #}
     {%- set bluefox_camera_reverse = components.bluefox_camera_reverse_macro(
       camera_name = 'bluefox_reverse',
