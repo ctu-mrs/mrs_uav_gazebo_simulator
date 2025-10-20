@@ -23,36 +23,36 @@ windows:
       panes:
         - ros2 launch mrs_uav_gazebo_simulator simulation.launch.py gz_headless:=false gz_verbose:=true
         - |
-          waitForGazebo; sleep 5; ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE --enable-rangefinder --enable-bluefox-camera'}"
-  - px4_api:
-      layout: tiled
-      panes:
-        - ros2 launch mrs_uav_px4_api api.launch.py
-  - core:
-      layout: tiled
-      panes:
-        - waitForHwApi; ros2 launch mrs_uav_core core.launch.py
-          platform_config:=$PLATFORM_CONFIG
-          world_config:=./config/world_config.yaml
-          custom_config:=./config/custom_config.yaml
-          network_config:=./config/network_config.yaml
-  - status:
-      layout: tiled
-      panes:
-        - ros2 run mrs_uav_status status.sh
-  - autostart:
-      layout: tiled
-      panes:
-        - ros2 launch mrs_uav_autostart automatic_start.launch.py custom_config:=./config/automatic_start.yaml
-  - takeoff:
-      layout: tiled
-      panes:
-        - waitForCore; ./takeoff.sh
-  - rviz:
-      layout: tiled
-      panes:
-        - waitForCore; ros2 run rviz2 rviz2 -d ./rviz.rviz
-  - layout:
-      layout: tiled
-      panes:
-        - waitForCore; sleep 2; ~/.i3/layout_manager.sh ./layout.json
+          waitForGazebo; sleep 5; ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE --enable-lidar-test'}"
+  # - px4_api:
+  #     layout: tiled
+  #     panes:
+  #       - ros2 launch mrs_uav_px4_api api.launch.py
+  # - core:
+  #     layout: tiled
+  #     panes:
+  #       - waitForHwApi; ros2 launch mrs_uav_core core.launch.py
+  #         platform_config:=$PLATFORM_CONFIG
+  #         world_config:=./config/world_config.yaml
+  #         custom_config:=./config/custom_config.yaml
+  #         network_config:=./config/network_config.yaml
+  # - status:
+  #     layout: tiled
+  #     panes:
+  #       - ros2 run mrs_uav_status status.sh
+  # - autostart:
+  #     layout: tiled
+  #     panes:
+  #       - ros2 launch mrs_uav_autostart automatic_start.launch.py custom_config:=./config/automatic_start.yaml
+  # - takeoff:
+  #     layout: tiled
+  #     panes:
+  #       - waitForCore; ./takeoff.sh
+  # - rviz:
+  #     layout: tiled
+  #     panes:
+  #       - waitForCore; ros2 run rviz2 rviz2 -d ./rviz.rviz
+  # - layout:
+  #     layout: tiled
+  #     panes:
+  #       - waitForCore; sleep 2; ~/.i3/layout_manager.sh ./layout.json

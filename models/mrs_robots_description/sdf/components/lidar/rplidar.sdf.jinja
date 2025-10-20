@@ -1,0 +1,104 @@
+<?xml version="1.0"? encoding="utf-8">
+
+
+{# rplidar_macro {--> #}
+{%- macro rplidar_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-rplidar' -%}
+  {%- set spawner_description = 'Add the RPlidar A3 laser scanner. Do not set range outside <0.10 - 15.0> (unrealistic)' -%}
+  {%- set spawner_default_args = {'horizontal_samples': 1600, 'update_rate': 20.0, 'min_range': 0.15, 'max_range': 14.0, 'noise': 0.01} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {%- set sensor_name = 'rplidar' -%}
+
+    <!-- rplidar A3 {-->
+    <link name="{{ sensor_name }}_link">
+      <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+      {{ generic.zero_inertial_macro() }}
+
+      <!-- visuals {-->
+      {{ generic.visual_mesh_macro(
+        name = 'base_visual',
+        mesh_file = 'model://mrs_robots_description/meshes/sensors/rplidar.stl',
+        mesh_scale = '0.001 0.001 0.001',
+        color = 'FlatBlack',
+        x = 0,
+        y = 0,
+        z = -0.029,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(180))
+      }}
+      <visual name="purple_visual">
+        <pose>0 0 -0.011 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.001</length>
+            <radius>0.038</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Purple</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <!--}-->
+
+      <!-- sensor {-->
+      <sensor name='{{ sensor_name }}_sensor' type='ray'>
+        <visualize>false</visualize>
+        <update_rate>{{ spawner_args[spawner_keyword]['update_rate'] }}</update_rate>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>{{ spawner_args[spawner_keyword]['horizontal_samples'] | int }}</samples>
+              <resolution>1</resolution>
+              <min_angle>-3.1241390751</min_angle>
+              <max_angle>3.1241390751</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>{{ spawner_args[spawner_keyword]['min_range'] }}</min>
+            <max>{{ spawner_args[spawner_keyword]['max_range'] }}</max>
+            <resolution>0.01</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>{{ spawner_args[spawner_keyword]['noise'] }}</stddev>
+          </noise>
+        </ray>
+        <plugin name='{{ sensor_name }}_plugin' filename='libMrsGazeboCommonResources_2DLidarPlugin.so'>
+          <topicName>{{ sensor_name }}/scan</topicName>
+          <frameName>{{ spawner_args['name'] }}/{{ sensor_name }}</frameName>
+          <parentFrameName>{{ spawner_args['name'] }}/fcu</parentFrameName>
+          <x>{{ x }}</x>
+          <y>{{ y }}</y>
+          <z>{{ z }}</z>
+          <roll>{{ roll }}</roll>
+          <pitch>{{ pitch }}</pitch>
+          <yaw>{{ yaw }}</yaw>
+        </plugin>
+      </sensor>
+      <!--}-->
+
+    </link>
+
+    <joint name="{{ sensor_name }}_joint" type="fixed">
+      <parent>{{ parent_link }}</parent>
+      <child>{{ sensor_name }}_link</child>
+    </joint>
+
+    <!-- mount {-->
+    {{ mount if mount }}
+    <!--}-->
+
+    <!--}-->
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}

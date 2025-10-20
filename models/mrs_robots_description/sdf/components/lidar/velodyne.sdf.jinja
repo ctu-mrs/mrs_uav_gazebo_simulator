@@ -1,0 +1,168 @@
+<?xml version="1.0"? encoding="utf-8">
+
+
+{# velodyne_macro {--> #}
+{%- macro velodyne_macro(parent_link, sensor_name, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-velodyne' -%}
+  {%- set spawner_description = 'Add Velodyne PUCK laser scanner to the vehicle' -%}
+  {%- set spawner_default_args = {'horizontal_samples': 3600, 'lasers': 16, 'noise': 0.01, 'range': 100, 'vfov': 30, 'update_rate': 20, 'use_gpu': false} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {# setup local variables {--> #}
+
+    {# The real ouster is transforming lidar data from lidar_frame to sensor_frame directly for user. #}
+    {# For simplicity, we are placing sensor_frame to the same place as the lidar_frame is. #}
+    {# Velodyne macro is using the same plugin as ouster macro. Therefore we need to render data in the same way. #}
+
+    {# -- frame names -- #}
+    {%- set frame_fcu = spawner_args['name'] + '/fcu' -%}
+    {%- set frame_sensor = spawner_args['name'] + '/' + sensor_name + '_sensor' -%}
+    {%- set frame_lidar = spawner_args['name'] + '/' + sensor_name  -%}
+
+    {# -- topics -- #}
+    {%- set topic_lidar = '/' + spawner_args['name'] + '/' + sensor_name + '/scan' -%}
+    {%- set topic_diag = '/' + spawner_args['name'] + '/' + sensor_name + '/is_alive' -%}
+
+    {# -- tf from sensor to lidar -- #}
+    {# The laser rays should be coming approximately from the half of sensor height #}
+    {%- set lidar_x = 0 -%}
+    {%- set lidar_y = 0 -%}
+    {%- set lidar_z = 0.037725 -%}
+    {%- set lidar_roll = 0 -%}
+    {%- set lidar_pitch = 0 -%}
+    {%- set lidar_yaw = 0  -%}
+
+    {%- if spawner_args[spawner_keyword]['use_gpu'] -%}
+      {%- set velodyne_plugin_filename ='libMrsGazeboCommonResources_3DLidarGpuPlugin.so' -%}
+      {%- set sensor_type = 'gpu_ray'  -%}
+    {%- else -%}
+      {%- set velodyne_plugin_filename ='libMrsGazeboCommonResources_3DLidarPlugin.so' -%}
+      {%- set sensor_type = 'ray'  -%}
+    {%- endif -%}
+    {# <!--}--> #}
+
+    <!-- Velodyne PUCK {-->
+    <link name="velodyne_link">
+      <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+      {{ generic.zero_inertial_macro() }}
+
+      <!-- visuals {-->
+      <visual name="base_visual">
+        <pose>0 0 0.0094 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0188</length>
+            <radius>0.062</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/FlatBlack</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name="top_visual">
+        <pose>0 0 0.0643 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0148</length>
+            <radius>0.062</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/FlatBlack</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name="window_visual">
+        <pose>0 0 0.03785 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0381</length>
+            <radius>0.058</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <!--}-->
+
+      <!-- sensor {-->
+      <sensor name="{{ sensor_name }}_lidar_sensor" type="{{ sensor_type }}">
+        <pose>{{ lidar_x }} {{ lidar_y }} {{ lidar_z }} {{ lidar_roll }} {{ lidar_pitch }} {{ lidar_yaw }}</pose>
+        {# <pose>0 0 0 0 0 0</pose> #}
+        <visualize>false</visualize>
+        <update_rate>{{ spawner_args[spawner_keyword]['update_rate'] }}</update_rate>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>{{ spawner_args[spawner_keyword]['horizontal_samples'] }}</samples>
+              <resolution>1</resolution>
+              <min_angle>{{ -math.radians(180) }}</min_angle>
+              <max_angle>{{ math.radians(180) }}</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>{{ spawner_args[spawner_keyword]['lasers'] }}</samples>
+              <resolution>1</resolution>
+              <min_angle>{{ -spawner_args[spawner_keyword]['vfov']/2*math.radians(180)/180.0 }}</min_angle>
+              <max_angle>{{ spawner_args[spawner_keyword]['vfov']/2*math.radians(180)/180.0 }}</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.1</min>
+            <max>{{ spawner_args[spawner_keyword]['range'] }}</max>
+            <resolution>0.03</resolution>
+          </range>
+        </ray>
+        <plugin name="{{ sensor_name }}_lidar_plugin" filename="{{ velodyne_plugin_filename }}">
+          <parentFrameName>{{ frame_fcu }}</parentFrameName>
+          <sensorFrameName>{{ frame_sensor }}</sensorFrameName>
+          <sensor_x>{{ x + lidar_x }}</sensor_x>
+          <sensor_y>{{ y + lidar_y }}</sensor_y>
+          <sensor_z>{{ z + lidar_z }}</sensor_z>
+          <sensor_roll>{{ roll }}</sensor_roll>
+          <sensor_pitch>{{ pitch }}</sensor_pitch>
+          <sensor_yaw>{{ yaw }}</sensor_yaw>
+          <lidar_x>0</lidar_x>
+          <lidar_y>0</lidar_y>
+          <lidar_z>0</lidar_z>
+          <lidar_roll>{{ lidar_roll }}</lidar_roll>
+          <lidar_pitch>{{ lidar_pitch }}</lidar_pitch>
+          <lidar_yaw>{{ lidar_yaw }}</lidar_yaw>
+          <topicName>{{ topic_lidar }}</topicName>
+          <topicDiagName>{{ topic_diag }}</topicDiagName>
+          <lidarFrameName>{{ frame_lidar }}</lidarFrameName>
+          <min_range>0.1</min_range>
+          <max_range>{{ spawner_args[spawner_keyword]['range'] }}</max_range>
+          <gaussianNoise>{{ spawner_args[spawner_keyword]['noise'] }}</gaussianNoise>
+          <imu>false</imu>
+        </plugin>
+      </sensor>
+      <!--}-->
+
+    </link>
+
+    <joint name="velodyne_joint" type="fixed">
+      <parent>{{ parent_link }}</parent>
+      <child>velodyne_link</child>
+    </joint>
+
+    <!-- mount {-->
+    {{ mount if mount }}
+    <!--}-->
+
+    <!--}-->
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}

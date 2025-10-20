@@ -686,12 +686,24 @@ limitations under the License.
 </sensor>{%- endmacro -%}
 {# <!--}--> #}
 
+
+{# lidar_plugins_macro {--> #}
+{%- macro lidar_plugins_macro(motor_number, direction, time_constant_up, time_constant_down, max_rot_velocity, motor_constant, moment_constant, rotor_drag_coefficient, rolling_moment_coefficient, rotor_velocity_slowdown_sim, robot_namespace) -%}
+  <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+    <render_engine>ogre2</render_engine>
+  </plugin>
+{%- endmacro -%}
+{# <!--}--> #}
+
+
+
 {# rangefinder_sensor_macro {--> #}
 {%- macro rangefinder_sensor_macro(name, update_rate, sensor_link_name, parent_link_name, samples, min_distance, max_distance, resolution, x, y, z, roll, pitch, yaw) -%}
   <sensor name="{{ name }}" type="gpu_lidar">
   <pose relative_to="{{ parent_link_name }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
   <update_rate>{{ update_rate }}</update_rate>
-  <lidar>
+  <topic>lidar</topic>
+  <ray>
     <scan>
       <horizontal>
         <samples>{{ samples }}</samples>
@@ -711,12 +723,14 @@ limitations under the License.
       <max>{{ max_distance }}</max>
       <resolution>{{ resolution }}</resolution>
     </range>
-  </lidar>
+  </ray>
   <visualize>true</visualize>
   <always_on>1</always_on>
 </sensor>
 {%- endmacro -%}
 {# <!--}--> #}
+
+
 
 {# ========================== camera sensors ========================= #}
 
