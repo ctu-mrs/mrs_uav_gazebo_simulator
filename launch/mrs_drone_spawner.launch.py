@@ -3,8 +3,8 @@
 import launch
 import os
 
-from launch_ros.actions import Node 
-from launch.actions import DeclareLaunchArgument
+from launch_ros.actions import Node
+from launch.actions import DeclareLaunchArgument, LogInfo
 from launch.substitutions import LaunchConfiguration, IfElseSubstitution, PythonExpression, PathJoinSubstitution, EnvironmentVariable
 
 from ament_index_python.packages import get_package_share_directory
@@ -49,6 +49,13 @@ def generate_launch_description():
         "'debug' if '", LaunchConfiguration('debug'), "' == 'true' else 'info'"
     ])
 
+    log_args = LogInfo(msg=[
+    '[simulation.launch.py] Passing to drone_spawner:  \n',
+    'custom_config=', custom_config_path,
+    '\nspawner_params=', LaunchConfiguration('spawner_params'),'\n'
+            ])
+    ld.add_action(log_args)
+
     ld.add_action(
             Node(
                 name='mrs_drone_spawner',
@@ -58,8 +65,8 @@ def generate_launch_description():
                 arguments=['--ros-args', '--log-level', log_level],
                 parameters=[
                     # This passes the custom_config path as a parameter named 'custom_config'
-                    {'custom_config': custom_config_path},
                     LaunchConfiguration('spawner_params'),
+                    {'custom_config': custom_config_path},
                     ],
 
                 remappings=[

@@ -127,7 +127,7 @@ def generate_launch_description():
             ])
         ),
         launch_arguments={
-            'spawner_config': LaunchConfiguration('spawner_config'),
+            'custom_config': LaunchConfiguration('spawner_config'),
             'debug': LaunchConfiguration('spawner_debug'),
         }.items()
     )
