@@ -1,0 +1,85 @@
+<?xml version="1.0"? encoding="utf-8">
+
+{%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
+
+{# gazebo_lidar_macro {--> #}
+{%- macro gazebo_lidar_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-gazebo-lidar' -%}
+  {%- set spawner_description = 'Add the general LIDAR laser scanner. Do not set range outside <0.10 - 15.0> (unrealistic)' -%}
+  {%- set spawner_default_args = {'horizontal_samples': 1600, 'update_rate': 20.0, 'min_range': 0.15, 'max_range': 14.0, 'noise': 0.01} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {%- set sensor_name = 'lidar_test' -%}
+
+    <link name="{{ sensor_name }}_link">
+      <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+      {{ generic.zero_inertial_macro() }}
+
+      <!-- visuals {-->
+      <visual name="base_visual">
+        <pose>0 0 -0.011 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.001</length>
+            <radius>0.038</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Purple</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+    <!--}-->
+
+    <joint name="{{ sensor_name }}_joint" type="fixed">
+      <parent>{{ parent_link }}</parent>
+      <child>{{ sensor_name }}_link</child>
+    </joint>
+
+    <!-- mount {-->
+      {{ mount if mount }}
+    <!--}-->
+
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <sensor name='{{ sensor_name }}' type='gpu_lidar'>
+      <pose relative_to="{{ sensor_name }}_link">0 0 0 0 0 0</pose>
+      <topic>lidar</topic>
+      <update_rate>10</update_rate>
+      <ray>
+          <scan>
+              <horizontal>
+                  <samples>640</samples>
+                  <resolution>1</resolution>
+                  <min_angle>-1.396263</min_angle>
+                  <max_angle>1.396263</max_angle>
+              </horizontal>
+              <vertical>
+                  <samples>1</samples>
+                  <resolution>0.01</resolution>
+                  <min_angle>0</min_angle>
+                  <max_angle>0</max_angle>
+              </vertical>
+          </scan>
+          <range>
+              <min>0.08</min>
+              <max>10.0</max>
+              <resolution>0.01</resolution>
+          </range>
+      </ray>
+      <always_on>1</always_on>
+      <visualize>true</visualize>
+  </sensor>
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}
+

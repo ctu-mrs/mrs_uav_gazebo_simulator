@@ -182,11 +182,11 @@ limitations under the License.
 {%- endmacro -%}
 
 {# ========================== LIDAR sensors ========================= #}
-{# ==== Test Lidar ==== #}
-{%- import "mrs_robots_description/sdf/components/lidar/test_lidar.sdf.jinja" as test_lidar -%}
+{# ==== Gazebo Lidar ==== #}
+{%- import "mrs_robots_description/sdf/components/lidar/gazebo_lidar.sdf.jinja" as gazebo_lidar -%}
 
-{%- macro lidar_test_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ test_lidar.lidar_test_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- macro gazebo_lidar_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ gazebo_lidar.gazebo_lidar_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 {# ==== RP lidar ==== #}
