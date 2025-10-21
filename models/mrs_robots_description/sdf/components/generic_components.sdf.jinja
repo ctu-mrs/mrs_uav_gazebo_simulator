@@ -717,7 +717,7 @@ limitations under the License.
     <pose relative_to="{{ lidar_name }}_link">0 0 0 0 0 0</pose>
     <topic>{{ lidar_topic_name }}/scan</topic>
     <update_rate>{{update_rate}}</update_rate>
-    <gz_frame_id>{{ lidar_name }}_link</gz_frame_id>
+    <gz_frame_id>{{ lidar_frame_name }}</gz_frame_id>
     <ray>
         <scan>
             <horizontal>
