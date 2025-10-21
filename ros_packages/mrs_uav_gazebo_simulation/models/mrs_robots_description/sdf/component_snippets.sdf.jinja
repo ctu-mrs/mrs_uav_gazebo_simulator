@@ -1374,6 +1374,86 @@ limitations under the License.
 {%- endmacro -%}
 {# <!--}--> #}
 
+{# oakd_front_pitched_macro {--> #}
+{%- macro oakd_front_pitched_macro(camera_name, camera_suffix, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-oakd-front-pitched' -%}
+  {%- set spawner_description = 'Add OAK-D Pro FF depth camera to the vehicle [4056x3040 @ 30hz], pointed front and pitched down' -%}
+  {%- set spawner_default_args = {'realistic': False, 'update_rate': 30} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    <!-- OAK-D front-pitched {-->
+
+    <!-- sensor {-->
+    {{ generic.oakd_pro_macro(
+      namespace = spawner_args['name'],
+      camera_name = camera_name,
+      camera_suffix = camera_suffix,
+      parent_link = parent_link,
+      realistic = spawner_args[spawner_keyword]['realistic'],
+      update_rate = spawner_args[spawner_keyword]['update_rate'],
+      x = x,
+      y = y,
+      z = z,
+      roll = roll,
+      pitch = pitch,
+      yaw = yaw)
+    }}
+    <!--}-->
+
+    <!-- mount {-->
+    {{ mount if mount }}
+    <!--}-->
+
+    <!--}-->
+
+  {%- endif -%}
+
+{%- endmacro -%}
+{# <!--}--> #}
+
+{# oakd_down_macro {--> #}
+{%- macro oakd_down_macro(camera_name, camera_suffix, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-oakd-down' -%}
+  {%- set spawner_description = 'Add OAK-D Pro FF depth camera to the vehicle [4056x3040 @ 30hz], pointed down' -%}
+  {%- set spawner_default_args = {'realistic': False, 'update_rate': 30} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    <!-- OAK-D down {-->
+
+    <!-- sensor {-->
+    {{ generic.oakd_pro_macro(
+      namespace = spawner_args['name'],
+      camera_name = camera_name,
+      camera_suffix = camera_suffix,
+      parent_link = parent_link,
+      realistic = spawner_args[spawner_keyword]['realistic'],
+      update_rate = spawner_args[spawner_keyword]['update_rate'],
+      x = x,
+      y = y,
+      z = z,
+      roll = roll,
+      pitch = pitch,
+      yaw = yaw)
+    }}
+    <!--}-->
+
+    <!-- mount {-->
+    {{ mount if mount }}
+    <!--}-->
+
+    <!--}-->
+
+  {%- endif -%}
+
+{%- endmacro -%}
+{# <!--}--> #}
+
 {# bluefox_camera_macro {--> #}
 {%- macro bluefox_camera_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
 
