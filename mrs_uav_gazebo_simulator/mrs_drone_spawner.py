@@ -365,8 +365,6 @@ class MrsDroneSpawner(Node):
             'bridge_debug': 'false',
         }
 
-        self.get_logger().info(f"\n\nLaunch:{launch_arguments}\n\n")
-
         ld = LaunchDescription([
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(self.uav_ros_gz_bridge_launch_path),
@@ -1333,8 +1331,6 @@ class MrsDroneSpawner(Node):
             camera_info_topic_list = camera_info_topic_list,
             lidar_topic_list = lidar_topic_list
         )
-
-        print(f"\nRendered template: {rendered_template}\n\n")
 
         filename = f'ros_gz_bridge_config_{uav_name}.yaml'
         filepath = os.path.join(self.tempfile_folder, filename)

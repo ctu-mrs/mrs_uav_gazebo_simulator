@@ -97,5 +97,5 @@ def generate_launch_description():
         declare_ros_gz_bridge_config_arg,
         declare_ros_gz_image_topics_arg,
         declare_bridge_debug_arg,
-        namespace_group,
+        namespace_group
     ])

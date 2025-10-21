@@ -754,7 +754,7 @@
 
 
     {# gazebo lidar {--> #}
-    {%- set gazebo_lidar = components.gazebo_lidar_macro(
+    {%- set gazebo_lidar = components.gazebo_twoD_lidar_macro(
       lidar_name =  'gazebo_lidar',
       parent_link = root,
       x = 0.0,

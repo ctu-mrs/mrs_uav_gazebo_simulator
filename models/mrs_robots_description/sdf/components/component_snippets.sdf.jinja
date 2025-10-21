@@ -185,8 +185,8 @@ limitations under the License.
 {# ==== Gazebo Lidar ==== #}
 {%- import "mrs_robots_description/sdf/components/lidar/gazebo_lidar.sdf.jinja" as gazebo_lidar -%}
 
-{%- macro gazebo_lidar_macro(lidar_name, parent_link, x, y, z, mount, spawner_args) -%}
-  {{ gazebo_lidar.gazebo_lidar_macro(lidar_name, parent_link, x, y, z, mount, spawner_args) }}
+{%- macro gazebo_twoD_lidar_macro(lidar_name, parent_link, x, y, z, mount, spawner_args) -%}
+  {{ gazebo_lidar.gazebo_twoD_lidar_macro(lidar_name, parent_link, x, y, z, mount, spawner_args) }}
 {%- endmacro -%}
 
 {# ==== RP lidar ==== #}

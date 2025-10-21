@@ -2,8 +2,8 @@
 
 {%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
 
-{# gazebo_lidar_macro {--> #}
-{%- macro gazebo_lidar_macro(lidar_name, parent_link, x, y, z, mount, spawner_args) -%}
+{# gazebo_twoD_lidar_macro {--> #}
+{%- macro gazebo_twoD_lidar_macro(lidar_name, parent_link, x, y, z, mount, spawner_args) -%}
 
   {%- set spawner_keyword = 'enable-gazebo-lidar' -%}
   {%- set spawner_description = 'Add the general LIDAR laser scanner. Do not set range outside <0.10 - 15.0> (unrealistic)' -%}
@@ -15,12 +15,23 @@
      <!-- gazebo lidar {-->
 
     <!-- sensor {-->
-    {{ generic.lidar_macro(
+    {{ generic.gazebo_twoD_lidar_macro(
       parent_link = parent_link, 
       lidar_name = lidar_name, 
       lidar_frame_name = spawner_args['name'] + '/' + lidar_name + '_link', 
       lidar_topic_name = spawner_args['name'] + '/' + lidar_name, 
-      update_rate=10, 
+      update_rate = 10, 
+      horiz_num_samples = 640,
+      horiz_resolution = 1,
+      horiz_min_angle = -1.396263,
+      horiz_max_angle = 1.396263,
+      vertic_num_samples = 1,
+      vertic_resolution = 0.01,
+      vertic_min_angle = 0,
+      vertic_max_angle = 0,
+      range_min = 0.08,
+      range_max = 10.0,
+      range_resolution = 0.01,
       mesh_file = 'model://mrs_robots_description/meshes/sensors/os1_64.dae', 
       mesh_scale = '1 1 1', 
       color = 'White', 
