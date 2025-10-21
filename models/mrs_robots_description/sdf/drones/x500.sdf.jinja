@@ -753,17 +753,14 @@
     {# <!--}--> #}
 
 
-
     {# gazebo lidar {--> #}
     {%- set gazebo_lidar = components.gazebo_lidar_macro(
+      lidar_name =  'gazebo_lidar',
       parent_link = root,
       x = 0.0,
-      y = -0.0515,
+      y = 0.0515,
       z = -0.038,
-      roll = 0.0,
-      pitch = 0.0,
-      yaw = 0.0,
-      mount = lidar_mount,
+      mount = none,
       spawner_args = spawner_args)
     -%}
     {{ gazebo_lidar }}

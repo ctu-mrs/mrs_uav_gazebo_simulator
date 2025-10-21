@@ -695,6 +695,61 @@ limitations under the License.
 {%- endmacro -%}
 {# <!--}--> #}
 
+{# lidar_macro {--> #}
+{%- macro lidar_macro(parent_link, lidar_name, lidar_frame_name, lidar_topic_name, update_rate, mesh_file, mesh_scale, color, visual_x, visual_y, visual_z, visual_roll, visual_pitch, visual_yaw, x, y, z, roll, pitch, yaw) -%}
+<link name="{{ lidar_name }}_link">
+  <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+  {{ zero_inertial_macro() }}
+  {{ visual_mesh_macro(
+    name = lidar_name + "_visual",
+    mesh_file = mesh_file,
+    mesh_scale = mesh_scale,
+    color = color,
+    x = visual_x,
+    y = visual_y,
+    z = visual_z,
+    roll = visual_roll,
+    pitch = visual_pitch,
+    yaw = visual_yaw)
+  }}
+  <sensor name="{{ lidar_name }}_sensor" type='gpu_lidar'>
+    <topic>{{ lidar_topic_name }}/scan</topic>
+    <gz_frame_id>{{ lidar_frame_name }}</gz_frame_id>
+    <update_rate>{{update_rate}}</update_rate>
+    <ray>
+        <scan>
+            <horizontal>
+                <samples>640</samples>
+                <resolution>1</resolution>
+                <min_angle>-1.396263</min_angle>
+                <max_angle>1.396263</max_angle>
+            </horizontal>
+            <vertical>
+                <samples>1</samples>
+                <resolution>0.01</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+            </vertical>
+        </scan>
+        <range>
+            <min>0.08</min>
+            <max>10.0</max>
+            <resolution>0.01</resolution>
+        </range>
+    </ray>
+    <always_on>1</always_on>
+    <visualize>true</visualize>
+  </sensor>
+</link>
+
+<joint name="{{ lidar_name }}_joint" type="fixed">
+  <parent>{{ parent_link }}</parent>
+  <child>{{ lidar_name }}_link</child>
+</joint>
+
+{%- endmacro -%}
+{# <!--}--> #}
+
 
 
 {# rangefinder_sensor_macro {--> #}
