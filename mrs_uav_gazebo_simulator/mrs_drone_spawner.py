@@ -365,6 +365,8 @@ class MrsDroneSpawner(Node):
             'bridge_debug': 'false',
         }
 
+        self.get_logger().info(f"\n\nLaunch:{launch_arguments}\n\n")
+
         ld = LaunchDescription([
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(self.uav_ros_gz_bridge_launch_path),
@@ -1272,7 +1274,8 @@ class MrsDroneSpawner(Node):
     def get_attached_sensors(self, robot_params):
 
         attached_sensors = {
-            'cameras': []
+            'cameras': [],
+            'lidar': []
         }
 
         # not using try-catch, it's already done during the sdf's generation
@@ -1280,13 +1283,20 @@ class MrsDroneSpawner(Node):
         sensor_blocks = xmldoc.getElementsByTagName('sensor')
 
         for sensor in sensor_blocks:
-            if sensor.getAttribute('type') == 'camera':
+            sensor_type = sensor.getAttribute('type')
+            if sensor_type == 'camera':
                 camera = {}
                 topic = sensor.getElementsByTagName('topic')
                 if topic:
                     camera['image_topic'] = '/' + topic[0].firstChild.data
                     camera['camera_info_topic'] = camera['image_topic'].replace('image_raw', 'camera_info')
                     attached_sensors['cameras'].append(camera)
+            elif sensor_type == 'gpu_lidar':
+                lidar = {}
+                topic = sensor.getElementsByTagName('topic')
+                if topic:
+                    lidar['laserscan_topic'] = '/' + topic[0].firstChild.data
+                    attached_sensors['lidar'].append(lidar)
 
         return attached_sensors
     # #}
@@ -1305,16 +1315,26 @@ class MrsDroneSpawner(Node):
 
         sensor_topics = {}
 
+        # Camera
         camera_info_topic_list = []
         image_topic_list = []
         for camera in attached_sensors['cameras']:
             camera_info_topic_list.append(camera['camera_info_topic'])
             image_topic_list.append(camera['image_topic'])
 
+        # Lidar
+        lidar_topic_list = []
+        for lidar in attached_sensors["lidar"]:
+            lidar_topic_list.append(lidar["laserscan_topic"])
+
+
 
         rendered_template = template.render(
-            camera_info_topic_list = camera_info_topic_list
+            camera_info_topic_list = camera_info_topic_list,
+            lidar_topic_list = lidar_topic_list
         )
+
+        print(f"\nRendered template: {rendered_template}\n\n")
 
         filename = f'ros_gz_bridge_config_{uav_name}.yaml'
         filepath = os.path.join(self.tempfile_folder, filename)
@@ -1327,6 +1347,11 @@ class MrsDroneSpawner(Node):
 
         return filepath, sensor_topics
     # #}
+
+    # #{ generate_uav_ros_gz_config(self, uav_name)
+
+    # #}
+
 
 def main(args=None):
     rclpy.init(args=args)

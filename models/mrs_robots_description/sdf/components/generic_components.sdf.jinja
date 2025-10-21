@@ -701,7 +701,7 @@ limitations under the License.
   <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
   {{ zero_inertial_macro() }}
   {{ visual_mesh_macro(
-    name = lidar_name + "_visual",
+    name = lidar_name,
     mesh_file = mesh_file,
     mesh_scale = mesh_scale,
     color = color,
@@ -712,10 +712,12 @@ limitations under the License.
     pitch = visual_pitch,
     yaw = visual_yaw)
   }}
+
   <sensor name="{{ lidar_name }}_sensor" type='gpu_lidar'>
+    <pose relative_to="{{ lidar_name }}_link">0 0 0 0 0 0</pose>
     <topic>{{ lidar_topic_name }}/scan</topic>
-    <gz_frame_id>{{ lidar_frame_name }}</gz_frame_id>
     <update_rate>{{update_rate}}</update_rate>
+    <gz_frame_id>{{ lidar_name }}_link</gz_frame_id>
     <ray>
         <scan>
             <horizontal>
@@ -740,12 +742,12 @@ limitations under the License.
     <always_on>1</always_on>
     <visualize>true</visualize>
   </sensor>
-</link>
+  </link>
 
-<joint name="{{ lidar_name }}_joint" type="fixed">
-  <parent>{{ parent_link }}</parent>
-  <child>{{ lidar_name }}_link</child>
-</joint>
+  <joint name="{{ lidar_name }}_joint" type="fixed">
+    <parent>{{ parent_link }}</parent>
+    <child>{{ lidar_name }}_link</child>
+  </joint>
 
 {%- endmacro -%}
 {# <!--}--> #}

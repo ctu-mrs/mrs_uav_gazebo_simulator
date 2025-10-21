@@ -6,3 +6,11 @@
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 {% endfor %}
+
+{% for topic in lidar_topic_list %}
+- ros_topic_name: "{{ topic }}"
+  gz_topic_name: "{{ topic }}"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS
+{% endfor %}
