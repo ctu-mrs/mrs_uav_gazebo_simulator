@@ -128,7 +128,8 @@ class MrsDroneSpawner(Node):
 
         self.declare_parameter('firmware_launch_delay', 0.0)
 
-        self.declare_parameter('extra_resource_paths', [])
+        self.declare_parameter('extra_resource_paths', [""])
+
 
         # Get all parameters
         try:
@@ -140,6 +141,7 @@ class MrsDroneSpawner(Node):
             self.template_suffix = self.get_parameter('jinja_templates.suffix').value
 
             self.firmware_launch_delay = float(self.get_parameter('firmware_launch_delay').value)
+
 
         except rclpy.exceptions.ParameterNotDeclaredException as e:
             self.get_logger().error(f'Could not load required param. {e}')
@@ -217,7 +219,6 @@ class MrsDroneSpawner(Node):
 
     # #{ launch_px4_firmware(self, robot_params)
     def launch_px4_firmware(self, robot_params):
-
         if self.firmware_launch_delay > 0:
             self.get_logger().info(f'Waiting for {self.firmware_launch_delay} s before launching firmware')
             time.sleep(self.firmware_launch_delay)
@@ -227,7 +228,10 @@ class MrsDroneSpawner(Node):
 
         package_name = self.jinja_templates[robot_params['model']].package_name
         package_path = get_package_share_directory(package_name)
+
         romfs_path = os.path.join(str(package_path), 'ROMFS')
+
+
         if not os.path.exists(romfs_path) or not os.path.isdir(romfs_path):
             self.get_logger().error(f'Could not start PX4 firmware for {name}. ROMFS folder not found')
             raise CouldNotLaunch('ROMFS folder not found')
