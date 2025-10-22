@@ -19,10 +19,16 @@ def generate_launch_description():
     # Launch arguments declaration
     ld.add_action(DeclareLaunchArgument(
         'custom_config',
+        default_value = "",
+        description="Path to the custom configuration file. The path can be absolute, starting with '/' or relative to the current working directory",
+    ))
+
+    ld.add_action(DeclareLaunchArgument(
+        'default_spawner_config',
         default_value = PathJoinSubstitution([
             pkg_mrs_uav_gazebo_simulator, 'config', 'spawner_params.yaml'
         ]),
-        description="Path to the custom configuration file. The path can be absolute, starting with '/' or relative to the current working directory",
+        description='Path to the default spawner configuration file. The path can be absolute, starting with "/" or relative to the current working directory',
     ))
 
 
@@ -37,7 +43,8 @@ def generate_launch_description():
     ])
 
     log_config_args = LogInfo(msg=[
-        '[mrs_drone_spawner.launch.py] Spawner config file:', LaunchConfiguration('custom_config')
+        '\n[mrs_drone_spawner.launch.py] Custom config file: ', LaunchConfiguration('custom_config'),
+        '\n[mrs_drone_spawner.launch.py] Default config file: ', LaunchConfiguration('default_spawner_config')
     ])
     ld.add_action(log_config_args)
 
@@ -49,6 +56,7 @@ def generate_launch_description():
                 output="screen",
                 arguments=['--ros-args', '--log-level', log_level],
                 parameters=[
+                    LaunchConfiguration('default_spawner_config'),
                     LaunchConfiguration('custom_config')
                     ],
 

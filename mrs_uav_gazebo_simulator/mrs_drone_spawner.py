@@ -142,6 +142,7 @@ class MrsDroneSpawner(Node):
 
             self.firmware_launch_delay = float(self.get_parameter('firmware_launch_delay').value)
 
+
         except rclpy.exceptions.ParameterNotDeclaredException as e:
             self.get_logger().error(f'Could not load required param. {e}')
             raise RuntimeError(f'Could not load required param. {e}')
@@ -155,7 +156,6 @@ class MrsDroneSpawner(Node):
             # no extra resources
             extra_resource_paths = []
             pass
-        
 
         if extra_resource_paths is not None:
             for elem in extra_resource_paths:
