@@ -128,8 +128,8 @@ class MrsDroneSpawner(Node):
 
         self.declare_parameter('firmware_launch_delay', 0.0)
 
-        self.declare_parameter('extra_resource_paths', [])
-        self.declare_parameter('custom_config', '')
+        self.declare_parameter('extra_resource_paths', [""])
+
 
         # Get all parameters
         try:
@@ -142,6 +142,7 @@ class MrsDroneSpawner(Node):
 
             self.firmware_launch_delay = float(self.get_parameter('firmware_launch_delay').value)
 
+
         except rclpy.exceptions.ParameterNotDeclaredException as e:
             self.get_logger().error(f'Could not load required param. {e}')
             raise RuntimeError(f'Could not load required param. {e}')
@@ -149,24 +150,12 @@ class MrsDroneSpawner(Node):
         # Configure resources and Jinja environment
         resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]
 
-        # Extra_resource_paths specified in default spawner
         try:
             extra_resource_paths = self.get_parameter('extra_resource_paths').value
         except:
             # no extra resources
             extra_resource_paths = []
             pass
-
-        # Extra_resource_paths specified in custom config
-        try:
-            custom_config = self.get_parameter('custom_config').value
-            with open(custom_config, 'r') as f:
-                params = yaml.safe_load(f)
-            extra_resource_paths += params['extra_resource_paths']
-        except:
-            # no extra resources
-            pass
-        
 
         if extra_resource_paths is not None:
             for elem in extra_resource_paths:

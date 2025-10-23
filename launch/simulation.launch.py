@@ -28,9 +28,7 @@ def generate_launch_description():
 
     declare_spawner_config_arg = DeclareLaunchArgument(
         'spawner_config',
-        default_value = PathJoinSubstitution([
-                pkg_mrs_uav_gazebo_simulator, 'config', 'spawner_params.yaml'
-            ]),
+        default_value = "",
         description='Configuration file for the custom spawner.'
     )
 
