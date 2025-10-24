@@ -221,9 +221,9 @@ class MrsDroneSpawner(Node):
 
     # #{ launch_px4_firmware(self, robot_params)
     def launch_px4_firmware(self, robot_params):
-        # if self.firmware_launch_delay > 0:
-        #     self.get_logger().info(f'Waiting for {self.firmware_launch_delay} s before launching firmware')
-        #     time.sleep(self.firmware_launch_delay)
+        if self.firmware_launch_delay > 0:
+            self.get_logger().info(f'Waiting for {self.firmware_launch_delay} s before launching firmware')
+            time.sleep(self.firmware_launch_delay)
 
         name = robot_params['name']
         self.get_logger().info(f'Launching PX4 firmware for {name}')
@@ -399,8 +399,8 @@ class MrsDroneSpawner(Node):
 
             try:
                 ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params['name'], ros_gz_bridge_config, sensor_topics)
-                firmware_process = self.launch_px4_firmware(robot_params)
                 mavros_process = self.launch_mavros(robot_params)
+                firmware_process = self.launch_px4_firmware(robot_params)
 
             except Exception as e:
                 self.get_logger().error(f'Failed during spawn sequence for {robot_params["name"]}: {e}')
