@@ -317,7 +317,7 @@ class MrsDroneSpawner(Node):
             self.get_logger().error('Template did not render, spawn failed.')
             return
 
-        # self.sdf_to_tf_publisher.generate_tf_publishers(self, sdf_content)
+        self.sdf_to_tf_publisher.generate_tf_publishers(self, sdf_content)
 
         filename = f'mrs_drone_spawner_{name}.sdf'
         filepath = os.path.join(self.tempfile_folder, filename)
@@ -349,9 +349,9 @@ class MrsDroneSpawner(Node):
     def launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics):
         self.get_logger().info(f'Launching ros_gz_bridge for {uav_name}')
 
-        if len(sensor_topics['image_topics']) < 1:
-            self.get_logger().info(f'No image publisher attached, not creating ros_gz_bridge for image topics')
-            return
+        # if len(sensor_topics['image_topics']) < 1:
+        #     self.get_logger().info(f'No image publisher attached, not creating ros_gz_bridge for image topics')
+        #     return
 
         launch_arguments = {
             'namespace': uav_name,
