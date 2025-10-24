@@ -131,6 +131,10 @@ class MrsDroneSpawner(Node):
 
         self.declare_parameter('extra_resource_paths', [""])
 
+        self.declare_parameter('tf_static_publisher.base_link', "base_link")
+        self.declare_parameter('tf_static_publisher.ignored_sensor_links', ["air_pressure_sensor", "magnetometer_sensor", "navsat_sensor", "imu_sensor"])
+
+
 
         # Get all parameters
         try:
@@ -142,6 +146,9 @@ class MrsDroneSpawner(Node):
             self.template_suffix = self.get_parameter('jinja_templates.suffix').value
 
             self.firmware_launch_delay = float(self.get_parameter('firmware_launch_delay').value)
+
+            self.tf_base_link = self.get_parameter('tf_static_publisher.base_link').value
+            self.tf_ignored_sensor_links = self.get_parameter('tf_static_publisher.ignored_sensor_links').value
 
 
         except rclpy.exceptions.ParameterNotDeclaredException as e:
@@ -216,7 +223,7 @@ class MrsDroneSpawner(Node):
         self.gazebo_spawn_request_start_time = None
 
         # SdfToTf Publisher
-        self.sdf_to_tf_publisher = SdfTfPublisher()
+        self.sdf_to_tf_publisher = SdfTfPublisher(self.tf_base_link, self.tf_ignored_sensor_links)
 
         self.is_initialized = True
         self.get_logger().info('Initialized')

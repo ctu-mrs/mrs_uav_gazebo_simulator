@@ -21,13 +21,13 @@ class SingletonMeta(type):
 
     
 class SdfTfPublisher(metaclass=SingletonMeta):
-    def __init__(self):
+    def __init__(self, base_link, ignored_sensors):
         self._model_name = ""
-        self._ignored_sensors = ["air_pressure_sensor",
-                                 "magnetometer_sensor",
-                                 "navsat_sensor",
-                                 "imu_sensor"]
-        self._base_link = "base_link" # I hate that this is hardcoded
+        self._ignored_sensors = ignored_sensors
+        self._base_link = base_link
+        if self._base_link is None:
+            raise RuntimeError(f"[MRS_DRONE_SPAWNER] base_link is not defined, cannot create tf publisher")
+
         
 
     def generate_tf_publishers(self, ros_node, sdf_xml):

@@ -14,3 +14,7 @@ mrs_drone_spawner:
     firmware_launch_delay: 10.0 # [s] after spawn, wait before launching px4 firmware
     
     extra_resource_paths: []
+
+    tf_static_publisher:
+      base_link: "base_link"
+      ignored_sensor_links: ["air_pressure_sensor", "magnetometer_sensor", "navsat_sensor", "imu_sensor"]
