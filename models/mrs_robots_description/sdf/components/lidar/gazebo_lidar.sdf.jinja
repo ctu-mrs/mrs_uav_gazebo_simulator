@@ -5,7 +5,7 @@
 {# gazebo_twoD_lidar_macro {--> #}
 {%- macro gazebo_twoD_lidar_macro(lidar_name, parent_link, x, y, z, mount, spawner_args) -%}
 
-  {%- set spawner_keyword = 'enable-gazebo-lidar' -%}
+  {%- set spawner_keyword = 'enable-gazebo-lidar' -%} 
   {%- set spawner_description = 'Add the general LIDAR laser scanner. Do not set range outside <0.10 - 15.0> (unrealistic)' -%}
   {%- set spawner_default_args = {'horizontal_samples': 1600, 'update_rate': 20.0, 'min_range': 0.15, 'max_range': 14.0, 'noise': 0.01} -%}
 

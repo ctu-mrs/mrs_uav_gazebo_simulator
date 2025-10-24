@@ -22,6 +22,7 @@ import yaml
 from ament_index_python.packages import get_package_share_directory
 from mrs_uav_gazebo_simulator.utils.component_wrapper import ComponentWrapper
 from mrs_uav_gazebo_simulator.utils.template_wrapper import TemplateWrapper
+from mrs_uav_gazebo_simulator.utils.sdf_to_tf_publisher import SdfTfPublisher
 
 # ROS 2 Imports
 from launch import LaunchDescription, LaunchService
@@ -214,6 +215,9 @@ class MrsDroneSpawner(Node):
         self.gazebo_delete_future = None
         self.gazebo_spawn_request_start_time = None
 
+        # SdfToTf Publisher
+        self.sdf_to_tf_publisher = SdfTfPublisher()
+
         self.is_initialized = True
         self.get_logger().info('Initialized')
 
@@ -312,6 +316,8 @@ class MrsDroneSpawner(Node):
         if sdf_content is None:
             self.get_logger().error('Template did not render, spawn failed.')
             return
+
+        # self.sdf_to_tf_publisher.generate_tf_publishers(self, sdf_content)
 
         filename = f'mrs_drone_spawner_{name}.sdf'
         filepath = os.path.join(self.tempfile_folder, filename)
