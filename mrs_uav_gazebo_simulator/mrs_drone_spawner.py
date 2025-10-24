@@ -120,6 +120,7 @@ class MrsDroneSpawner(Node):
 
         # Declare all parameters with default values. The type is inferred.
         self.declare_parameter('mavlink_config.vehicle_base_port', 14000)
+        self.declare_parameter('mavlink_config.stream_for_qgc', True)
 
         self.declare_parameter('gazebo_models.default_robot_name', 'uav')
         self.declare_parameter('gazebo_models.spacing', 5.0)
@@ -134,6 +135,7 @@ class MrsDroneSpawner(Node):
         # Get all parameters
         try:
             self.vehicle_base_port = self.get_parameter('mavlink_config.vehicle_base_port').value
+            self.stream_for_qgc = int(self.get_parameter('mavlink_config.stream_for_qgc').value)
 
             self.default_robot_name = self.get_parameter('gazebo_models.default_robot_name').value
             self.model_spacing = self.get_parameter('gazebo_models.spacing').value
@@ -219,9 +221,9 @@ class MrsDroneSpawner(Node):
 
     # #{ launch_px4_firmware(self, robot_params)
     def launch_px4_firmware(self, robot_params):
-        if self.firmware_launch_delay > 0:
-            self.get_logger().info(f'Waiting for {self.firmware_launch_delay} s before launching firmware')
-            time.sleep(self.firmware_launch_delay)
+        # if self.firmware_launch_delay > 0:
+        #     self.get_logger().info(f'Waiting for {self.firmware_launch_delay} s before launching firmware')
+        #     time.sleep(self.firmware_launch_delay)
 
         name = robot_params['name']
         self.get_logger().info(f'Launching PX4 firmware for {name}')
@@ -239,7 +241,8 @@ class MrsDroneSpawner(Node):
         launch_arguments = {
             'ID': str(robot_params['ID']),
             'PX4_SIM_MODEL': str(robot_params['model']),
-            'ROMFS_PATH': str(romfs_path)
+            'ROMFS_PATH': str(romfs_path),
+            'CONNECT_TO_QGC': str(self.stream_for_qgc)
         }
 
         ld = LaunchDescription([
@@ -260,6 +263,9 @@ class MrsDroneSpawner(Node):
             raise CouldNotLaunch('PX4 failed to launch')
 
         self.get_logger().info(f'PX4 firmware for {name} launched')
+        if self.stream_for_qgc:
+            qgc_port = robot_params['mavlink_config']['udp_qgc_port_remote']
+            self.get_logger().info(f'QGC connection for {name} created at localhost UDP port {qgc_port}')
         return firmware_process
     # #}
 
@@ -270,7 +276,7 @@ class MrsDroneSpawner(Node):
 
         launch_arguments = {
             'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
-            'gcs_url': str(robot_params['mavlink_config']['gcs_url']),
+            'gcs_url': '', # do not connect to QGC using mavros, we create a dedicated mavlink stream instead
             'tgt_system': str(robot_params['ID'] + 1),
             'tgt_component': str(1),
             'pluginlists_yaml': self.mavros_plugin_list,
@@ -393,8 +399,8 @@ class MrsDroneSpawner(Node):
 
             try:
                 ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params['name'], ros_gz_bridge_config, sensor_topics)
-                mavros_process = self.launch_mavros(robot_params)
                 firmware_process = self.launch_px4_firmware(robot_params)
+                mavros_process = self.launch_mavros(robot_params)
 
             except Exception as e:
                 self.get_logger().error(f'Failed during spawn sequence for {robot_params["name"]}: {e}')
@@ -1231,7 +1237,6 @@ class MrsDroneSpawner(Node):
         mavlink_config['udp_qgc_port_remote'] = udp_qgc_port_remote
         mavlink_config['udp_qgc_port_local'] = udp_qgc_port_local
         mavlink_config['fcu_url'] = f'udp://127.0.0.1:{udp_offboard_port_remote}@127.0.0.1:{udp_offboard_port_local}'
-        mavlink_config['gcs_url'] = ''
 
         return mavlink_config
     # #}

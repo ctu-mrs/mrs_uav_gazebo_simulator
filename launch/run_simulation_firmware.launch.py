@@ -24,8 +24,7 @@ def generate_launch_description():
         DeclareLaunchArgument('ID', description='The unique ID for the UAV.'),
         DeclareLaunchArgument('PX4_SIM_MODEL', description='The PX4 simulation model (e.g., iris).'),
         DeclareLaunchArgument('PX4_ESTIMATOR', default_value='ekf2', description='The PX4 estimator to use.'),
-        DeclareLaunchArgument('MAVLINK_GCS_UDP_PORT_LOCAL', default_value='', description='Local MAVLink port for QGroundControl.'),
-        DeclareLaunchArgument('MAVLINK_GCS_UDP_PORT_REMOTE', default_value='', description='Remote MAVLink port for QGroundControl.'),
+        DeclareLaunchArgument('CONNECT_TO_QGC', default_value='0', description='Create a mavlink stream for QGroundControl.'),
         DeclareLaunchArgument(
             'ROMFS_PATH',
             default_value=PathJoinSubstitution([
@@ -65,16 +64,7 @@ def generate_launch_description():
             SetEnvironmentVariable('PX4_SIM_MODEL', LaunchConfiguration('PX4_SIM_MODEL')),
             SetEnvironmentVariable('PX4_ESTIMATOR', LaunchConfiguration('PX4_ESTIMATOR')),
             SetEnvironmentVariable('PX4_GZ_MODEL_NAME', [TextSubstitution(text='uav'), LaunchConfiguration('ID')]),
-            SetEnvironmentVariable(
-                'MAVLINK_GCS_UDP_PORT_LOCAL',
-                LaunchConfiguration('MAVLINK_GCS_UDP_PORT_LOCAL'),
-                condition=IfCondition(PythonExpression(["'", LaunchConfiguration('MAVLINK_GCS_UDP_PORT_LOCAL'), "' != ''"]))
-            ),
-            SetEnvironmentVariable(
-                'MAVLINK_GCS_UDP_PORT_REMOTE',
-                LaunchConfiguration('MAVLINK_GCS_UDP_PORT_REMOTE'),
-                condition=IfCondition(PythonExpression(["'", LaunchConfiguration('MAVLINK_GCS_UDP_PORT_REMOTE'), "' != ''"]))
-            ),
+            SetEnvironmentVariable('CONNECT_TO_QGC', LaunchConfiguration('CONNECT_TO_QGC')),
 
             # The process to run
             px4_sitl_process

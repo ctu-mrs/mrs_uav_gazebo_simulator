@@ -362,6 +362,10 @@ fi
 #user defined mavlink streams for instances can be in PATH
 . px4-rc.mavlink
 
+if [ $CONNECT_TO_QGC = "1" ]; then
+  . px4-rc.mavlink_qgc
+fi
+
 # execute autostart post script if any
 [ -e "$autostart_file".post ] && . "$autostart_file".post
 
