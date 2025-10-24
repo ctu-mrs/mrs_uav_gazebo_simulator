@@ -22,6 +22,7 @@ import yaml
 from ament_index_python.packages import get_package_share_directory
 from mrs_uav_gazebo_simulator.utils.component_wrapper import ComponentWrapper
 from mrs_uav_gazebo_simulator.utils.template_wrapper import TemplateWrapper
+from mrs_uav_gazebo_simulator.utils.sdf_to_tf_publisher import SdfTfPublisher
 
 # ROS 2 Imports
 from launch import LaunchDescription, LaunchService
@@ -214,6 +215,9 @@ class MrsDroneSpawner(Node):
         self.gazebo_delete_future = None
         self.gazebo_spawn_request_start_time = None
 
+        # SdfToTf Publisher
+        self.sdf_to_tf_publisher = SdfTfPublisher()
+
         self.is_initialized = True
         self.get_logger().info('Initialized')
 
@@ -313,6 +317,8 @@ class MrsDroneSpawner(Node):
             self.get_logger().error('Template did not render, spawn failed.')
             return
 
+        self.sdf_to_tf_publisher.generate_tf_publishers(self, sdf_content)
+
         filename = f'mrs_drone_spawner_{name}.sdf'
         filepath = os.path.join(self.tempfile_folder, filename)
 
@@ -343,9 +349,9 @@ class MrsDroneSpawner(Node):
     def launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics):
         self.get_logger().info(f'Launching ros_gz_bridge for {uav_name}')
 
-        if len(sensor_topics['image_topics']) < 1:
-            self.get_logger().info(f'No image publisher attached, not creating ros_gz_bridge for image topics')
-            return
+        # if len(sensor_topics['image_topics']) < 1:
+        #     self.get_logger().info(f'No image publisher attached, not creating ros_gz_bridge for image topics')
+        #     return
 
         launch_arguments = {
             'namespace': uav_name,
