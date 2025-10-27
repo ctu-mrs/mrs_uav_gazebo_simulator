@@ -31,7 +31,7 @@ windows:
   - core:
       layout: tiled
       panes:
-        - waitForHwApi; ros2 launch mrs_uav_core core.launch.py
+        - ros2 launch mrs_uav_core core.launch.py
           platform_config:=$PLATFORM_CONFIG
           world_config:=./config/world_config.yaml
           custom_config:=./config/custom_config.yaml
