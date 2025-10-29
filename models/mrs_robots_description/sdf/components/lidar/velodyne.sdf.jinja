@@ -22,7 +22,7 @@
 
 
     {%- set sensor_name = 'velodyne' -%}
-    <link name="velodyne_link">
+    <link name="{{sensor_name}}_link">
       {{ generic.zero_inertial_macro() }}
 
 

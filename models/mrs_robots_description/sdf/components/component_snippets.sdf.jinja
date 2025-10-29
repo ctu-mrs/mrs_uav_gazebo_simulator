@@ -200,11 +200,9 @@ limitations under the License.
 
 {# ========================== 3D LIDAR sensors ========================= #}
 {# ==== Ouster lidar ==== #}
-{# TODO: Not implemented in ROS2 #}
 {%- import "mrs_robots_description/sdf/components/lidar/ouster.sdf.jinja" as ouster_lidar -%}
-
-{%- macro ouster_macro(parent_link, sensor_name, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ ouster_lidar.ouster_macro(parent_link, sensor_name, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- macro ouster_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ ouster_lidar.ouster_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 {# ==== Velodyne lidar ==== #}
