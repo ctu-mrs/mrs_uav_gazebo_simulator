@@ -170,6 +170,7 @@ limitations under the License.
   {{ garmin_rangefinder.garmin_up_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
+
 {# ==== Teraranger ==== #}
 {# TODO: Not implemented in ROS2 #}
 {%- import "mrs_robots_description/sdf/components/rangefinder/teraranger.sdf.jinja" as teraranger_rangefinder -%}
@@ -181,44 +182,33 @@ limitations under the License.
   {{ teraranger_rangefinder.teraranger_evo_tower_macro(parent_link, visualize, frame_name, parent_frame_name, gaussian_noise, x, y, z, roll, pitch, yaw, spawner_args) }}
 {%- endmacro -%}
 
-{# ========================== LIDAR sensors ========================= #}
-{# ==== Gazebo Lidar ==== #}
-{%- import "mrs_robots_description/sdf/components/lidar/gazebo_lidar.sdf.jinja" as gazebo_lidar -%}
 
-{%- macro gazebo_twoD_lidar_macro(lidar_name, parent_link, x, y, z, mount, spawner_args) -%}
-  {{ gazebo_lidar.gazebo_twoD_lidar_macro(lidar_name, parent_link, x, y, z, mount, spawner_args) }}
-{%- endmacro -%}
-
+{# ========================== 2D LIDAR sensors ========================= #}
 {# ==== RP lidar ==== #}
-{# TODO: Not implemented in ROS2 #}
 {%- import "mrs_robots_description/sdf/components/lidar/rplidar.sdf.jinja" as rplidar_lidar -%}
-
-{%- macro rplidar_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ rplidar_lidar.rplidar_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- macro rplidar_macro(parent_link, x, y, z, mount, spawner_args) -%}
+  {{ rplidar_lidar.rplidar_macro(parent_link, x, y, z, mount, spawner_args) }}
 {%- endmacro -%}
+
 
 {# ==== Scance Sweep lidar ==== #}
-{# TODO: Not implemented in ROS2 #}
 {%- import "mrs_robots_description/sdf/components/lidar/scance_sweep.sdf.jinja" as scance_sweep_lidar -%}
-
 {%- macro scanse_sweep_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
   {{ scance_sweep_lidar.scanse_sweep_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
-{# ==== Ouster lidar ==== #}
-{# TODO: Not implemented in ROS2 #}
-{%- import "mrs_robots_description/sdf/components/lidar/ouster.sdf.jinja" as ouster_lidar -%}
 
-{%- macro ouster_macro(parent_link, sensor_name, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ ouster_lidar.ouster_macro(parent_link, sensor_name, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{# ========================== 3D LIDAR sensors ========================= #}
+{# ==== Ouster lidar ==== #}
+{%- import "mrs_robots_description/sdf/components/lidar/ouster.sdf.jinja" as ouster_lidar -%}
+{%- macro ouster_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ ouster_lidar.ouster_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 {# ==== Velodyne lidar ==== #}
-{# TODO: Not implemented in ROS2 #}
 {%- import "mrs_robots_description/sdf/components/lidar/velodyne.sdf.jinja" as velodyne_lidar -%}
-
-{%- macro velodyne_macro(parent_link, sensor_name, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ velodyne_lidar.velodyne_macro(parent_link, sensor_name, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- macro velodyne_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ velodyne_lidar.velodyne_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 

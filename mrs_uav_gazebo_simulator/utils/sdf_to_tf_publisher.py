@@ -35,18 +35,19 @@ class SdfTfPublisher(metaclass=SingletonMeta):
         model_xml = root_xml.find(".//model")
         self._model_name = model_xml.attrib["name"]
         
-        sensor_xml_links = self._detect_sensors(model_xml)
-        sensors_tf = self._detect_sensors_transformations(sensor_xml_links)
+        sensor_to_xml_joint = self._detect_sensors(model_xml)
+        sensors_tf = self._detect_sensors_transformations(ros_node, sensor_to_xml_joint)
         self._generate_static_tf_broadcasters(ros_node, sensors_tf)
 
 
 
-    def _detect_sensors_transformations(self, sensor_links):
+    def _detect_sensors_transformations(self, ros_node, sensor_joints):
         sensors_Tf = {}
-        for link_name, link_xml in sensor_links.items():
-            pose_str = link_xml.findtext('pose')
-            if (pose_str == ""):
-                raise RuntimeError(f"[MRS_DRONE_SPAWNER] {link_name} has no pose, cannot create tf publisher")
+        for link_name, joint_xml in sensor_joints.items():
+            pose_str = joint_xml.findtext('pose')
+            if pose_str is None or (pose_str == ""):
+                ros_node.get_logger().info(f"[MRS_DRONE_SPAWNER]  {link_name} has no pose specified in its parent joint, cannot create tf publisher")
+                continue
             link_pose_rpy = self._str_to_pose(pose_str)
             sensors_Tf[link_name] = link_pose_rpy
         return sensors_Tf        
@@ -57,12 +58,22 @@ class SdfTfPublisher(metaclass=SingletonMeta):
         return np.array([x, y, z, roll, pitch, yaw])
 
     def _detect_sensors(self, model_xml):
-        sensor_xml_links = {}
+        sensor_xml_links = []
+        sensor_to_xml_joint = {}
         for link in model_xml.findall('.//link'):
             for sensor in link.findall('.//sensor'):
                 if sensor.attrib["name"] not in self._ignored_sensors:
-                    sensor_xml_links[link.attrib["name"]] = link
-        return sensor_xml_links
+                    sensor_xml_links.append(link.attrib["name"])
+        
+        for link_name in sensor_xml_links:
+            for joint in model_xml.findall('.//joint'):
+                child_elem = joint.find('child')
+                child_name = child_elem.text.strip() 
+                if child_name == link_name:
+                    sensor_to_xml_joint[child_name] = joint
+                    break
+
+        return sensor_to_xml_joint
                 
 
     def _generate_static_tf_broadcasters(self, ros_node, sensors_tf):

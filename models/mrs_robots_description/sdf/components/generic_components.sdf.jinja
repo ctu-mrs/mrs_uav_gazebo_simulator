@@ -687,55 +687,32 @@ limitations under the License.
 {# <!--}--> #}
 
 
-{# lidar_plugins_macro {--> #}
-{%- macro lidar_plugins_macro(motor_number, direction, time_constant_up, time_constant_down, max_rot_velocity, motor_constant, moment_constant, rotor_drag_coefficient, rolling_moment_coefficient, rotor_velocity_slowdown_sim, robot_namespace) -%}
-  <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
-    <render_engine>ogre2</render_engine>
-  </plugin>
-{%- endmacro -%}
-{# <!--}--> #}
-
-{# gazebo_twoD_lidar_macro {--> #}
-{%- macro gazebo_twoD_lidar_macro(parent_link, 
-                      lidar_name, lidar_frame_name, lidar_topic_name, 
+{# gazebo_lidar_plugin_macro {--> #}
+{%- macro gazebo_lidar_plugin_macro(parent_link, 
+                      lidar_name, lidar_frame_name, lidar_topic_name,
+                      sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
                       update_rate, 
                       horiz_num_samples, horiz_resolution, horiz_min_angle, horiz_max_angle, 
                       vertic_num_samples, vertic_resolution, vertic_min_angle, vertic_max_angle,
                       range_min, range_max, range_resolution,
-                      mesh_file, mesh_scale, color, 
-                      visual_x, visual_y, visual_z, visual_roll, visual_pitch, visual_yaw, 
-                      x, y, z, roll, pitch, yaw) -%}
-  <link name="{{ lidar_name }}_link">
-    <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
-    {{ zero_inertial_macro() }}
-    {{ visual_mesh_macro(
-      name = lidar_name,
-      mesh_file = mesh_file,
-      mesh_scale = mesh_scale,
-      color = color,
-      x = visual_x,
-      y = visual_y,
-      z = visual_z,
-      roll = visual_roll,
-      pitch = visual_pitch,
-      yaw = visual_yaw)
-    }}
+                      noise_mean, noise_std
+                      ) -%}
 
   <sensor name="{{ lidar_name }}_sensor" type='gpu_lidar'>
-    <pose relative_to="{{ lidar_name }}_link">0 0 0 0 0 0</pose>
-    <topic>{{ lidar_topic_name }}/scan</topic>
-    <update_rate>{{update_rate}}</update_rate>
+    <pose relative_to="{{ lidar_name }}_link">{{ sensor_x }} {{ sensor_y }} {{ sensor_z }} {{ sensor_roll }} {{ sensor_pitch }} {{ sensor_yaw }}</pose>
+    <topic>{{ lidar_topic_name }}</topic>
+    <update_rate>{{ update_rate }}</update_rate>
     <gz_frame_id>{{ lidar_frame_name }}</gz_frame_id>
     <ray>
         <scan>
             <horizontal>
-                <samples>{{horiz_num_samples}}</samples>
+                <samples>{{horiz_num_samples | int }}</samples>
                 <resolution>{{horiz_resolution}}</resolution>
                 <min_angle>{{horiz_min_angle}}</min_angle>
                 <max_angle>{{horiz_max_angle}}</max_angle>
             </horizontal>
             <vertical>
-                <samples>{{vertic_num_samples}}</samples>
+                <samples>{{vertic_num_samples | int }}</samples>
                 <resolution>{{vertic_resolution}}</resolution>
                 <min_angle>{{vertic_min_angle}}</min_angle>
                 <max_angle>{{vertic_max_angle}}</max_angle>
@@ -746,17 +723,15 @@ limitations under the License.
             <max>{{range_max}}</max>
             <resolution>{{range_resolution}}</resolution>
         </range>
+        <noise>
+            <type>gaussian</type>
+            <mean>{{noise_mean}}</mean>
+            <stddev>{{noise_std}}</stddev>
+        </noise>
     </ray>
     <always_on>1</always_on>
     <visualize>true</visualize>
   </sensor>
-  </link>
-
-  <joint name="{{ lidar_name }}_joint" type="fixed">
-    <parent>{{ parent_link }}</parent>
-    <child>{{ lidar_name }}_link</child>
-  </joint>
-
 {%- endmacro -%}
 {# <!--}--> #}
 

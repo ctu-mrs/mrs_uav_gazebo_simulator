@@ -356,10 +356,6 @@ class MrsDroneSpawner(Node):
     def launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics):
         self.get_logger().info(f'Launching ros_gz_bridge for {uav_name}')
 
-        # if len(sensor_topics['image_topics']) < 1:
-        #     self.get_logger().info(f'No image publisher attached, not creating ros_gz_bridge for image topics')
-        #     return
-
         launch_arguments = {
             'namespace': uav_name,
             'ros_gz_bridge_config': str(ros_gz_bridge_config),
@@ -405,7 +401,8 @@ class MrsDroneSpawner(Node):
             ros_gz_bridge_config, sensor_topics = self.generate_uav_ros_gz_config(robot_params)
 
             try:
-                ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params['name'], ros_gz_bridge_config, sensor_topics)
+                if ros_gz_bridge_config != "":
+                    ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params['name'], ros_gz_bridge_config, sensor_topics)
                 mavros_process = self.launch_mavros(robot_params)
                 firmware_process = self.launch_px4_firmware(robot_params)
 
@@ -1275,7 +1272,8 @@ class MrsDroneSpawner(Node):
 
         attached_sensors = {
             'cameras': [],
-            'lidar': []
+            '2dlidar': [],
+            '3dlidar': []
         }
 
         # not using try-catch, it's already done during the sdf's generation
@@ -1292,14 +1290,30 @@ class MrsDroneSpawner(Node):
                     camera['camera_info_topic'] = camera['image_topic'].replace('image_raw', 'camera_info')
                     attached_sensors['cameras'].append(camera)
             elif sensor_type == 'gpu_lidar':
-                lidar = {}
-                topic = sensor.getElementsByTagName('topic')
-                if topic:
-                    lidar['laserscan_topic'] = '/' + topic[0].firstChild.data
-                    attached_sensors['lidar'].append(lidar)
+                # We have to differentiate between 1D/2D and 3D lidars, since they need a different topic.
+                # We can do this by checking number of vertical samples
+                vertical_elements = sensor.getElementsByTagName('vertical')
+                samples_elements = vertical_elements[0].getElementsByTagName('samples')
+                vertical_samples = int(samples_elements[0].firstChild.nodeValue.strip())
+                if vertical_samples == 1:  # 1D/2D lidar
+                    lidar = {}
+                    topic = sensor.getElementsByTagName('topic')
+                    if topic:
+                        lidar['laserscan_topic'] = '/' + topic[0].firstChild.data
+                        attached_sensors['2dlidar'].append(lidar)
+                elif vertical_samples > 1: # 3D lidar
+                    lidar = {}
+                    topic = sensor.getElementsByTagName('topic')
+                    if topic:
+                        lidar['laserscan_topic'] = '/' + topic[0].firstChild.data
+                        attached_sensors['3dlidar'].append(lidar)
+                else: # Incorrect lidar
+                    self.get_logger().error(f"The lidar {sensor.getAttribute('name')} for the {robot_params['name']} drone cannot loaded.  \
+                                            Check if the number of vertical samples is either 1 or 2.")
 
         return attached_sensors
     # #}
+
 
     # #{ generate_uav_ros_gz_config(self, uav_name)
     def generate_uav_ros_gz_config(self, robot_params):
@@ -1322,16 +1336,27 @@ class MrsDroneSpawner(Node):
             camera_info_topic_list.append(camera['camera_info_topic'])
             image_topic_list.append(camera['image_topic'])
 
-        # Lidar
-        lidar_topic_list = []
-        for lidar in attached_sensors["lidar"]:
-            lidar_topic_list.append(lidar["laserscan_topic"])
+        # 1D/2D Lidar
+        twoD_lidar_topic_list = []
+        for lidar in attached_sensors["2dlidar"]:
+            twoD_lidar_topic_list.append(lidar["laserscan_topic"])
 
+
+        # 3D Lidar
+        threeD_lidar_topic_list = []
+        for lidar in attached_sensors["3dlidar"]:
+            threeD_lidar_topic_list.append(lidar["laserscan_topic"])
+
+
+        if len(camera_info_topic_list) == 0 and len(twoD_lidar_topic_list)==0 and len(threeD_lidar_topic_list)==0:
+            self.get_logger().info(f"There are no additional sensors. Skipping launching ros_gz_bridge for {uav_name}")
+            return  "", []
 
 
         rendered_template = template.render(
             camera_info_topic_list = camera_info_topic_list,
-            lidar_topic_list = lidar_topic_list
+            twoD_lidar_topic_list = twoD_lidar_topic_list,
+            threeD_lidar_topic_list = threeD_lidar_topic_list,
         )
 
         filename = f'ros_gz_bridge_config_{uav_name}.yaml'

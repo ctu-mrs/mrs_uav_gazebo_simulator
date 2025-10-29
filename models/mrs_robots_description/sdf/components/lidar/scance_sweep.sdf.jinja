@@ -11,10 +11,12 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
+    {%- set sensor_name = 'scance_sweep' -%}
+
     <!-- scanse sweep {-->
-    <link name="sweeper_link">
-      <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+    <link name="{{ sensor_name }}_link">
       {{ generic.zero_inertial_macro() }}
+
 
       <!-- visuals {-->
       <visual name="base_visual">
@@ -48,49 +50,34 @@
       </visual>
       <!--}-->
 
-      <!-- sensor {-->
-      <sensor name='sweeper_sensor' type='ray'>
-        <visualize>false</visualize>
-        <update_rate>{{ spawner_args[spawner_keyword]['update_rate'] }}</update_rate>
-        <ray>
-          <scan>
-            <horizontal>
-              <samples>{{ spawner_args[spawner_keyword]['horizontal_samples'] | int }}</samples>
-              <resolution>1</resolution>
-              <min_angle>0</min_angle>
-              <max_angle>6.283185</max_angle>
-            </horizontal>
-          </scan>
-          <range>
-            <min>{{ spawner_args[spawner_keyword]['min_range'] }}</min>
-            <max>{{ spawner_args[spawner_keyword]['max_range'] }}</max>
-            <resolution>0.01</resolution>
-          </range>
-          <noise>
-            <type>gaussian</type>
-            <mean>0.0</mean>
-            <stddev>{{ spawner_args[spawner_keyword]['noise'] }}</stddev>
-          </noise>
-        </ray>
-        <plugin name='sweeper_plugin' filename='libMrsGazeboCommonResources_2DLidarPlugin.so'>
-          <topicName>scanse_sweep/range</topicName>
-          <frameName>{{ spawner_args['name'] }}/scanse_sweep</frameName>
-          <parentFrameName>{{ spawner_args['name'] }}/fcu</parentFrameName>
-          <x>{{ x }}</x>
-          <y>{{ y }}</y>
-          <z>{{ z }}</z>
-          <roll>{{ roll }}</roll>
-          <pitch>{{ pitch }}</pitch>
-          <yaw>{{ yaw }}</yaw>
-        </plugin>
-      </sensor>
-      <!--}-->
+      {{ generic.gazebo_lidar_plugin_macro(
+          parent_link = parent_link, 
+          lidar_name = sensor_name, 
+          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link', 
+          lidar_topic_name = spawner_args['name'] + '/' + sensor_name + '/scan', 
+          sensor_x = 0.0, sensor_y = 0.0, sensor_z = 0.0, sensor_roll = 0.0, sensor_pitch = 0.0, sensor_yaw = 0.0,
+          update_rate = spawner_args[spawner_keyword]['update_rate'], 
+          horiz_num_samples = spawner_args[spawner_keyword]['horizontal_samples'],
+          horiz_resolution = 1,
+          horiz_min_angle = 0,
+          horiz_max_angle = 6.283185,
+          vertic_num_samples = 1, 
+          vertic_resolution = 0.01,
+          vertic_min_angle = 0,
+          vertic_max_angle = 0,
+          range_min = spawner_args[spawner_keyword]['min_range'],
+          range_max = spawner_args[spawner_keyword]['max_range'],
+          range_resolution = 0.01,
+          noise_mean = 0.0,
+          noise_std= spawner_args[spawner_keyword]["noise"]
+      )}}
 
     </link>
 
-    <joint name="sweeper_joint" type="fixed">
+    <joint name="{{ sensor_name }}_joint" type="fixed">
+      <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       <parent>{{ parent_link }}</parent>
-      <child>sweeper_link</child>
+      <child>{{ sensor_name }}_link</child>
     </joint>
 
     <!-- mount {-->
@@ -102,3 +89,4 @@
   {%- endif -%}
 {%- endmacro -%}
 {# <!--}--> #}
+
