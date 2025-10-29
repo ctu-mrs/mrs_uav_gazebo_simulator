@@ -186,7 +186,6 @@ limitations under the License.
 {# ========================== 2D LIDAR sensors ========================= #}
 {# ==== RP lidar ==== #}
 {%- import "mrs_robots_description/sdf/components/lidar/rplidar.sdf.jinja" as rplidar_lidar -%}
-
 {%- macro rplidar_macro(parent_link, x, y, z, mount, spawner_args) -%}
   {{ rplidar_lidar.rplidar_macro(parent_link, x, y, z, mount, spawner_args) }}
 {%- endmacro -%}
@@ -209,11 +208,9 @@ limitations under the License.
 {%- endmacro -%}
 
 {# ==== Velodyne lidar ==== #}
-{# TODO: Not implemented in ROS2 #}
 {%- import "mrs_robots_description/sdf/components/lidar/velodyne.sdf.jinja" as velodyne_lidar -%}
-
-{%- macro velodyne_macro(parent_link, sensor_name, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ velodyne_lidar.velodyne_macro(parent_link, sensor_name, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- macro velodyne_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ velodyne_lidar.velodyne_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 

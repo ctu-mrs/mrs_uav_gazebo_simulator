@@ -687,9 +687,10 @@ limitations under the License.
 {# <!--}--> #}
 
 
-{# gazebo_twoD_lidar_plugin_macro {--> #}
-{%- macro gazebo_twoD_lidar_plugin_macro(parent_link, 
-                      lidar_name, lidar_frame_name, lidar_topic_name, 
+{# gazebo_lidar_plugin_macro {--> #}
+{%- macro gazebo_lidar_plugin_macro(parent_link, 
+                      lidar_name, lidar_frame_name, lidar_topic_name,
+                      sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
                       update_rate, 
                       horiz_num_samples, horiz_resolution, horiz_min_angle, horiz_max_angle, 
                       vertic_num_samples, vertic_resolution, vertic_min_angle, vertic_max_angle,
@@ -698,8 +699,8 @@ limitations under the License.
                       ) -%}
 
   <sensor name="{{ lidar_name }}_sensor" type='gpu_lidar'>
-    <pose relative_to="{{ lidar_name }}_link">0 0 0 0 0 0</pose>
-    <topic>{{ lidar_topic_name }}/scan</topic>
+    <pose relative_to="{{ lidar_name }}_link">{{ sensor_x }} {{ sensor_y }} {{ sensor_z }} {{ sensor_roll }} {{ sensor_pitch }} {{ sensor_yaw }}</pose>
+    <topic>{{ lidar_topic_name }}</topic>
     <update_rate>{{ update_rate }}</update_rate>
     <gz_frame_id>{{ lidar_frame_name }}</gz_frame_id>
     <ray>
