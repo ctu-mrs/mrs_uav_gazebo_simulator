@@ -113,6 +113,14 @@
     {%- set lidar_pitch = 0 -%}
     {%- set lidar_yaw = 0 -%}
 
+    {# -- tf from sensor to imu -- #}
+    {%- set imu_x = 0.006253 -%}
+    {%- set imu_y = -0.011775 -%}
+    {%- set imu_z = 0.007645 -%}
+    {%- set imu_roll = 0 -%}
+    {%- set imu_pitch = 0 -%}
+    {%- set imu_yaw = 0 -%}
+
     {# <!--}--> #}
 
     <!-- Ouster {{ ouster_model }} {-->
@@ -151,7 +159,6 @@
 
       <!-- LIDAR {-->
       {{ generic.gazebo_lidar_plugin_macro(
-          parent_link = parent_link, 
           lidar_name = sensor_name, 
           lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link', 
           lidar_topic_name = spawner_args['name'] + '/' + sensor_name, 
@@ -171,6 +178,11 @@
           noise_mean = 0.0,
           noise_std= spawner_args[spawner_keyword]['noise']
       )}}
+      <!--}-->
+
+      <!--}-->
+
+
     </link>
 
     <joint name="{{ sensor_name }}_joint" type="fixed">

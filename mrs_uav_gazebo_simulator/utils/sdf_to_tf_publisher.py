@@ -21,38 +21,61 @@ class SingletonMeta(type):
 
     
 class SdfTfPublisher(metaclass=SingletonMeta):
-    def __init__(self, base_link, ignored_sensors):
+    def __init__(self, ros_node, base_link, ignored_sensors):
         self._model_name = ""
         self._ignored_sensors = ignored_sensors
         self._base_link = base_link
         if self._base_link is None:
             raise RuntimeError(f"[MRS_DRONE_SPAWNER] base_link (parent link) is not defined in the config file, cannot create tf publisher")
-
+        self._ros_node = ros_node
         
-    def generate_tf_publishers(self, ros_node, sdf_xml):
+    def generate_tf_publishers(self, sdf_xml):
         root_xml = ET.fromstring(sdf_xml)
         model_xml = root_xml.find(".//model")
         self._model_name = model_xml.attrib["name"]
         
-        sensor_to_xml_joint = self._detect_sensors(ros_node, model_xml)
-        sensors_tf = self._detect_sensors_transformations(ros_node, sensor_to_xml_joint)
-        self._generate_static_tf_broadcasters(ros_node, sensors_tf)
+        sensor_to_xml_joint = self._detect_sensors(model_xml)
+        sensors_tf = self._detect_sensors_transformations(sensor_to_xml_joint)
+        self._generate_static_tf_broadcasters(sensors_tf)
 
 
-
-    def _detect_sensors_transformations(self, ros_node, sensor_joints):
+    def _detect_sensors_transformations(self, sensor_joints):
         sensors_Tf = {}
-        for link_name, joint_xml in sensor_joints.items():
+        for link_name, data in sensor_joints.items():
+            joint_xml = data["joint"]
+            sensor_pose_str = data["sensor_pose_str"]
+
+            # Detect joint pose
             pose_str = joint_xml.findtext('pose')
             if pose_str is None or (pose_str == ""):
-                ros_node.get_logger().info(f"[MRS_DRONE_SPAWNER]  {link_name} has no pose specified in its parent joint, cannot create tf publisher")
+                self._ros_node.get_logger().info(f"[MRS_DRONE_SPAWNER]  {link_name} has no pose specified in its parent joint, cannot create its tf publisher")
                 continue
-            
             link_pose_rpy = self._str_to_pose(pose_str)
-            sensors_Tf[link_name] = link_pose_rpy
-        return sensors_Tf        
-            
 
+            # Detect sensor offset
+            if sensor_pose_str is None or (sensor_pose_str == ""):
+                self._ros_node.get_logger().info(f"[MRS_DRONE_SPAWNER]  {link_name} has no pose specified in its sensor plugin")
+                sensor_pose_offset = np.zeros(6)
+            else:
+                sensor_pose_offset = self._str_to_pose(sensor_pose_str)
+
+            sensors_Tf[link_name] = self._add_pose_with_offset(link_pose_rpy, sensor_pose_offset)
+
+        return sensors_Tf        
+    
+    def _add_pose_with_offset(self, link_pose, sensor_offset):
+        T_W_Link = np.eye(4)
+        T_W_Link[:3, 3] = link_pose[:3]
+        T_W_Link[:3, :3] = R.from_euler("xyz", link_pose[3:]).as_matrix()
+
+        T_Link_Sensor = np.eye(4)
+        T_Link_Sensor[:3, 3] = sensor_offset[:3]
+        T_Link_Sensor[:3, :3] = R.from_euler("xyz", sensor_offset[3:]).as_matrix()
+
+        T_W_Sensor = T_W_Link@T_Link_Sensor
+        return T_W_Sensor
+    
+            
     def _str_to_pose(self, pose_str):
         parts = pose_str.split()
         if len(parts) != 6:
@@ -61,52 +84,62 @@ class SdfTfPublisher(metaclass=SingletonMeta):
         x, y, z, roll, pitch, yaw = map(float, parts)
         return np.array([x, y, z, roll, pitch, yaw])
 
-    def _detect_sensors(self, ros_node, model_xml):
-        sensor_xml_links = []
-        for link in model_xml.findall('.//link'):
-            for sensor in link.findall('.//sensor'):
-                if sensor.attrib["name"] not in self._ignored_sensors:
-                    sensor_xml_links.append(link.attrib["name"])
+
+    def _detect_sensors(self, model_xml):
+        sensor_links_to_plugins = self._find_all_sensor_links(model_xml)
         
         sensor_to_xml_joint = {}
-        for link_name in sensor_xml_links:
+        for link_name, sensor_xml in sensor_links_to_plugins.items():
             for joint in model_xml.findall('.//joint'):
                 child_elem = joint.find('child')
                 child_name = child_elem.text.strip() 
+
                 if child_name == link_name:
-                    sensor_to_xml_joint[child_name] = joint
+                    sensor_to_xml_joint[child_name] = {
+                        "joint" : joint,
+                        "sensor_pose_str" : sensor_xml.findtext('pose')
+                    }
                     break
             if link_name not in sensor_to_xml_joint:
-                ros_node.get_logger().info(f"[MRS_DRONE_SPAWNER]  {link_name} has no joint and therefore cannot create a tf publisher")
+                self._ros_node.get_logger().info(f"[MRS_DRONE_SPAWNER]  {link_name} has no joint and therefore cannot create a tf publisher")
 
         return sensor_to_xml_joint
+    
+
+    def _find_all_sensor_links(self, model_xml):
+        sensor_links_to_plugins = {}
+        for link in model_xml.findall('.//link'):
+            for sensor in link.findall('.//sensor'):
+                if sensor.attrib["name"] not in self._ignored_sensors:
+                    sensor_links_to_plugins[link.attrib["name"]] = sensor
+        return sensor_links_to_plugins
                 
 
-    def _generate_static_tf_broadcasters(self, ros_node, sensors_tf):
-        broadcaster = StaticTransformBroadcaster(ros_node)
-        time_now = ros_node.get_clock().now().to_msg()
+    def _generate_static_tf_broadcasters(self, sensors_tf):
+        broadcaster = StaticTransformBroadcaster(self._ros_node)
+        time_now = self._ros_node.get_clock().now().to_msg()
 
         transforms = []
-        for link_name, pose in sensors_tf.items():
+        for link_name, T_W_Sensor in sensors_tf.items():
             t = TransformStamped()
             t.header.stamp = time_now
             t.header.frame_id = self._model_name + "/" + self._base_link
             t.child_frame_id = self._model_name + "/" + link_name
 
-            t.transform = self._get_sensor_pose(pose)
+            t.transform = self._get_sensor_pose(T_W_Sensor)
             transforms.append(t)
 
         broadcaster.sendTransform(transforms)
-        ros_node.get_logger().info(f"Published {len(transforms)} static transforms relative to {self._base_link}")
+        self._ros_node.get_logger().info(f"Published {len(transforms)} static transforms relative to {self._base_link}")
 
     
-    def _get_sensor_pose(self, pose_rpy:np.ndarray) -> Transform:
+    def _get_sensor_pose(self, T_W_Sensor: np.ndarray) -> Transform:
         pose = Transform()
-        pose.translation.x = pose_rpy[0]
-        pose.translation.y = pose_rpy[1]
-        pose.translation.z = pose_rpy[3]
+        pose.translation.x = T_W_Sensor[0, 3]
+        pose.translation.y = T_W_Sensor[1, 3]
+        pose.translation.z = T_W_Sensor[2, 3]
 
-        quat = R.from_euler("xyz", pose_rpy[3:]).as_quat()
+        quat = R.from_matrix(T_W_Sensor[:3, :3]).as_quat()
         pose.rotation.x = quat[0]
         pose.rotation.y = quat[1]
         pose.rotation.z = quat[2]

@@ -223,7 +223,7 @@ class MrsDroneSpawner(Node):
         self.gazebo_spawn_request_start_time = None
 
         # SdfToTf Publisher
-        self.sdf_to_tf_publisher = SdfTfPublisher(self.tf_base_link, self.tf_ignored_sensor_links)
+        self.sdf_to_tf_publisher = SdfTfPublisher(self, self.tf_base_link, self.tf_ignored_sensor_links)
 
         self.is_initialized = True
         self.get_logger().info('Initialized')
@@ -324,7 +324,7 @@ class MrsDroneSpawner(Node):
             self.get_logger().error('Template did not render, spawn failed.')
             return
 
-        self.sdf_to_tf_publisher.generate_tf_publishers(self, sdf_content)
+        self.sdf_to_tf_publisher.generate_tf_publishers(sdf_content)
 
         filename = f'mrs_drone_spawner_{name}.sdf'
         filepath = os.path.join(self.tempfile_folder, filename)

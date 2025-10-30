@@ -688,7 +688,8 @@ limitations under the License.
 
 
 {# gazebo_lidar_plugin_macro {--> #}
-{%- macro gazebo_lidar_plugin_macro(parent_link, 
+{# --- sensor is always defined with respect to the sensor_link frame #}
+{%- macro gazebo_lidar_plugin_macro( 
                       lidar_name, lidar_frame_name, lidar_topic_name,
                       sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
                       update_rate, 

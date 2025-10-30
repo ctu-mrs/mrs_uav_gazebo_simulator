@@ -75,7 +75,6 @@
       <!--}-->
 
       {{ generic.gazebo_lidar_plugin_macro(
-          parent_link = parent_link, 
           lidar_name = sensor_name, 
           lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link', 
           lidar_topic_name = spawner_args['name'] + '/' + sensor_name, 

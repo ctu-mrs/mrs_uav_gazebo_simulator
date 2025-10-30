@@ -192,9 +192,9 @@ limitations under the License.
 
 
 {# ==== Scance Sweep lidar ==== #}
-{%- import "mrs_robots_description/sdf/components/lidar/scance_sweep.sdf.jinja" as scance_sweep_lidar -%}
+{%- import "mrs_robots_description/sdf/components/lidar/scanse_sweep.sdf.jinja" as scanse_sweep_lidar -%}
 {%- macro scanse_sweep_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ scance_sweep_lidar.scanse_sweep_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+  {{ scanse_sweep_lidar.scanse_sweep_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 
@@ -215,7 +215,6 @@ limitations under the License.
 
 {# ============================= cameras ============================ #}
 {# ==== Bluefox camera ==== #}
-{# TODO: Not implemented in ROS2 #}
 {%- import "mrs_robots_description/sdf/components/camera/bluefox.sdf.jinja" as bluefox_camera -%}
 
 {%- macro bluefox_camera_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
