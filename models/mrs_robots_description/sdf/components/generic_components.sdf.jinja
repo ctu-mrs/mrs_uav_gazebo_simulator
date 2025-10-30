@@ -742,8 +742,7 @@ limitations under the License.
   <sensor name="{{ name }}" type="gpu_lidar">
   <pose relative_to="{{ parent_link_name }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
   <update_rate>{{ update_rate }}</update_rate>
-  <topic>lidar</topic>
-  <ray>
+  <lidar>
     <scan>
       <horizontal>
         <samples>{{ samples }}</samples>
@@ -763,7 +762,7 @@ limitations under the License.
       <max>{{ max_distance }}</max>
       <resolution>{{ resolution }}</resolution>
     </range>
-  </ray>
+  </lidar>
   <visualize>true</visualize>
   <always_on>1</always_on>
 </sensor>

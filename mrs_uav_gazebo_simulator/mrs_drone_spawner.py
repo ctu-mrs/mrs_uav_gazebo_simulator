@@ -1290,28 +1290,38 @@ class MrsDroneSpawner(Node):
                     camera['camera_info_topic'] = camera['image_topic'].replace('image_raw', 'camera_info')
                     attached_sensors['cameras'].append(camera)
             elif sensor_type == 'gpu_lidar':
-                # We have to differentiate between 1D/2D and 3D lidars, since they need a different topic.
-                # We can do this by checking number of vertical samples
-                vertical_elements = sensor.getElementsByTagName('vertical')
-                samples_elements = vertical_elements[0].getElementsByTagName('samples')
-                vertical_samples = int(samples_elements[0].firstChild.nodeValue.strip())
+                # NOTE: Pix4 requires its own bridge with the Garmin rangefinder, so we do not set it up.
+                # Do not rename the Garmin link or the rangefinder plugin, as Pix4 may fail to detect it otherwise.
+                if sensor.getAttribute('name') == "lidar_sensor_link": # Garmin rangefinder
+                    continue
+                
+                lidar = {}
+                topic = sensor.getElementsByTagName('topic')
+                if not topic:
+                    continue
+                lidar['laserscan_topic'] = '/' + topic[0].firstChild.data
+
+                # Differentiate between 1D/2D and 3D LiDARs, since they use different msg type.
+                # This can be determined by checking the number of vertical samples.
+                vertical_samples = self.get_number_of_vertical_samples(sensor)
                 if vertical_samples == 1:  # 1D/2D lidar
-                    lidar = {}
-                    topic = sensor.getElementsByTagName('topic')
-                    if topic:
-                        lidar['laserscan_topic'] = '/' + topic[0].firstChild.data
-                        attached_sensors['2dlidar'].append(lidar)
+                    attached_sensors['2dlidar'].append(lidar)
                 elif vertical_samples > 1: # 3D lidar
-                    lidar = {}
-                    topic = sensor.getElementsByTagName('topic')
-                    if topic:
-                        lidar['laserscan_topic'] = '/' + topic[0].firstChild.data
-                        attached_sensors['3dlidar'].append(lidar)
+                    attached_sensors['3dlidar'].append(lidar)
                 else: # Incorrect lidar
                     self.get_logger().error(f"The lidar {sensor.getAttribute('name')} for the {robot_params['name']} drone cannot loaded.  \
                                             Check if the number of vertical samples is either 1 or 2.")
 
         return attached_sensors
+    # #}
+
+    # #{ get_number_of_vertical_samples(self, lidar_sensor)
+    def get_number_of_vertical_samples(self, lidar_sensor):
+        vertical_elements = lidar_sensor.getElementsByTagName('vertical')
+        samples_elements = vertical_elements[0].getElementsByTagName('samples')
+        vertical_samples = int(samples_elements[0].firstChild.nodeValue.strip())
+
+        return vertical_samples
     # #}
 
 
