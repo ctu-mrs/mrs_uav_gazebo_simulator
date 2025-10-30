@@ -16,5 +16,5 @@ mrs_drone_spawner:
     extra_resource_paths: []
 
     tf_static_publisher:
-      base_link: "base_link"
-      ignored_sensor_links: ["air_pressure_sensor", "magnetometer_sensor", "navsat_sensor", "imu_sensor"]
+      base_link: "fcu"
+      ignored_sensor_links: ["air_pressure_sensor", "magnetometer_sensor", "navsat_sensor", "imu_sensor", "lidar"] #lidar is reserved for PX4 Garmin

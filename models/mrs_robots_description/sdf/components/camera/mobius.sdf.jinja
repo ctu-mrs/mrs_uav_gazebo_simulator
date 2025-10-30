@@ -51,6 +51,12 @@
     {{ mount if mount }}
     <!--}-->
 
+    <joint name="{{ camera_name }}_joint" type="fixed">
+      <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+      <parent>{{ parent_link }}</parent>
+      <child>{{ camera_name }}_link</child>
+    </joint>
+
     <!--}-->
 
   {%- endif -%}

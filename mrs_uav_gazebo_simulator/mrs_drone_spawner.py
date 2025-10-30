@@ -1269,7 +1269,6 @@ class MrsDroneSpawner(Node):
 
     # #{ get_attached_sensors(self, robot_params)
     def get_attached_sensors(self, robot_params):
-
         attached_sensors = {
             'cameras': [],
             '2dlidar': [],
@@ -1283,36 +1282,47 @@ class MrsDroneSpawner(Node):
         for sensor in sensor_blocks:
             sensor_type = sensor.getAttribute('type')
             if sensor_type == 'camera':
-                camera = {}
-                topic = sensor.getElementsByTagName('topic')
-                if topic:
-                    camera['image_topic'] = '/' + topic[0].firstChild.data
-                    camera['camera_info_topic'] = camera['image_topic'].replace('image_raw', 'camera_info')
-                    attached_sensors['cameras'].append(camera)
+                self.get_attached_camera(attached_sensors, sensor)
             elif sensor_type == 'gpu_lidar':
-                # NOTE: Pix4 requires its own bridge with the Garmin rangefinder, so we do not set it up.
-                # Do not rename the Garmin link or the rangefinder plugin, as Pix4 may fail to detect it otherwise.
-                if sensor.getAttribute('name') == "lidar_sensor_link": # Garmin rangefinder
-                    continue
-                
-                lidar = {}
-                topic = sensor.getElementsByTagName('topic')
-                if not topic:
-                    continue
-                lidar['laserscan_topic'] = '/' + topic[0].firstChild.data
-
-                # Differentiate between 1D/2D and 3D LiDARs, since they use different msg type.
-                # This can be determined by checking the number of vertical samples.
-                vertical_samples = self.get_number_of_vertical_samples(sensor)
-                if vertical_samples == 1:  # 1D/2D lidar
-                    attached_sensors['2dlidar'].append(lidar)
-                elif vertical_samples > 1: # 3D lidar
-                    attached_sensors['3dlidar'].append(lidar)
-                else: # Incorrect lidar
-                    self.get_logger().error(f"The lidar {sensor.getAttribute('name')} for the {robot_params['name']} drone cannot loaded.  \
-                                            Check if the number of vertical samples is either 1 or 2.")
+                self.get_attached_lidar(attached_sensors, sensor)
 
         return attached_sensors
+    # #}
+
+    # #{ get_attached_camera(self, attached_sensors, camera_sensor)
+    def get_attached_camera(self, attached_sensors, camera_sensor) -> None:
+        camera = {}
+        topic = camera_sensor.getElementsByTagName('topic')
+        if topic:
+            camera['image_topic'] = '/' + topic[0].firstChild.data
+            camera['camera_info_topic'] = camera['image_topic'].replace('image_raw', 'camera_info')
+            attached_sensors['cameras'].append(camera)
+        return
+    # #}
+
+    # #{ get_attached_lidar(self, attached_sensors, lidar_sensor)
+    def get_attached_lidar(self, attached_sensors, lidar_sensor) -> None:
+        # NOTE: PX4 requires its own bridge with the Garmin rangefinder, so we do not set it up.
+        # Do not rename the Garmin link or the rangefinder plugin, as PX4 may fail to detect it otherwise.
+        if lidar_sensor.getAttribute('name') == "lidar_sensor_link": # Garmin rangefinder
+            return
+        
+        lidar = {}
+        topic = lidar_sensor.getElementsByTagName('topic')
+        if not topic:
+            return
+        lidar['laserscan_topic'] = '/' + topic[0].firstChild.data
+
+        # Differentiate between 1D/2D and 3D LiDARs, since they use different msg type.
+        # This can be determined by checking the number of vertical samples.
+        vertical_samples = self.get_number_of_vertical_samples(lidar_sensor)
+        if vertical_samples == 1:  # 2D lidar
+            attached_sensors['2dlidar'].append(lidar)
+        elif vertical_samples > 1: # 3D lidar
+            attached_sensors['3dlidar'].append(lidar)
+        else: # Incorrect lidar
+            self.get_logger().error(f"The lidar {lidar_sensor.getAttribute('name')} cannot loaded. Check if the number of vertical samples is correct.")
+        return
     # #}
 
     # #{ get_number_of_vertical_samples(self, lidar_sensor)

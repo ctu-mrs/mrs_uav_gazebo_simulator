@@ -776,7 +776,6 @@ limitations under the License.
 {# camera_macro {--> #}
 {%- macro camera_macro(parent_link, camera_name, camera_frame_name, camera_topic_name, frame_rate, horizontal_fov, image_width, image_height, min_distance, max_distance, noise_mean, noise_stddev, mesh_file, mesh_scale, color, visual_x, visual_y, visual_z, visual_roll, visual_pitch, visual_yaw, x, y, z, roll, pitch, yaw) -%}
 <link name="{{ camera_name }}_link">
-  <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
   {{ zero_inertial_macro() }}
   {{ visual_mesh_macro(
     name = camera_name + "_visual",
@@ -819,10 +818,6 @@ limitations under the License.
   </sensor>
 </link>
 
-<joint name="{{ camera_name }}_joint" type="fixed">
-  <parent>{{ parent_link }}</parent>
-  <child>{{ camera_name }}_link</child>
-</joint>
 
 {%- endmacro -%}
 {# <!--}--> #}
