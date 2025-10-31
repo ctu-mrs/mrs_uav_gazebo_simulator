@@ -377,7 +377,7 @@
           mesh_file = garmin_mount_mesh,
           mesh_scale = mesh_scale_milimeters,
           color = 'DarkGrey',
-          x = -0.055,
+          x = -0.062,
           y = 0,
           z = -(arm_height + 0.016),
           roll = math.radians(90),
@@ -517,7 +517,7 @@
     {# <!--}--> #}
 
     <!--}-->
-    
+
     <!-- Body physics {-->
     {{ generic.multirotor_physics_macro(
       mass = mass,
@@ -590,24 +590,6 @@
 
     </link>
 
-    {# ================================================================== #}
-    {# ||                 optional sensor definitions                  || #}
-    {# ================================================================== #}
-
-    {# Garmin down {--> #}
-    {{ components.garmin_down_macro(
-      parent_link = root,
-      x = -0.057,
-      y = 0,
-      z = -0.069,
-      roll = 0,
-      pitch = math.radians(90),
-      yaw = 0,
-      mount = garmin_down_mount,
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
-
     {# Propellers {--> #}
     {%- set prop_list = [
     {
@@ -674,6 +656,114 @@
       prop_izz = prop_izz,
       spawner_args = spawner_args)
     }}
+    {# <!--}--> #}
+
+    {# ================================================================== #}
+    {# ||                 optional sensor definitions                  || #}
+    {# ================================================================== #}
+
+    {# ======================= rangefinder sensors ====================== #}
+
+    {# Garmin down {--> #}
+    {{ components.garmin_down_macro(
+      parent_link = root,
+      x = -0.062,
+      y = 0,
+      z = -0.059,
+      roll = 0,
+      pitch = math.radians(90),
+      yaw = 0,
+      mount = garmin_down_mount,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# ========================== LIDAR sensors ========================= #}
+
+    {# Scanse Sweep {--> #}
+    {%- set scanse_sweep = components.scanse_sweep_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.113,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ scanse_sweep }}
+    {# <!--}--> #}
+
+    {# Rplidar {--> #}
+    {%- set rplidar = components.rplidar_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.1,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ rplidar }}
+    {# <!--}--> #}
+
+    {# Velodyne {--> #}
+    {%- set velodyne = components.velodyne_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.066,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ velodyne }}
+    {# <!--}--> #}
+
+    {# Ouster {--> #}
+    {%- set ouster = components.ouster_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.066,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ ouster }}
+    {# <!--}--> #}
+
+    {# ====================== conditional components ==================== #}
+
+    {# Bluefox mount {--> #}
+    {%- if bluefox_camera | replace('\s', '') | length != 0 or bluefox_camera_reverse | replace('\s', '') | length != 0 -%}
+      <!-- Bluefox mount {-->
+      {{ bluefox_mount }}
+      <!--}-->
+    {%- endif -%}
+    {# <!--}--> #}
+
+    {# 2D lidar mount {--> #}
+    {%- if rplidar | replace('\s', '') | length != 0 or scanse_sweep | replace('\s', '') | length != 0 -%}
+      <!-- 2d lidar mount {-->
+      {{ lidar_mount_2d }}
+      <!--}-->
+    {%- endif -%}
+    {# <!--}--> #}
+
+    {# 3D lidar mount {--> #}
+    {%- if velodyne | replace('\s', '') | length != 0 or ouster | replace('\s', '') | length != 0 -%}
+      <!-- 3d lidar mount {-->
+      {{ lidar_mount_3d }}
+      <!--}-->
+    {%- endif -%}
     {# <!--}--> #}
 
   </model>
