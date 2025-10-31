@@ -706,6 +706,8 @@
     {# ||                 optional sensor definitions                  || #}
     {# ================================================================== #}
 
+    {# ======================= rangefinder sensors ====================== #}
+
     {# Garmin down {--> #}
     {{ components.garmin_down_macro(
       parent_link = root,
@@ -718,6 +720,38 @@
       mount = garmin_down_mount,
       spawner_args = spawner_args)
     }}
+    {# <!--}--> #}
+
+    {# ========================== LIDAR sensors ========================= #}
+
+    {# Ouster {--> #}
+    {%- set ouster_macro = components.ouster_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.103,
+      roll = 0.0,
+      pitch = 0.0,
+      yaw = 0.0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ ouster_macro }}
+    {# <!--}--> #}
+
+    {# Rplidar {--> #}
+    {%- set rplidar = components.rplidar_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.136,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ rplidar }}
     {# <!--}--> #}
 
     {# ========================== camera sensors ======================== #}
@@ -752,22 +786,26 @@
 
     {# <!--}--> #}
 
+    {# ====================== conditional components ==================== #}
 
-    {#ouster_macro{--> #}
-    {%- set ouster_macro = components.ouster_macro(
-      parent_link = root,
-      x = 0.0,
-      y = 0.0,
-      z = 0.05,
-      roll = 0.0,
-      pitch = 0.0,
-      yaw = 0.0,
-      mount = none,
-      spawner_args = spawner_args)
-    -%}
-    {{ ouster_macro }}
+    {# lidar mount / gps antenna visuals {--> #}
+    {%- if rplidar | replace('\s', '') | length != 0 or ouster | replace('\s', '') | length != 0 or livox | replace('\s', '') | length != 0 -%}
+      <!-- lidar mount {-->
+      {{ lidar_mount }}
+      <!--}-->
+    {%- else -%}
+      {# otherwise put a GPS antenna to the empty space #}
+      {{ gps_visuals }}
+    {%- endif -%}
+    {# <!--}--> #}
 
-    
+    {# Bluefox mount {--> #}
+    {%- if bluefox_camera | replace('\s', '') | length != 0 or bluefox_camera_reverse | replace('\s', '') | length != 0 -%}
+      <!-- Bluefox mount {-->
+      {{ bluefox_mount }}
+      <!--}-->
+    {%- endif -%}
+    {# <!--}--> #}
 
   </model>
 </sdf>
