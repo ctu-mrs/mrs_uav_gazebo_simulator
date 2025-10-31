@@ -123,9 +123,9 @@
 
     {# <!--}--> #}
 
-    <!-- Ouster {{ ouster_model }} {-->
+    <!-- Ouster {-->
     <link name="{{sensor_name}}_link">
-    
+
       <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       {{ generic.zero_inertial_macro() }}
 
@@ -159,18 +159,18 @@
       </visual>
       <!--}-->
 
-      <!-- LIDAR {-->
+      <!-- sensor + plugin {-->
       {{ generic.gazebo_lidar_plugin_macro(
-          lidar_name = sensor_name, 
-          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link', 
-          lidar_topic_name = spawner_args['name'] + '/' + sensor_name, 
+          lidar_name = sensor_name,
+          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link',
+          lidar_topic_name = spawner_args['name'] + '/' + sensor_name,
           sensor_x = lidar_x, sensor_y = lidar_y, sensor_z = lidar_z, sensor_roll = lidar_roll, sensor_pitch =lidar_pitch, sensor_yaw =lidar_yaw,
-          update_rate = spawner_args[spawner_keyword]['update_rate'], 
-          horiz_num_samples = spawner_args[spawner_keyword]['horizontal_samples'], 
+          update_rate = spawner_args[spawner_keyword]['update_rate'],
+          horiz_num_samples = spawner_args[spawner_keyword]['horizontal_samples'],
           horiz_resolution = 1,
           horiz_min_angle = 0,
           horiz_max_angle =2*math.pi,
-          vertic_num_samples = lasers, 
+          vertic_num_samples = lasers,
           vertic_resolution = 1,
           vertic_min_angle = -vfov_angle/2*math.radians(180)/180.0 ,
           vertic_max_angle = vfov_angle/2*math.radians(180)/180.0,
@@ -182,21 +182,16 @@
       )}}
       <!--}-->
 
-      <!--}-->
-
-
     </link>
 
     <joint name="{{ sensor_name }}_joint" type="fixed">
       <parent>{{ parent_link }}</parent>
       <child>{{ sensor_name }}_link</child>
     </joint>
-
+    <!--}-->
 
     <!-- mount {-->
     {{ mount if mount }}
-    <!--}-->
-
     <!--}-->
 
   {%- endif -%}

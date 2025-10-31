@@ -186,7 +186,7 @@ class MrsDroneSpawner(Node):
         gazebo_simulator_path = get_package_share_directory('mrs_uav_gazebo_simulator')
         self.uav_ros_gz_bridge_launch_path = os.path.join(gazebo_simulator_path, 'launch', 'uav_ros_gz_bridge.launch.py')
         self.uav_ros_gz_bridge_config_path = os.path.join(gazebo_simulator_path, 'config')
-        self.uav_ros_gz_bridge_config_template_name = 'uav_ros_gz_bridge_config.jinja.yaml'
+        self.uav_ros_gz_bridge_config_template_name = 'uav_ros_gz_bridge_config.yaml.jinja'
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
         self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
         self.mavros_px4_config_path = os.path.join(px4_api_path, 'config')
@@ -1302,11 +1302,12 @@ class MrsDroneSpawner(Node):
 
     # #{ get_attached_lidar(self, attached_sensors, lidar_sensor)
     def get_attached_lidar(self, attached_sensors, lidar_sensor) -> None:
+        
         # NOTE: PX4 requires its own bridge with the Garmin rangefinder, so we do not set it up.
         # Do not rename the Garmin link or the rangefinder plugin, as PX4 may fail to detect it otherwise.
         if lidar_sensor.getAttribute('name') == "lidar_sensor_link": # Garmin rangefinder
             return
-        
+
         lidar = {}
         topic = lidar_sensor.getElementsByTagName('topic')
         if not topic:
@@ -1321,7 +1322,7 @@ class MrsDroneSpawner(Node):
         elif vertical_samples > 1: # 3D lidar
             attached_sensors['3dlidar'].append(lidar)
         else: # Incorrect lidar
-            self.get_logger().error(f"The lidar {lidar_sensor.getAttribute('name')} cannot loaded. Check if the number of vertical samples is correct.")
+            self.get_logger().error(f"The lidar {lidar_sensor.getAttribute('name')} cannot be loaded. Check if the number of vertical samples is correct.")
         return
     # #}
 

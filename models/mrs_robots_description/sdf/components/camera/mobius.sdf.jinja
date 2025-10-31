@@ -1,7 +1,6 @@
 <?xml version="1.0"? encoding="utf-8">
 {%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
 
-
 {# mobius_down_macro {-->#}
 {%- macro mobius_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
 
@@ -36,7 +35,7 @@
         pitch = 0,
         yaw = 0)
       }}
-      
+
       <!-- sensor {-->
       {{ generic.camera_macro(
         parent_link = parent_link,

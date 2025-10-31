@@ -1,8 +1,3 @@
-#mrs_drone_spawner Line316: sdf_content
-
-import jinja2
-import copy
-import tempfile
 import xml.etree.ElementTree as ET
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -17,9 +12,8 @@ class SingletonMeta(type):
             instance = super().__call__(*args, **kwargs)
             cls._instances[cls] = instance
         return cls._instances[cls]
-    
 
-    
+
 class SdfTfPublisher(metaclass=SingletonMeta):
     def __init__(self, ros_node, base_link, ignored_sensors):
         self._model_name = ""
@@ -28,16 +22,15 @@ class SdfTfPublisher(metaclass=SingletonMeta):
         if self._base_link is None:
             raise RuntimeError(f"[Sdf2Tf_Publisher] base_link (parent link) is not defined in the config file, cannot create tf publisher")
         self._ros_node = ros_node
-        
+
     def generate_tf_publishers(self, sdf_xml):
         root_xml = ET.fromstring(sdf_xml)
         model_xml = root_xml.find(".//model")
         self._model_name = model_xml.attrib["name"]
-        
+
         sensor_links_to_poses = self._detect_sensors(model_xml)
         sensors_tf = self._detect_sensors_transformations(sensor_links_to_poses)
         self._generate_static_tf_broadcasters(sensors_tf)
-
 
     def _detect_sensors_transformations(self, sensor_joints):
         sensors_Tf = {}
@@ -60,8 +53,8 @@ class SdfTfPublisher(metaclass=SingletonMeta):
 
             sensors_Tf[link_name] = self._add_pose_with_offset(link_pose_rpy, sensor_pose_offset)
 
-        return sensors_Tf        
-    
+        return sensors_Tf
+
     def _add_pose_with_offset(self, link_pose, sensor_offset):
         T_W_Link = np.eye(4)
         T_W_Link[:3, 3] = link_pose[:3]
@@ -73,16 +66,14 @@ class SdfTfPublisher(metaclass=SingletonMeta):
 
         T_W_Sensor = T_W_Link@T_Link_Sensor
         return T_W_Sensor
-    
-            
+
     def _str_to_pose(self, pose_str):
         parts = pose_str.split()
         if len(parts) != 6:
             raise ValueError(f"[Sdf2Tf_Publisher] Expected 6 elements in pose string, got {len(parts)}: {pose_str}")
-        
+
         x, y, z, roll, pitch, yaw = map(float, parts)
         return np.array([x, y, z, roll, pitch, yaw])
-
 
     def _detect_sensors(self, model_xml):
         sensor_links_to_poses = {}
@@ -94,8 +85,6 @@ class SdfTfPublisher(metaclass=SingletonMeta):
                         "sensor_pose" : sensor.findtext('pose')
                     }
         return sensor_links_to_poses
-    
-                
 
     def _generate_static_tf_broadcasters(self, sensors_tf):
         broadcaster = StaticTransformBroadcaster(self._ros_node)
@@ -114,7 +103,6 @@ class SdfTfPublisher(metaclass=SingletonMeta):
         broadcaster.sendTransform(transforms)
         self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Published {len(transforms)} static transforms relative to {self._base_link}")
 
-    
     def _get_sensor_pose(self, T_W_Sensor: np.ndarray) -> Transform:
         pose = Transform()
         pose.translation.x = T_W_Sensor[0, 3]

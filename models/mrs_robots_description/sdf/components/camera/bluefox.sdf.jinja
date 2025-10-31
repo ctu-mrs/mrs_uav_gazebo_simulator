@@ -1,14 +1,13 @@
 <?xml version="1.0"? encoding="utf-8">
 {%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
 
-
 {# bluefox_camera_macro {--> #}
 {%- macro bluefox_camera_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
 
   {%- set spawner_keyword = 'enable-bluefox-camera' -%}
   {%- set spawner_description = 'Add bluefox camera to the vehicle [752x480 @ 50hz], pointing down' -%}
   {%- set spawner_default_args = {'update_rate': 100, 'noise': 0.0} -%}
-  
+
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
@@ -121,7 +120,7 @@
         pitch = 0,
         yaw = 0)
         }}
- 
+
       <!-- sensor {-->
       {{ generic.camera_macro(
         parent_link = parent_link,
@@ -152,12 +151,10 @@
       <child>{{ camera_name }}_link</child>
     </joint>
 
-
     <!-- mount {-->
     {{ mount if mount }}
     <!--}-->
 
-   
     <!--}-->
 
   {%- endif -%}

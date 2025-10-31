@@ -59,16 +59,16 @@
       <!--}-->
 
       {{ generic.gazebo_lidar_plugin_macro(
-          lidar_name = sensor_name, 
-          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link', 
-          lidar_topic_name = spawner_args['name'] + '/' + sensor_name + '/scan', 
+          lidar_name = sensor_name,
+          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link',
+          lidar_topic_name = spawner_args['name'] + '/' + sensor_name + '/scan',
           sensor_x = lidar_x, sensor_y = lidar_y, sensor_z = lidar_z, sensor_roll = lidar_roll, sensor_pitch = lidar_pitch, sensor_yaw = lidar_yaw,
-          update_rate = spawner_args[spawner_keyword]['update_rate'], 
+          update_rate = spawner_args[spawner_keyword]['update_rate'],
           horiz_num_samples = spawner_args[spawner_keyword]['horizontal_samples'],
           horiz_resolution = 1,
           horiz_min_angle = 0,
           horiz_max_angle = 6.283185,
-          vertic_num_samples = 1, 
+          vertic_num_samples = 1,
           vertic_resolution = 0.01,
           vertic_min_angle = 0,
           vertic_max_angle = 0,

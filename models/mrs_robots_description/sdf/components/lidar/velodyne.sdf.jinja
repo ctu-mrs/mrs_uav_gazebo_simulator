@@ -1,8 +1,6 @@
 <?xml version="1.0"? encoding="utf-8">
 {%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
 
-
-
 {# velodyne_macro {--> #}
 {%- macro velodyne_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
 
@@ -26,9 +24,12 @@
     {# For simplicity, we are placing sensor_frame to the same place as the lidar_frame is. #}
     {# Velodyne macro is using the same plugin as ouster macro. Therefore we need to render data in the same way. #}
 
+    {# <!--}--> #}
 
     {%- set sensor_name = 'velodyne' -%}
-    
+
+    <!-- Velodyne {-->
+
     <link name="{{sensor_name}}_link">
       <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       {{ generic.zero_inertial_macro() }}
@@ -82,17 +83,18 @@
         </visual>
       <!--}-->
 
+      <!-- sensor + plugin {-->
       {{ generic.gazebo_lidar_plugin_macro(
-          lidar_name = sensor_name, 
-          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link', 
-          lidar_topic_name = spawner_args['name'] + '/' + sensor_name, 
+          lidar_name = sensor_name,
+          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link',
+          lidar_topic_name = spawner_args['name'] + '/' + sensor_name,
           sensor_x = lidar_x, sensor_y = lidar_y, sensor_z = lidar_z, sensor_roll = lidar_roll, sensor_pitch =lidar_pitch, sensor_yaw =lidar_yaw,
-          update_rate = spawner_args[spawner_keyword]['update_rate'], 
-          horiz_num_samples = spawner_args[spawner_keyword]['horizontal_samples'], 
+          update_rate = spawner_args[spawner_keyword]['update_rate'],
+          horiz_num_samples = spawner_args[spawner_keyword]['horizontal_samples'],
           horiz_resolution = 1,
           horiz_min_angle = -math.radians(180),
           horiz_max_angle = math.radians(180),
-          vertic_num_samples = spawner_args[spawner_keyword]['lasers'], 
+          vertic_num_samples = spawner_args[spawner_keyword]['lasers'],
           vertic_resolution = 1,
           vertic_min_angle = -spawner_args[spawner_keyword]['vfov']/2*math.radians(180)/180.0 ,
           vertic_max_angle = spawner_args[spawner_keyword]['vfov']/2*math.radians(180)/180.0,
@@ -103,12 +105,14 @@
           noise_std= spawner_args[spawner_keyword]['noise']
       )}}
     </link>
+    <!--}-->
 
     <joint name="{{ sensor_name }}_joint" type="fixed">
       <parent>{{ parent_link }}</parent>
       <child>{{ sensor_name }}_link</child>
     </joint>
 
+    <!--}-->
 
     <!-- mount {-->
     {{ mount if mount }}
