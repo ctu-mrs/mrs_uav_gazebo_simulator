@@ -125,6 +125,8 @@
 
     <!-- Ouster {{ ouster_model }} {-->
     <link name="{{sensor_name}}_link">
+    
+      <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       {{ generic.zero_inertial_macro() }}
 
       <!-- visuals {-->
@@ -186,7 +188,6 @@
     </link>
 
     <joint name="{{ sensor_name }}_joint" type="fixed">
-      <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       <parent>{{ parent_link }}</parent>
       <child>{{ sensor_name }}_link</child>
     </joint>

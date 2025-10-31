@@ -3,7 +3,7 @@
 
 
 {# bluefox_camera_macro {--> #}
-{%- macro bluefox_camera_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+{%- macro bluefox_camera_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
 
   {%- set spawner_keyword = 'enable-bluefox-camera' -%}
   {%- set spawner_description = 'Add bluefox camera to the vehicle [752x480 @ 50hz], pointing down' -%}
@@ -12,43 +12,61 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
+    {# -- tf from link to sensor -- #}
+    {%- set x_offset = 0.0 -%}
+    {%- set y_offset = 0.0 -%}
+    {%- set z_offset = 0.0 -%}
+    {%- set roll_offset = 0.0 -%}
+    {%- set pitch_offset = 0.0 -%}
+    {%- set yaw_offset = 0.0 -%}
+
+    {%- set roll = 0.0 -%}
+    {%- set pitch = math.radians(90) -%}
+    {%- set yaw = 0.0 -%}
+
 
     <!-- bluefox camera {-->
+    <link name="{{ camera_name }}_link">
+      <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+      {{ generic.zero_inertial_macro() }}
+      {{ generic.visual_mesh_macro(
+        name = camera_name + "_visual",
+        mesh_file = 'model://mrs_robots_description/meshes/sensors/bluefox.dae',
+        mesh_scale = '1 1 1',
+        color = 'DarkGrey',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = math.radians(90),
+        pitch = 0,
+        yaw = 0)
+        }}
 
-    <!-- sensor {-->
-    {{ generic.camera_macro(
-      parent_link = parent_link,
-      camera_name = camera_name,
-      camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
-      camera_topic_name = spawner_args['name'] + '/' + camera_name,
-      frame_rate = spawner_args[spawner_keyword]['update_rate'],
-      horizontal_fov = 2.1,
-      image_width = 752,
-      image_height = 480,
-      min_distance = 0.02,
-      max_distance = 80,
-      noise_mean = 0.0,
-      noise_stddev = spawner_args[spawner_keyword]['noise'],
-      mesh_file = 'model://mrs_robots_description/meshes/sensors/bluefox.dae',
-      mesh_scale = '1 1 1',
-      color = 'DarkGrey',
-      visual_x = 0,
-      visual_y = 0,
-      visual_z = 0,
-      visual_roll = math.radians(90),
-      visual_pitch = 0,
-      visual_yaw = 0,
-      x = x,
-      y = y,
-      z = z,
-      roll = roll,
-      pitch = pitch,
-      yaw = yaw)
-    }}
-    <!--}-->
+      <!-- sensor {-->
+      {{ generic.camera_macro(
+        parent_link = parent_link,
+        camera_name = camera_name,
+        camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
+        camera_topic_name = spawner_args['name'] + '/' + camera_name,
+        frame_rate = spawner_args[spawner_keyword]['update_rate'],
+        horizontal_fov = 2.1,
+        image_width = 752,
+        image_height = 480,
+        min_distance = 0.02,
+        max_distance = 80,
+        noise_mean = 0.0,
+        noise_stddev = spawner_args[spawner_keyword]['noise'],
+        x_offset = x_offset,
+        y_offset = y_offset,
+        z_offset = z_offset,
+        roll_offset = roll_offset,
+        pitch_offset = pitch_offset,
+        yaw_offset = yaw_offset)
+      }}
+      <!--}-->
+    </link>
 
-     <joint name="{{ camera_name }}_joint" type="fixed">
-      <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+    <joint name="{{ camera_name }}_joint" type="fixed">
       <parent>{{ parent_link }}</parent>
       <child>{{ camera_name }}_link</child>
     </joint>
@@ -65,7 +83,7 @@
 {# <!--}--> #}
 
 {# bluefox_camera_reverse_macro {--> #}
-{%- macro bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+{%- macro bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
 
   {%- set spawner_keyword = 'enable-bluefox-camera-reverse' -%}
   {%- set spawner_description = 'Add bluefox camera to the vehicle [752x480 @ 50hz], pointing down but image is rotated by 180 deg' -%}
@@ -74,43 +92,62 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
-    <!-- bluefox camera reverse {-->
 
-    <!-- sensor {-->
-    {{ generic.camera_macro(
-      parent_link = parent_link,
-      camera_name = camera_name,
-      parent_frame_name = spawner_args['name'] + '/fcu',
-      camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
-      sensor_base_frame_name = spawner_args['name'] + '/' + camera_name,
-      frame_rate = spawner_args[spawner_keyword]['update_rate'],
-      horizontal_fov = 2.1,
-      image_width = 752,
-      image_height = 480,
-      min_distance = 0.02,
-      max_distance = 80,
-      noise_mean = 0.0,
-      noise_stddev = spawner_args[spawner_keyword]['noise'],
-      mesh_file = 'model://mrs_robots_description/meshes/sensors/bluefox.dae',
-      mesh_scale = '1 1 1',
-      color = 'DarkGrey',
-      visual_x = 0,
-      visual_y = 0,
-      visual_z = 0,
-      visual_roll = math.radians(90),
-      visual_pitch = 0,
-      visual_yaw = 0,
-      x = x,
-      y = y,
-      z = z,
-      roll = roll,
-      pitch = pitch,
-      yaw = yaw)
-    }}
-    <!--}-->
+    {# -- tf from link to sensor -- #}
+    {%- set x_offset = 0.0 -%}
+    {%- set y_offset = 0.0 -%}
+    {%- set z_offset = 0.0 -%}
+    {%- set roll_offset = 0.0 -%}
+    {%- set pitch_offset = 0.0 -%}
+    {%- set yaw_offset = 0.0 -%}
+
+    {%- set roll = 0.0 -%}
+    {%- set pitch = math.radians(90) -%}
+    {%- set yaw = math.radians(180) -%}
+
+    <!-- bluefox camera reverse {-->
+    <link name="{{ camera_name }}_link">
+      <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+      {{ generic.zero_inertial_macro() }}
+      {{ generic.visual_mesh_macro(
+        name = camera_name + "_visual",
+        mesh_file = 'model://mrs_robots_description/meshes/sensors/bluefox.dae',
+        mesh_scale = '1 1 1',
+        color = 'DarkGrey',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = math.radians(90),
+        pitch = 0,
+        yaw = 0)
+        }}
+ 
+      <!-- sensor {-->
+      {{ generic.camera_macro(
+        parent_link = parent_link,
+        camera_name = camera_name,
+        parent_frame_name = spawner_args['name'] + '/fcu',
+        camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
+        sensor_base_frame_name = spawner_args['name'] + '/' + camera_name,
+        frame_rate = spawner_args[spawner_keyword]['update_rate'],
+        horizontal_fov = 2.1,
+        image_width = 752,
+        image_height = 480,
+        min_distance = 0.02,
+        max_distance = 80,
+        noise_mean = 0.0,
+        noise_stddev = spawner_args[spawner_keyword]['noise'],
+        x_offset = x_offset,
+        y_offset = y_offset,
+        z_offset = z_offset,
+        roll_offset = roll_offset,
+        pitch_offset = pitch_offset,
+        yaw_offset = yaw_offset)
+      }}
+      <!--}-->
+    </link>
 
     <joint name="{{ camera_name }}_joint" type="fixed">
-      <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       <parent>{{ parent_link }}</parent>
       <child>{{ camera_name }}_link</child>
     </joint>
@@ -128,7 +165,7 @@
 {# <!--}--> #}
 
 {# bluefox_camera_front_macro {--> #}
-{%- macro bluefox_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+{%- macro bluefox_camera_front_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
 
   {%- set spawner_keyword = 'enable-bluefox-camera-front' -%}
   {%- set spawner_description = 'Add bluefox camera to the vehicle [752x480 @ 50hz], pointing forward' -%}
@@ -137,47 +174,65 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
-    <!-- bluefox camera {-->
+    {# -- tf from link to sensor -- #}
+    {%- set x_offset = 0.0 -%}
+    {%- set y_offset = 0.0 -%}
+    {%- set z_offset = 0.0 -%}
+    {%- set roll_offset = 0.0 -%}
+    {%- set pitch_offset = 0.0 -%}
+    {%- set yaw_offset = 0.0 -%}
 
-    <!-- sensor {-->
-    {{ generic.camera_macro(
-      parent_link = parent_link,
-      camera_name = camera_name,
-      parent_frame_name = spawner_args['name'] + '/fcu',
-      camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
-      sensor_base_frame_name = spawner_args['name'] + '/' + camera_name,
-      frame_rate = spawner_args[spawner_keyword]['update_rate'],
-      horizontal_fov = 2.1,
-      image_width = 752,
-      image_height = 480,
-      min_distance = 0.02,
-      max_distance = 80,
-      noise_mean = 0.0,
-      noise_stddev = spawner_args[spawner_keyword]['noise'],
-      mesh_file = 'model://mrs_robots_description/meshes/sensors/bluefox.dae',
-      mesh_scale = '1 1 1',
-      color = 'DarkGrey',
-      visual_x = 0,
-      visual_y = 0,
-      visual_z = 0,
-      visual_roll = math.radians(90),
-      visual_pitch = 0,
-      visual_yaw = 0,
-      x = x,
-      y = y,
-      z = z,
-      roll = roll,
-      pitch = pitch,
-      yaw = yaw)
-    }}
+    {%- set roll = 0.0 -%}
+    {%- set pitch = 0.0 -%}
+    {%- set yaw = 0.0-%}
+
+    <!-- bluefox camera {-->
+    <link name="{{ camera_name }}_link">
+      <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+      {{ generic.zero_inertial_macro() }}
+      {{ generic.visual_mesh_macro(
+        name = camera_name + "_visual",
+        mesh_file = 'model://mrs_robots_description/meshes/sensors/bluefox.dae',
+        mesh_scale = '1 1 1',
+        color = 'DarkGrey',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = math.radians(90),
+        pitch = 0,
+        yaw = 0)
+        }}
+
+      <!-- sensor {-->
+      {{ generic.camera_macro(
+        parent_link = parent_link,
+        camera_name = camera_name,
+        parent_frame_name = spawner_args['name'] + '/fcu',
+        camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
+        sensor_base_frame_name = spawner_args['name'] + '/' + camera_name,
+        frame_rate = spawner_args[spawner_keyword]['update_rate'],
+        horizontal_fov = 2.1,
+        image_width = 752,
+        image_height = 480,
+        min_distance = 0.02,
+        max_distance = 80,
+        noise_mean = 0.0,
+        noise_stddev = spawner_args[spawner_keyword]['noise'],
+        x_offset = x_offset,
+        y_offset = y_offset,
+        z_offset = z_offset,
+        roll_offset = roll_offset,
+        pitch_offset = pitch_offset,
+        yaw_offset = yaw_offset)
+      }}
     <!--}-->
+    </link>
 
     <!-- mount {-->
     {{ mount if mount }}
     <!--}-->
 
     <joint name="{{ camera_name }}_joint" type="fixed">
-      <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       <parent>{{ parent_link }}</parent>
       <child>{{ camera_name }}_link</child>
     </joint>

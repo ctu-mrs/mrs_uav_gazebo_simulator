@@ -34,25 +34,24 @@ class SdfTfPublisher(metaclass=SingletonMeta):
         model_xml = root_xml.find(".//model")
         self._model_name = model_xml.attrib["name"]
         
-        sensor_to_xml_joint = self._detect_sensors(model_xml)
-        sensors_tf = self._detect_sensors_transformations(sensor_to_xml_joint)
+        sensor_links_to_poses = self._detect_sensors(model_xml)
+        sensors_tf = self._detect_sensors_transformations(sensor_links_to_poses)
         self._generate_static_tf_broadcasters(sensors_tf)
 
 
     def _detect_sensors_transformations(self, sensor_joints):
         sensors_Tf = {}
-        for link_name, data in sensor_joints.items():
-            joint_xml = data["joint"]
-            sensor_pose_str = data["sensor_pose_str"]
+        for link_name, poses in sensor_joints.items():
+            pose_str = poses["link_pose"]
+            sensor_pose_str = poses["sensor_pose"]
 
             # Detect joint pose
-            pose_str = joint_xml.findtext('pose')
             if pose_str is None or (pose_str == ""):
-                self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Link {link_name} has no pose specified in its parent joint, cannot create its tf publisher")
+                self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Link {link_name} has no pose, cannot create its tf publisher")
                 continue
             link_pose_rpy = self._str_to_pose(pose_str)
 
-            # Detect sensor offset
+            # Detect sensor offset (optional)
             if sensor_pose_str is None or (sensor_pose_str == ""):
                 self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Link {link_name} has no pose specified in its sensor plugin")
                 sensor_pose_offset = np.zeros(6)
@@ -86,33 +85,16 @@ class SdfTfPublisher(metaclass=SingletonMeta):
 
 
     def _detect_sensors(self, model_xml):
-        sensor_links_to_plugins = self._find_all_sensor_links(model_xml)
-        
-        sensor_to_xml_joint = {}
-        for link_name, sensor_xml in sensor_links_to_plugins.items():
-            for joint in model_xml.findall('.//joint'):
-                child_elem = joint.find('child')
-                child_name = child_elem.text.strip() 
-
-                if child_name == link_name:
-                    sensor_to_xml_joint[child_name] = {
-                        "joint" : joint,
-                        "sensor_pose_str" : sensor_xml.findtext('pose')
-                    }
-                    break
-            if link_name not in sensor_to_xml_joint:
-                self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Link {link_name} has no joint and therefore cannot create a tf publisher")
-
-        return sensor_to_xml_joint
-    
-
-    def _find_all_sensor_links(self, model_xml):
-        sensor_links_to_plugins = {}
+        sensor_links_to_poses = {}
         for link in model_xml.findall('.//link'):
             for sensor in link.findall('.//sensor'):
                 if sensor.attrib["name"] not in self._ignored_sensors:
-                    sensor_links_to_plugins[link.attrib["name"]] = sensor
-        return sensor_links_to_plugins
+                    sensor_links_to_poses[link.attrib["name"]] = {
+                        "link_pose" : link.findtext('pose'),
+                        "sensor_pose" : sensor.findtext('pose')
+                    }
+        return sensor_links_to_poses
+    
                 
 
     def _generate_static_tf_broadcasters(self, sensors_tf):

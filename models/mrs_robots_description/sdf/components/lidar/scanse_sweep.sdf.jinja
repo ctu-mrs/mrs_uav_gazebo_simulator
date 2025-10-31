@@ -11,12 +11,20 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
+    {# -- tf from link to sensor -- #}
+    {%- set lidar_x = 0.0 -%}
+    {%- set lidar_y = 0.0 -%}
+    {%- set lidar_z = 0.0 -%}
+    {%- set lidar_roll = 0.0 -%}
+    {%- set lidar_pitch = 0.0 -%}
+    {%- set lidar_yaw = 0.0 -%}
+
     {%- set sensor_name = 'scanse_sweep' -%}
 
     <!-- scanse sweep {-->
     <link name="{{ sensor_name }}_link">
+      <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       {{ generic.zero_inertial_macro() }}
-
 
       <!-- visuals {-->
       <visual name="base_visual">
@@ -54,7 +62,7 @@
           lidar_name = sensor_name, 
           lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link', 
           lidar_topic_name = spawner_args['name'] + '/' + sensor_name + '/scan', 
-          sensor_x = 0.0, sensor_y = 0.0, sensor_z = 0.0, sensor_roll = 0.0, sensor_pitch = 0.0, sensor_yaw = 0.0,
+          sensor_x = lidar_x, sensor_y = lidar_y, sensor_z = lidar_z, sensor_roll = lidar_roll, sensor_pitch = lidar_pitch, sensor_yaw = lidar_yaw,
           update_rate = spawner_args[spawner_keyword]['update_rate'], 
           horiz_num_samples = spawner_args[spawner_keyword]['horizontal_samples'],
           horiz_resolution = 1,
@@ -74,7 +82,6 @@
     </link>
 
     <joint name="{{ sensor_name }}_joint" type="fixed">
-      <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       <parent>{{ parent_link }}</parent>
       <child>{{ sensor_name }}_link</child>
     </joint>
