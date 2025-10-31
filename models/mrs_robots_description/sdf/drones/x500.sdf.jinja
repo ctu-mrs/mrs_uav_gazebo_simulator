@@ -731,6 +731,9 @@
       x = 0.0,
       y = -0.0515,
       z = -0.038,
+      roll = 0.0,
+      pitch = math.radians(90),
+      yaw = 0.0,
       mount = none,
       spawner_args = spawner_args)
     -%}
@@ -744,6 +747,9 @@
       x = 0.0,
       y = -0.0515,
       z = -0.038,
+      roll = 0.0,
+      pitch = math.radians(90),
+      yaw = math.radians(180) ,
       mount = none,
       spawner_args = spawner_args)
     -%}
@@ -753,8 +759,8 @@
     {# <!--}--> #}
 
 
-    {#rplidar_macro{--> #}
-    {%- set rplidar_macro = components.ouster_macro(
+    {#ouster_macro{--> #}
+    {%- set ouster_macro = components.ouster_macro(
       parent_link = root,
       x = 0.0,
       y = 0.0,
@@ -765,7 +771,7 @@
       mount = none,
       spawner_args = spawner_args)
     -%}
-    {{ rplidar_macro }}
+    {{ ouster_macro }}
 
     
 

@@ -3,15 +3,11 @@
 
 
 {# bluefox_camera_macro {--> #}
-{%- macro bluefox_camera_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
+{%- macro bluefox_camera_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
 
   {%- set spawner_keyword = 'enable-bluefox-camera' -%}
   {%- set spawner_description = 'Add bluefox camera to the vehicle [752x480 @ 50hz], pointing down' -%}
   {%- set spawner_default_args = {'update_rate': 100, 'noise': 0.0} -%}
-
-  {%- set roll = 0 -%}
-  {%- set pitch = math.radians(90) -%}
-  {%- set yaw = 0 -%}
   
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
@@ -69,15 +65,11 @@
 {# <!--}--> #}
 
 {# bluefox_camera_reverse_macro {--> #}
-{%- macro bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
+{%- macro bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
 
   {%- set spawner_keyword = 'enable-bluefox-camera-reverse' -%}
   {%- set spawner_description = 'Add bluefox camera to the vehicle [752x480 @ 50hz], pointing down but image is rotated by 180 deg' -%}
   {%- set spawner_default_args = {'update_rate': 100, 'noise': 0.0} -%}
-
-  {%- set roll = 0 -%}
-  {%- set pitch = math.radians(90) -%}
-  {%- set yaw = math.radians(180) -%}
 
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
@@ -136,16 +128,11 @@
 {# <!--}--> #}
 
 {# bluefox_camera_front_macro {--> #}
-{%- macro bluefox_camera_front_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
+{%- macro bluefox_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
 
   {%- set spawner_keyword = 'enable-bluefox-camera-front' -%}
   {%- set spawner_description = 'Add bluefox camera to the vehicle [752x480 @ 50hz], pointing forward' -%}
   {%- set spawner_default_args = {'update_rate': 100, 'noise': 0.0} -%}
-
-
-  {%- set roll = 0 -%}
-  {%- set pitch = 0 -%}
-  {%- set yaw = 0 -%}
 
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}

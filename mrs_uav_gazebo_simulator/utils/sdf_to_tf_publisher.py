@@ -26,7 +26,7 @@ class SdfTfPublisher(metaclass=SingletonMeta):
         self._ignored_sensors = ignored_sensors
         self._base_link = base_link
         if self._base_link is None:
-            raise RuntimeError(f"[MRS_DRONE_SPAWNER] base_link (parent link) is not defined in the config file, cannot create tf publisher")
+            raise RuntimeError(f"[Sdf2Tf_Publisher] base_link (parent link) is not defined in the config file, cannot create tf publisher")
         self._ros_node = ros_node
         
     def generate_tf_publishers(self, sdf_xml):
@@ -48,13 +48,13 @@ class SdfTfPublisher(metaclass=SingletonMeta):
             # Detect joint pose
             pose_str = joint_xml.findtext('pose')
             if pose_str is None or (pose_str == ""):
-                self._ros_node.get_logger().info(f"[MRS_DRONE_SPAWNER]  {link_name} has no pose specified in its parent joint, cannot create its tf publisher")
+                self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Link {link_name} has no pose specified in its parent joint, cannot create its tf publisher")
                 continue
             link_pose_rpy = self._str_to_pose(pose_str)
 
             # Detect sensor offset
             if sensor_pose_str is None or (sensor_pose_str == ""):
-                self._ros_node.get_logger().info(f"[MRS_DRONE_SPAWNER]  {link_name} has no pose specified in its sensor plugin")
+                self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Link {link_name} has no pose specified in its sensor plugin")
                 sensor_pose_offset = np.zeros(6)
             else:
                 sensor_pose_offset = self._str_to_pose(sensor_pose_str)
@@ -79,7 +79,7 @@ class SdfTfPublisher(metaclass=SingletonMeta):
     def _str_to_pose(self, pose_str):
         parts = pose_str.split()
         if len(parts) != 6:
-            raise ValueError(f"[MRS_DRONE_SPAWNER] Expected 6 elements in pose string, got {len(parts)}: {pose_str}")
+            raise ValueError(f"[Sdf2Tf_Publisher] Expected 6 elements in pose string, got {len(parts)}: {pose_str}")
         
         x, y, z, roll, pitch, yaw = map(float, parts)
         return np.array([x, y, z, roll, pitch, yaw])
@@ -101,7 +101,7 @@ class SdfTfPublisher(metaclass=SingletonMeta):
                     }
                     break
             if link_name not in sensor_to_xml_joint:
-                self._ros_node.get_logger().info(f"[MRS_DRONE_SPAWNER]  {link_name} has no joint and therefore cannot create a tf publisher")
+                self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Link {link_name} has no joint and therefore cannot create a tf publisher")
 
         return sensor_to_xml_joint
     
@@ -130,7 +130,7 @@ class SdfTfPublisher(metaclass=SingletonMeta):
             transforms.append(t)
 
         broadcaster.sendTransform(transforms)
-        self._ros_node.get_logger().info(f"Published {len(transforms)} static transforms relative to {self._base_link}")
+        self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Published {len(transforms)} static transforms relative to {self._base_link}")
 
     
     def _get_sensor_pose(self, T_W_Sensor: np.ndarray) -> Transform:
