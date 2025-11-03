@@ -1,0 +1,124 @@
+<?xml version="1.0"? encoding="utf-8">
+{%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
+
+{# velodyne_macro {--> #}
+{%- macro velodyne_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-velodyne' -%}
+  {%- set spawner_description = 'Add Velodyne PUCK laser scanner to the vehicle' -%}
+  {%- set spawner_default_args = {'horizontal_samples': 3600, 'lasers': 16, 'noise': 0.01, 'range': 100, 'vfov': 30, 'update_rate': 20} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {# setup local variables {--> #}
+    {# -- tf from sensor to lidar -- #}
+    {%- set lidar_x = 0 -%}
+    {%- set lidar_y = 0 -%}
+    {%- set lidar_z = 0.037725 -%}
+    {%- set lidar_roll = 0 -%}
+    {%- set lidar_pitch = 0 -%}
+    {%- set lidar_yaw = 0 -%}
+
+    {# The real ouster is transforming lidar data from lidar_frame to sensor_frame directly for user. #}
+    {# For simplicity, we are placing sensor_frame to the same place as the lidar_frame is. #}
+    {# Velodyne macro is using the same plugin as ouster macro. Therefore we need to render data in the same way. #}
+
+    {# <!--}--> #}
+
+    {%- set sensor_name = 'velodyne' -%}
+
+    <!-- Velodyne {-->
+
+    <link name="{{sensor_name}}_link">
+      <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+      {{ generic.zero_inertial_macro() }}
+
+
+      <!-- visuals {-->
+        <visual name="base_visual">
+          <pose>0 0 0.0094 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <length>0.0188</length>
+              <radius>0.062</radius>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <name>Gazebo/FlatBlack</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+          </material>
+        </visual>
+        <visual name="top_visual">
+          <pose>0 0 0.0643 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <length>0.0148</length>
+              <radius>0.062</radius>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <name>Gazebo/FlatBlack</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+          </material>
+        </visual>
+        <visual name="window_visual">
+          <pose>0 0 0.03785 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <length>0.0381</length>
+              <radius>0.058</radius>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <name>Gazebo/Blue</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+          </material>
+        </visual>
+      <!--}-->
+
+      <!-- sensor + plugin {-->
+      {{ generic.gazebo_lidar_plugin_macro(
+          lidar_name = sensor_name,
+          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link',
+          lidar_topic_name = spawner_args['name'] + '/' + sensor_name,
+          sensor_x = lidar_x, sensor_y = lidar_y, sensor_z = lidar_z, sensor_roll = lidar_roll, sensor_pitch =lidar_pitch, sensor_yaw =lidar_yaw,
+          update_rate = spawner_args[spawner_keyword]['update_rate'],
+          horiz_num_samples = spawner_args[spawner_keyword]['horizontal_samples'],
+          horiz_resolution = 1,
+          horiz_min_angle = -math.radians(180),
+          horiz_max_angle = math.radians(180),
+          vertic_num_samples = spawner_args[spawner_keyword]['lasers'],
+          vertic_resolution = 1,
+          vertic_min_angle = -spawner_args[spawner_keyword]['vfov']/2*math.radians(180)/180.0 ,
+          vertic_max_angle = spawner_args[spawner_keyword]['vfov']/2*math.radians(180)/180.0,
+          range_min = 0.1,
+          range_max = spawner_args[spawner_keyword]['range'],
+          range_resolution = 0.03,
+          noise_mean = 0.0,
+          noise_std= spawner_args[spawner_keyword]['noise']
+      )}}
+    </link>
+    <!--}-->
+
+    <joint name="{{ sensor_name }}_joint" type="fixed">
+      <parent>{{ parent_link }}</parent>
+      <child>{{ sensor_name }}_link</child>
+    </joint>
+
+    <!--}-->
+
+    <!-- mount {-->
+    {{ mount if mount }}
+    <!--}-->
+
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}

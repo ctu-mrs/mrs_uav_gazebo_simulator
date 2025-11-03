@@ -1,0 +1,201 @@
+<?xml version="1.0"? encoding="utf-8">
+{%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
+
+{# ouster_macro {--> #}
+{%- macro ouster_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-ouster' -%}
+  {%- set spawner_description = 'Add Ouster laser scanner to the vehicle. Select a model to automatically set number of lines, vertical FOV and range. Available models: OS0-32, OS0-64, OS0-128, OS1-16, OS1-32G1, OS1-32, OS1-64, OS1-128, OS2-32, OS2-64, OS2-128' -%}
+  {%- set spawner_default_args = {'model': 'OS1-16', 'horizontal_samples': 2048, 'update_rate': 10, 'noise': 0.03} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {# model selection {--> #}
+    {%- set sensor_name = 'ouster' -%}
+    {%- set ouster_model = spawner_args[spawner_keyword]['model'] -%}
+
+    {# OS0 {--> #}
+
+    {# OS0-32 #}
+    {%- if ouster_model == 'OS0-32' -%}
+      {%- set lasers = 32 -%}
+      {%- set vfov_angle = 90 -%}
+      {%- set range = 55 -%}
+    {%- endif -%}
+
+    {# OS0-64 #}
+    {%- if ouster_model == 'OS0-64' -%}
+      {%- set lasers = 64 -%}
+      {%- set vfov_angle = 90 -%}
+      {%- set range = 55 -%}
+    {%- endif -%}
+
+    {# OS0-128 #}
+    {%- if ouster_model == 'OS0-128' -%}
+      {%- set lasers = 128 -%}
+      {%- set vfov_angle = 90 -%}
+      {%- set range = 55 -%}
+    {%- endif -%}
+
+    {# <!--}--> #}
+
+    {# OS1 Generation 1 {--> #}
+    {# <!-- OS1-16 Generation 1 --> #}
+    {%- if ouster_model == 'OS1-16' -%}
+      {%- set lasers = 16 -%}
+      {%- set vfov_angle = 33.2 -%}
+      {%- set range = 120 -%}
+    {%- endif -%}
+    {# <!--}--> #}
+
+    {# OS1 Generation 2 {--> #}
+
+    {# OS1-32 Generation 2 #}
+    {%- if ouster_model == 'OS1-32' -%}
+      {%- set lasers = 32 -%}
+      {%- set vfov_angle = 45 -%}
+      {%- set range = 120 -%}
+    {%- endif -%}
+
+    {# OS1-64 Generation 2 #}
+    {%- if ouster_model == 'OS1-64' -%}
+      {%- set lasers = 64 -%}
+      {%- set vfov_angle = 45 -%}
+      {%- set range = 120 -%}
+    {%- endif -%}
+
+    {# OS1-128 Generation 2 #}
+    {%- if ouster_model == 'OS1-128' -%}
+      {%- set lasers = 128 -%}
+      {%- set vfov_angle = 45 -%}
+      {%- set range = 120 -%}
+    {%- endif -%}
+
+    {# <!--}--> #}
+
+    {# OS2 {--> #}
+
+    {# OS2-32 #}
+    {%- if ouster_model == 'OS2-32' -%}
+      {%- set lasers = 32 -%}
+      {%- set vfov_angle = 22.5 -%}
+      {%- set range = 240 -%}
+    {%- endif -%}
+
+    {# OS2-64 #}
+    {%- if ouster_model == 'OS2-64' -%}
+      {%- set lasers = 64 -%}
+      {%- set vfov_angle = 22.5 -%}
+      {%- set range = 240 -%}
+    {%- endif -%}
+
+    {# OS2-128 #}
+    {%- if ouster_model == 'OS2-128' -%}
+      {%- set lasers = 128 -%}
+      {%- set vfov_angle = 22.5 -%}
+      {%- set range = 240 -%}
+    {%- endif -%}
+
+    {# <!--}--> #}
+
+    {# <!--}--> #}
+
+    {# The real ouster is transforming lidar data from lidar_frame to sensor_frame directly for user. #}
+    {# For simplicity, we are placing sensor_frame to the same place as the lidar_frame is. #}
+
+    {# setup local variables {--> #}
+    {# -- tf from sensor to lidar -- #}
+    {%- set lidar_x = 0 -%}
+    {%- set lidar_y = 0 -%}
+    {%- set lidar_z = 0.0344 -%}
+    {%- set lidar_roll = 0 -%}
+    {%- set lidar_pitch = 0 -%}
+    {%- set lidar_yaw = 0 -%}
+
+    {# -- tf from sensor to imu -- #}
+    {%- set imu_x = 0.006253 -%}
+    {%- set imu_y = -0.011775 -%}
+    {%- set imu_z = 0.007645 -%}
+    {%- set imu_roll = 0 -%}
+    {%- set imu_pitch = 0 -%}
+    {%- set imu_yaw = 0 -%}
+
+    {# <!--}--> #}
+
+    <!-- Ouster {-->
+    <link name="{{sensor_name}}_link">
+
+      <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+      {{ generic.zero_inertial_macro() }}
+
+      <!-- visuals {-->
+      {{ generic.visual_mesh_macro(
+        name = 'base_visual',
+        mesh_file = 'model://mrs_robots_description/meshes/sensors/os1_64.dae',
+        mesh_scale = '1 1 1',
+        color = 'White',
+        x = 0,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(90))
+      }}
+      <visual name="window_visual">
+        <pose>0 0 {{ lidar_z }} 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.035</length>
+            <radius>0.038</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Black</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <!--}-->
+
+      <!-- sensor + plugin {-->
+      {{ generic.gazebo_lidar_plugin_macro(
+          lidar_name = sensor_name,
+          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link',
+          lidar_topic_name = spawner_args['name'] + '/' + sensor_name,
+          sensor_x = lidar_x, sensor_y = lidar_y, sensor_z = lidar_z, sensor_roll = lidar_roll, sensor_pitch =lidar_pitch, sensor_yaw =lidar_yaw,
+          update_rate = spawner_args[spawner_keyword]['update_rate'],
+          horiz_num_samples = spawner_args[spawner_keyword]['horizontal_samples'],
+          horiz_resolution = 1,
+          horiz_min_angle = 0,
+          horiz_max_angle =2*math.pi,
+          vertic_num_samples = lasers,
+          vertic_resolution = 1,
+          vertic_min_angle = -vfov_angle/2*math.radians(180)/180.0 ,
+          vertic_max_angle = vfov_angle/2*math.radians(180)/180.0,
+          range_min = 0.1,
+          range_max = range,
+          range_resolution = 0.03,
+          noise_mean = 0.0,
+          noise_std= spawner_args[spawner_keyword]['noise']
+      )}}
+      <!--}-->
+
+    </link>
+
+    <joint name="{{ sensor_name }}_joint" type="fixed">
+      <parent>{{ parent_link }}</parent>
+      <child>{{ sensor_name }}_link</child>
+    </joint>
+    <!--}-->
+
+    <!-- mount {-->
+    {{ mount if mount }}
+    <!--}-->
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}
+
+

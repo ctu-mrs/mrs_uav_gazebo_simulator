@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<sdf version='1.10'>
+<sdf version="1.10">
 
-  {%- import 'mrs_robots_description/sdf/component_snippets.sdf.jinja' as components -%}
-  {%- import 'mrs_robots_description/sdf/generic_components.sdf.jinja' as generic -%}
+  {%- import 'mrs_robots_description/sdf/components/component_snippets.sdf.jinja' as components -%}
+  {%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
 
   {# ================================================================== #}
   {# ||                    parameters definition                     || #}
   {# ================================================================== #}
 
   {# Robot parameters and arguments {--> #}
-  {%- set mass = 2.0 -%} {# [kg] #}
-  {%- set body_radius = 0.3 -%} {# [m] #}
+  {%- set mass = 1.64 -%} {# [kg] #}
+  {%- set body_radius = 0.2 -%} {# [m] #}
   {%- set body_height = 0.1 -%} {# [m] #}
-  {%- set mass_prop = 0.005 -%} {# [kg] #}
-  {%- set prop_radius = 0.118 -%} {# [m] #}
-  {%- set prop_height = 0.002 -%} {# [m] #}
+  {%- set mass_prop = 0.016 -%} {# [kg] #}
+  {%- set prop_radius = 0.127 -%} {# [m] #}
   {%- set prop_offset_top = 0.0235 -%} {# [m] #}
-  {%- set arm_length = 0.275 -%} {# [m] #}
+  {%- set prop_height = 0.002 -%} {# [m] #}
+  {%- set arm_length = 0.23 -%} {# [m] #}
   {%- set arm_height = 0.038 -%} {# [m] #}
-  {%- set board_radius = 0.11 -%} {# [m] #}
+  {%- set board_radius = 0.065 -%} {# [m] #}
   {%- set board_height = 0.002 -%} {# [m] #}
   {%- set holder_offset = 0.02 -%} {# [m] #}
   {%- set leg_offset_z = 0.098 -%} {# [m] #}
@@ -50,25 +50,26 @@
   {# Meshes {--> #}
 
   {# Drone parts {--> #}
-  {%- set central_board_mesh_top = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_central_board.dae' -%}
-  {%- set central_board_mesh_bottom = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_central_board.dae' -%}
-  {%- set arm_mesh_file = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_arm.dae' -%}
-  {%- set leg_mesh_file = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_leg_170mm.dae'-%}
-  {%- set motor_mesh_file = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_rotor.dae' -%}
-  {%- set prop_mesh_file = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_prop.dae'-%}
+  {%- set central_board_mesh_top = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_central_top.dae' -%}
+  {%- set central_board_mesh_bottom = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_central_bottom.dae' -%}
+  {%- set arm_mesh_file = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_arm.dae' -%}
+  {%- set leg_mesh_file = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_leg_170mm.dae'-%}
+  {%- set motor_mesh_file = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_rotor.dae' -%}
+  {%- set prop_mesh_file = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_prop.dae'-%}
   {%- set pixhawk_mesh_file = 'model://mrs_robots_description/meshes/sensors/pixhawk.dae' -%}
-  {%- set nuc_mesh_file = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_nuc.dae' -%}
+  {%- set nuc_mesh_file = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_nuc.dae' -%}
   {# <!--}--> #}
 
   {# Mounts {--> #}
-  {%- set battery_and_garmin_mount_mesh = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_battery_and_garmin_mount.dae' -%}
-  {%- set ouster_mount_mesh = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_ouster_mount.dae' -%}
-  {%- set rplidar_mount_mesh = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_rplidar_mount.dae' -%}
-  {%- set realsense_top_mount_mesh = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_realsense_top_mount.dae' -%}
-  {%- set realsense_front_mount_mesh = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_realsense_front_pitched_0_mount.dae' -%}
-  {%- set realsense_front_pitched_mount_mesh = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_realsense_front_pitched_10_mount.dae' -%}
-  {%- set realsense_front_down_mount_mesh = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_realsense_front_pitched_90_mount.dae' -%}
-  {%- set uvdar_mount_mesh = 'model://mrs_robots_description/meshes/dji/f550/dji_f550_uvdar_mount.dae' -%}
+  {%- set battery_mount_mesh = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_battery_mount.dae' -%}
+  {%- set bluefox_mount_mesh = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_bluefox_mount.dae' -%}
+  {%- set ouster_mount_mesh = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_ouster_mount.dae' -%}
+  {%- set garmin_mount_mesh = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_garmin_mount.dae' -%}
+  {%- set rplidar_mount_mesh = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_rplidar_mount.dae' -%}
+  {%- set realsense_front_mount_mesh = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_realsense_front_pitched_0_mount.dae' -%}
+  {%- set realsense_front_pitched_mount_mesh = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_realsense_front_pitched_45_mount.dae' -%}
+  {%- set realsense_front_down_mount_mesh = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_realsense_front_pitched_90_mount.dae' -%}
+  {%- set uvdar_mount_mesh = 'model://mrs_robots_description/meshes/dji/f450/dji_f450_uvdar_mount.dae' -%}
   {# <!--}--> #}
 
   {# Scales {--> #}
@@ -117,7 +118,7 @@
         z = - body_height / 2,
         roll = 0,
         pitch = 0,
-        yaw = math.radians(30))
+        yaw = 0)
       }}
 
       {{ generic.visual_mesh_macro(
@@ -130,7 +131,7 @@
         z = arm_height - body_height / 2,
         roll = 0,
         pitch = 0,
-        yaw = math.radians(30))
+        yaw = 0)
       }}
       <!--}-->
 
@@ -140,38 +141,12 @@
         mesh_file = arm_mesh_file,
         mesh_scale = mesh_scale,
         color = 'White',
-        x = board_radius * math.cos(math.radians(30)),
-        y = -board_radius * math.sin(math.radians(30)),
+        x = board_radius * math.sin(math.radians(45)),
+        y = -board_radius * math.sin(math.radians(45)),
         z = arm_height - body_height / 2,
         roll = 0,
         pitch = 0,
-        yaw = math.radians(-30))
-      }}
-
-      {{ generic.visual_mesh_macro(
-        name = 'middle_right_arm',
-        mesh_file = arm_mesh_file,
-        mesh_scale = mesh_scale,
-        color = 'White',
-        x = 0,
-        y = -board_radius,
-        z = arm_height - body_height / 2,
-        roll = 0,
-        pitch = 0,
-        yaw = math.radians(-90))
-      }}
-
-      {{ generic.visual_mesh_macro(
-        name = 'back_right_arm',
-        mesh_file = arm_mesh_file,
-        mesh_scale = mesh_scale,
-        color = 'Red',
-        x = -board_radius * math.cos(math.radians(30)),
-        y = -board_radius * math.sin(math.radians(30)),
-        z = arm_height - body_height / 2,
-        roll = 0,
-        pitch = 0,
-        yaw = math.radians(-150))
+        yaw = math.radians(-45))
       }}
 
       {{ generic.visual_mesh_macro(
@@ -179,25 +154,25 @@
         mesh_file = arm_mesh_file,
         mesh_scale = mesh_scale,
         color = 'White',
-        x = board_radius * math.cos(math.radians(30)),
-        y = board_radius * math.sin(math.radians(30)),
+        x = board_radius * math.sin(math.radians(45)),
+        y = board_radius * math.sin(math.radians(45)),
         z = arm_height - body_height / 2,
         roll = 0,
         pitch = 0,
-        yaw = math.radians(30))
+        yaw = math.radians(45))
       }}
 
       {{ generic.visual_mesh_macro(
-        name = 'middle_left_arm',
+        name = 'back_right_arm',
         mesh_file = arm_mesh_file,
         mesh_scale = mesh_scale,
-        color = 'White',
-        x = 0,
-        y = board_radius,
+        color = 'Red',
+        x = -board_radius * math.sin(math.radians(45)),
+        y = -board_radius * math.sin(math.radians(45)),
         z = arm_height - body_height / 2,
         roll = 0,
         pitch = 0,
-        yaw = math.radians(90))
+        yaw = math.radians(-135))
       }}
 
       {{ generic.visual_mesh_macro(
@@ -205,16 +180,16 @@
         mesh_file = arm_mesh_file,
         mesh_scale = mesh_scale,
         color = 'Red',
-        x = -board_radius * math.cos(math.radians(30)),
-        y = board_radius * math.sin(math.radians(30)),
+        x = -board_radius * math.sin(math.radians(45)),
+        y = board_radius * math.sin(math.radians(45)),
         z = arm_height - body_height / 2,
         roll = 0,
         pitch = 0,
-        yaw = math.radians(150))
+        yaw = math.radians(135))
       }}
       <!--}-->
 
-      <!-- intel nuc {-->
+      <!-- Intel NUC {-->
       {{ generic.visual_mesh_macro(
         name = 'NUC',
         mesh_file = nuc_mesh_file,
@@ -229,7 +204,7 @@
       }}
       <!--}-->
 
-      <!-- pixhawk {-->
+      <!-- Pixhawk {-->
       {{ generic.visual_mesh_macro(
         name = 'pixhawk',
         mesh_file = pixhawk_mesh_file,
@@ -244,35 +219,35 @@
       }}
       <!--}-->
 
-      <!-- legs {-->
+      <!-- Legs {-->
       {{ generic.leg_macro(
         name = 'front_right_leg',
         mesh_file = leg_mesh_file,
         mesh_scale = mesh_scale_milimeters,
         color = 'White',
         parent = root,
-        x = (arm_length - leg_offset_r) * math.cos(math.radians(30)),
-        y = -(arm_length - leg_offset_r) * math.sin(math.radians(30)),
+        x = (arm_length - leg_offset_r) * math.sin(math.radians(45)),
+        y = -(arm_length - leg_offset_r) * math.sin(math.radians(45)),
         z = arm_height - body_height/2 - leg_offset_z,
         roll = 0,
         pitch = 0,
-        yaw = math.radians(150),
+        yaw = math.radians(135),
         collision_height = leg_height,
         collision_radius = leg_radius)
       }}
 
       {{ generic.leg_macro(
-        name = 'middle_left_leg',
+        name = 'front_left_leg',
         mesh_file = leg_mesh_file,
         mesh_scale = mesh_scale_milimeters,
         color = 'White',
         parent = root,
-        x = 0,
-        y = arm_length - leg_offset_r,
+        x = (arm_length - leg_offset_r) * math.sin(math.radians(45)),
+        y = (arm_length - leg_offset_r) * math.sin(math.radians(45)),
         z = arm_height - body_height/2 - leg_offset_z,
         roll = 0,
         pitch = 0,
-        yaw = math.radians(-90),
+        yaw = math.radians(-135),
         collision_height = leg_height,
         collision_radius = leg_radius)
       }}
@@ -281,54 +256,43 @@
         name = 'back_right_leg',
         mesh_file = leg_mesh_file,
         mesh_scale = mesh_scale_milimeters,
-        color = 'White',
+        color = 'Red',
         parent = root,
-        x = -(arm_length - leg_offset_r) * math.cos(math.radians(30)),
-        y = -(arm_length - leg_offset_r) * math.sin(math.radians(30)),
+        x = -(arm_length - leg_offset_r) * math.sin(math.radians(45)),
+        y = -(arm_length - leg_offset_r) * math.sin(math.radians(45)),
         z = arm_height - body_height/2 - leg_offset_z,
         roll = 0,
         pitch = 0,
-        yaw = math.radians(30),
+        yaw = math.radians(45),
         collision_height = leg_height,
         collision_radius = leg_radius)
       }}
 
+      {{ generic.leg_macro(
+        name = 'back_left_leg',
+        mesh_file = leg_mesh_file,
+        mesh_scale = mesh_scale_milimeters,
+        color = 'Red',
+        parent = root,
+        x = -(arm_length - leg_offset_r) * math.sin(math.radians(45)),
+        y = (arm_length - leg_offset_r) * math.sin(math.radians(45)),
+        z = arm_height - body_height/2 - leg_offset_z,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(-45),
+        collision_height = leg_height,
+        collision_radius = leg_radius)
+      }}
       <!--}-->
 
-      <!-- motors {-->
+      <!-- Motors {-->
       {{ generic.visual_mesh_macro(
         name = 'front_right_motor',
         mesh_file = motor_mesh_file,
         mesh_scale = mesh_scale,
         color = 'Black',
-        x = arm_length * math.cos(math.radians(30)),
-        y = -arm_length * math.sin(math.radians(30)),
-        z = arm_height - body_height / 2,
-        roll = 0,
-        pitch = 0,
-        yaw = 0)
-      }}
-
-      {{ generic.visual_mesh_macro(
-        name = 'middle_right_motor',
-        mesh_file = motor_mesh_file,
-        mesh_scale = mesh_scale,
-        color = 'Black',
-        x = 0,
-        y = -arm_length,
-        z = arm_height - body_height / 2,
-        roll = 0,
-        pitch = 0,
-        yaw = 0)
-      }}
-
-      {{ generic.visual_mesh_macro(
-        name = 'back_right_motor',
-        mesh_file = motor_mesh_file,
-        mesh_scale = mesh_scale,
-        color = 'Black',
-        x = -arm_length * math.cos(math.radians(30)),
-        y = -arm_length * math.sin(math.radians(30)),
+        x = arm_length * math.sin(math.radians(45)),
+        y = -arm_length * math.sin(math.radians(45)),
         z = arm_height - body_height / 2,
         roll = 0,
         pitch = 0,
@@ -340,8 +304,8 @@
         mesh_file = motor_mesh_file,
         mesh_scale = mesh_scale,
         color = 'Black',
-        x = arm_length * math.cos(math.radians(30)),
-        y = arm_length * math.sin(math.radians(30)),
+        x = arm_length * math.sin(math.radians(45)),
+        y = arm_length * math.sin(math.radians(45)),
         z = arm_height - body_height / 2,
         roll = 0,
         pitch = 0,
@@ -349,12 +313,12 @@
       }}
 
       {{ generic.visual_mesh_macro(
-        name = 'middle_left_motor',
+        name = 'back_right_motor',
         mesh_file = motor_mesh_file,
         mesh_scale = mesh_scale,
         color = 'Black',
-        x = 0,
-        y = arm_length,
+        x = -arm_length * math.sin(math.radians(45)),
+        y = -arm_length * math.sin(math.radians(45)),
         z = arm_height - body_height / 2,
         roll = 0,
         pitch = 0,
@@ -366,51 +330,68 @@
         mesh_file = motor_mesh_file,
         mesh_scale = mesh_scale,
         color = 'Black',
-        x = -arm_length * math.cos(math.radians(30)),
-        y = arm_length * math.sin(math.radians(30)),
+        x = -arm_length * math.sin(math.radians(45)),
+        y = arm_length * math.sin(math.radians(45)),
         z = arm_height - body_height / 2,
         roll = 0,
         pitch = 0,
         yaw = 0)
       }}
-
       <!--}-->
 
-      <!-- battery mount and battery {-->
+      <!-- Battery mount and battery {-->
       {{ generic.visual_mesh_macro(
         name = 'battery_mount',
-        mesh_file = battery_and_garmin_mount_mesh,
+        mesh_file = battery_mount_mesh,
         mesh_scale = mesh_scale_milimeters,
         color = 'DarkGrey',
-        x = 0.03,
+        x = 0,
         y = 0,
-        z = -body_height / 2 - 0.01,
+        z = -body_height / 2 - 0.028,
         roll = 0,
         pitch = 0,
-        yaw = math.radians(180))
+        yaw = math.radians(90))
       }}
 
       {{ generic.visual_colored_box_macro(
         name = 'battery',
-        size_x = 0.135,
+        size_x = 0.13,
         size_y = 0.042,
         size_z = 0.044,
         color = 'Grey',
         x = 0,
         y = 0,
-        z = -body_height / 2 - 0.024,
+        z = -body_height / 2 - 0.027,
         roll = 0,
         pitch = 0,
-        yaw = math.radians(180))
+        yaw = math.radians(90))
       }}
       <!--}-->
 
       {# component mounts and holders (these must be passed as args into components, or must be called) {--> #}
 
-      {# lidar_mount_2d {--> #}
+      {# Garmin down mount {--> #}
+      {%- set garmin_down_mount -%}
+        {{ generic.visual_link_macro(
+          name = 'garmin_mount',
+          mesh_file = garmin_mount_mesh,
+          mesh_scale = mesh_scale_milimeters,
+          color = 'DarkGrey',
+          x = -0.062,
+          y = 0,
+          z = -(arm_height + 0.016),
+          roll = math.radians(90),
+          pitch = 0,
+          yaw = math.radians(90),
+          parent_link = root)
+        }}
+      {%- endset -%}
+      {# <!--}--> #}
+
+      {# Lidar mount 2D {--> #}
       {%- set lidar_mount_2d -%}
         {{ generic.visual_link_macro(
-          name = 'rplidar_mount',
+          name = 'lidar_mount_2d',
           mesh_file = rplidar_mount_mesh,
           mesh_scale = mesh_scale_milimeters,
           color = 'DarkGrey',
@@ -425,7 +406,7 @@
       {%- endset -%}
       {# <!--}--> #}
 
-      {# lidar_mount_3d {--> #}
+      {# Lidar mount 3D {--> #}
       {%- set lidar_mount_3d -%}
         {{ generic.visual_link_macro(
           name = 'lidar_mount_3d',
@@ -443,73 +424,21 @@
       {%- endset -%}
       {# <!--}--> #}
 
-      {# Realsense top mount {--> #}
-      {%- set realsense_top_mount -%}
-        {{ generic.visual_link_macro(
-          name = 'realsense_top_mount',
-          mesh_file = realsense_top_mount_mesh,
-          mesh_scale = mesh_scale_milimeters,
-          color = 'DarkGrey',
-          x = 0.06,
-          y = -0.040,
-          z = 0.163,
-          roll = 0,
-          pitch = 0,
-          yaw = math.radians(180),
-          parent_link = root)
-        }}
-
-        <!-- Aluminium holder {-->
-        <link name="aluminum_holder_link">
-          {{ generic.zero_inertial_macro() }}
-          {{ generic.visual_colored_box_with_collision_macro(
-            name = 'top_holder_1',
-            size_x = 0.006,
-            size_y = 0.035,
-            size_z = 0.175,
-            color = 'Grey',
-            x = -0.095 * math.cos(math.radians(30)),
-            y = 0.095 * math.sin(math.radians(30)),
-            z = 0.075,
-            roll = 0,
-            pitch = 0,
-            yaw = -math.radians(30))
-          }}
-
-          {{ generic.visual_colored_box_with_collision_macro(
-            name = 'top_holder_2',
-            size_x = 0.006,
-            size_y = 0.035,
-            size_z = 0.175,
-            color = 'Grey',
-            x = 0.095 * math.cos(math.radians(30)),
-            y = -0.095 * math.sin(math.radians(30)),
-            z = 0.075,
-            roll = 0,
-            pitch = 0,
-            yaw = -math.radians(30))
-          }}
-
-          {{ generic.visual_colored_box_with_collision_macro(
-            name = 'top_holder_3',
-            size_x = 0.190,
-            size_y = 0.035,
-            size_z = 0.006,
-            color = 'Grey',
-            x = 0,
-            y = 0,
-            z = 0.160,
-            roll = 0,
-            pitch = 0,
-            yaw = -math.radians(30))
-          }}
-        </link>
-        <joint name="aluminum_holder_joint" type="fixed">
-          <parent>{{ root }}</parent>
-          <child>aluminum_holder_link</child>
-        </joint>
-        <!--}-->
-
+      {# Bluefox mount {--> #}
+      {%- set bluefox_mount -%}
+      {{ generic.visual_link_macro(
+        name = 'bluefox_mount',
+        mesh_file = bluefox_mount_mesh,
+        mesh_scale = mesh_scale_milimeters,
+        color = 'DarkGrey',
+        x = 0.051,
+        y = 0,
+        z = -(arm_height + 0.02),
+        roll = math.radians(90),
+        pitch = 0,
+        yaw = -math.radians(90),
+        parent_link = root)
+      }}
       {%- endset -%}
       {# <!--}--> #}
 
@@ -520,12 +449,12 @@
           mesh_file = realsense_front_mount_mesh,
           mesh_scale = mesh_scale_milimeters,
           color = 'DarkGrey',
-          x = 0.223,
+          x = 0.153,
           y = 0,
           z = -0.089,
-          roll = math.radians(90),
+          roll = 0,
           pitch = 0,
-          yaw = -math.radians(90),
+          yaw = 0,
           parent_link = root)
         }}
       {%- endset -%}
@@ -538,12 +467,12 @@
           mesh_file = realsense_front_pitched_mount_mesh,
           mesh_scale = mesh_scale_milimeters,
           color = 'DarkGrey',
-          x = 0.223,
+          x = 0.153,
           y = 0,
           z = -0.089,
-          roll = math.radians(90),
+          roll = 0,
           pitch = 0,
-          yaw = -math.radians(90),
+          yaw = 0,
           parent_link = root)
         }}
       {%- endset -%}
@@ -553,83 +482,55 @@
       {%- set realsense_down_mount -%}
         {{ generic.visual_link_macro(
           name = 'realsense_down_mount',
-          mesh_file = realsense_front_pitched_mount_mesh,
+          mesh_file = realsense_front_down_mount_mesh,
           mesh_scale = mesh_scale_milimeters,
           color = 'DarkGrey',
-          x = 0.223,
+          x = 0.153,
           y = 0,
           z = -0.089,
-          roll = math.radians(90),
+          roll = 0,
           pitch = 0,
-          yaw = -math.radians(90),
+          yaw = 0,
           parent_link = root)
         }}
       {%- endset -%}
       {# <!--}--> #}
 
-      {# Front left leg {--> #}
-      {%- set front_left_leg -%}
-      <!-- extra leg to mount realsense {-->
-      <link name="extra_leg_link">
-        {{ generic.zero_inertial_macro() }}
-        {{ generic.leg_macro(
-          name = 'front_left_leg',
-          mesh_file = leg_mesh_file,
-          mesh_scale = mesh_scale_milimeters,
-          color = 'White',
-          parent = root,
-          x = (arm_length - leg_offset_r) * math.cos(math.radians(30)),
-          y = (arm_length - leg_offset_r) * math.sin(math.radians(30)),
-          z = arm_height - body_height/2 - leg_offset_z,
-          roll = 0,
-          pitch = 0,
-          yaw = math.radians(210),
-          collision_height = leg_height,
-          collision_radius = leg_radius)
-        }}
-        </link>
-        <joint name="extra_leg_joint" type="fixed">
-          <parent>{{ root }}</parent>
-          <child>extra_leg_link</child>
-        </joint>
-        <!--}-->
-      {%- endset -%}
-      {# <!--}--> #}
-
       {# UVDAR mount {--> #}
       {%- set uvdar_mount -%}
-        {{ generic.visual_mesh_macro(
-          name = 'uvdar_mount',
-          mesh_file = uvdar_mount_mesh,
-          mesh_scale = mesh_scale_milimeters,
-          color = 'DarkGrey',
-          x = 0.025,
-          y = 0,
-          z = 0.036,
-          roll = 0,
-          pitch = 0,
-          yaw = 0)
-        }}
+      {{ generic.visual_link_macro(
+        name = 'uvdar_mount',
+        mesh_file = uvdar_mount_mesh,
+        mesh_scale = mesh_scale_milimeters,
+        color = 'DarkGrey',
+        x = 0.025,
+        y = 0,
+        z = 0.036,
+        roll = 0,
+        pitch = 0,
+        yaw = 0,
+        parent_link = root)
+      }}
       {%- endset -%}
       {# <!--}--> #}
 
-      {# <!--}--> #}
+    {# <!--}--> #}
 
-      <!--}-->
+    <!--}-->
 
-      <!-- Body physics {-->
-      {{ generic.multirotor_physics_macro(
-        mass = mass,
-        body_radius = body_radius,
-        body_height = body_height,
-        ixx = body_ixx,
-        ixy = body_ixy,
-        ixz = body_ixz,
-        iyy = body_iyy,
-        iyz = body_iyz,
-        izz = body_izz)
-      }}
-      <!--}-->
+    <!-- Body physics {-->
+    {{ generic.multirotor_physics_macro(
+      mass = mass,
+      body_radius = body_radius,
+      body_height = body_height,
+      ixx = body_ixx,
+      ixy = body_ixy,
+      ixz = body_ixz,
+      iyy = body_iyy,
+      iyz = body_iyz,
+      izz = body_izz)
+    }}
+    <!--}-->
 
     {# ================================================================== #}
     {# ||                compulsory sensor definitions                 || #}
@@ -693,19 +594,19 @@
     {%- set prop_list = [
     {
     'motor_number': 0,
-    'direction': 'cw',
-    'x': 0,
-    'y': -arm_length,
+    'direction': 'ccw',
+    'x': arm_length * math.sin(math.radians(45)),
+    'y': -arm_length * math.sin(math.radians(45)),
     'z': arm_height + prop_offset_top - body_height/2,
     'mesh_files': [prop_mesh_file],
-    'mesh_scale': mesh_scale_prop_cw,
+    'mesh_scale': mesh_scale_prop_ccw,
     'color': 'White'
     },
     {
     'motor_number': 1,
     'direction': 'ccw',
-    'x': 0,
-    'y': arm_length,
+    'x': -arm_length * math.sin(math.radians(45)),
+    'y': arm_length * math.sin(math.radians(45)),
     'z': arm_height + prop_offset_top - body_height/2,
     'mesh_files': [prop_mesh_file],
     'mesh_scale': mesh_scale_prop_ccw,
@@ -714,8 +615,8 @@
     {
     'motor_number': 2,
     'direction': 'cw',
-    'x': arm_length * math.cos(math.radians(30)),
-    'y': arm_length * math.sin(math.radians(30)),
+    'x': arm_length * math.sin(math.radians(45)),
+    'y': arm_length * math.sin(math.radians(45)),
     'z': arm_height + prop_offset_top - body_height/2,
     'mesh_files': [prop_mesh_file],
     'mesh_scale': mesh_scale_prop_cw,
@@ -723,34 +624,14 @@
     },
     {
     'motor_number': 3,
-    'direction': 'ccw',
-    'x': -arm_length * math.cos(math.radians(30)),
-    'y': -arm_length * math.sin(math.radians(30)),
-    'z': arm_height + prop_offset_top - body_height/2,
-    'mesh_files': [prop_mesh_file],
-    'mesh_scale': mesh_scale_prop_ccw,
-    'color': 'White'
-    },
-    {
-    'motor_number': 4,
-    'direction': 'ccw',
-    'x': arm_length * math.cos(math.radians(30)),
-    'y': -arm_length * math.sin(math.radians(30)),
-    'z': arm_height + prop_offset_top - body_height/2,
-    'mesh_files': [prop_mesh_file],
-    'mesh_scale': mesh_scale_prop_ccw,
-    'color': 'White'
-    },
-    {
-    'motor_number': 5,
     'direction': 'cw',
-    'x': -arm_length * math.cos(math.radians(30)),
-    'y': arm_length * math.sin(math.radians(30)),
+    'x': -arm_length * math.sin(math.radians(45)),
+    'y': -arm_length * math.sin(math.radians(45)),
     'z': arm_height + prop_offset_top - body_height/2,
     'mesh_files': [prop_mesh_file],
     'mesh_scale': mesh_scale_prop_cw,
     'color': 'White'
-    },
+    }
     ]
     -%}
     {{ components.propellers_macro(
@@ -778,21 +659,111 @@
     {# <!--}--> #}
 
     {# ================================================================== #}
-    {# ||                  optional sensor definitions                 || #}
+    {# ||                 optional sensor definitions                  || #}
     {# ================================================================== #}
+
+    {# ======================= rangefinder sensors ====================== #}
 
     {# Garmin down {--> #}
     {{ components.garmin_down_macro(
       parent_link = root,
-      x = 0.7 * board_radius * math.cos(math.radians(90)),
-      y = 0.7 * board_radius * -math.sin(math.radians(90)),
-      z = -0.0605,
+      x = -0.062,
+      y = 0,
+      z = -0.059,
       roll = 0,
       pitch = math.radians(90),
-      yaw = math.radians(90),
-      mount = none,
+      yaw = 0,
+      mount = garmin_down_mount,
       spawner_args = spawner_args)
     }}
+    {# <!--}--> #}
+
+    {# ========================== LIDAR sensors ========================= #}
+
+    {# Scanse Sweep {--> #}
+    {%- set scanse_sweep = components.scanse_sweep_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.113,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ scanse_sweep }}
+    {# <!--}--> #}
+
+    {# Rplidar {--> #}
+    {%- set rplidar = components.rplidar_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.1,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ rplidar }}
+    {# <!--}--> #}
+
+    {# Velodyne {--> #}
+    {%- set velodyne = components.velodyne_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.066,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ velodyne }}
+    {# <!--}--> #}
+
+    {# Ouster {--> #}
+    {%- set ouster = components.ouster_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.066,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ ouster }}
+    {# <!--}--> #}
+
+    {# ====================== conditional components ==================== #}
+
+    {# Bluefox mount {--> #}
+    {%- if bluefox_camera | replace('\s', '') | length != 0 or bluefox_camera_reverse | replace('\s', '') | length != 0 -%}
+      <!-- Bluefox mount {-->
+      {{ bluefox_mount }}
+      <!--}-->
+    {%- endif -%}
+    {# <!--}--> #}
+
+    {# 2D lidar mount {--> #}
+    {%- if rplidar | replace('\s', '') | length != 0 or scanse_sweep | replace('\s', '') | length != 0 -%}
+      <!-- 2d lidar mount {-->
+      {{ lidar_mount_2d }}
+      <!--}-->
+    {%- endif -%}
+    {# <!--}--> #}
+
+    {# 3D lidar mount {--> #}
+    {%- if velodyne | replace('\s', '') | length != 0 or ouster | replace('\s', '') | length != 0 -%}
+      <!-- 3d lidar mount {-->
+      {{ lidar_mount_3d }}
+      <!--}-->
+    {%- endif -%}
     {# <!--}--> #}
 
   </model>

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <sdf version='1.10'>
 
-  {%- import 'mrs_robots_description/sdf/component_snippets.sdf.jinja' as components -%}
-  {%- import 'mrs_robots_description/sdf/generic_components.sdf.jinja' as generic -%}
+  {%- import 'mrs_robots_description/sdf/components/component_snippets.sdf.jinja' as components -%}
+  {%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
 
   {# ================================================================== #}
   {# ||                    parameters definition                     || #}
@@ -365,6 +365,8 @@
     {# ||                 optional sensor definitions                  || #}
     {# ================================================================== #}
 
+    {# ======================= rangefinder sensors ====================== #}
+
     {# Garmin down {--> #}
     {{ components.garmin_down_macro(
       parent_link = root,
@@ -378,6 +380,22 @@
       spawner_args = spawner_args)
     }}
 
+    {# <!--}--> #}
+
+    {# ========================== LIDAR sensors ========================= #}
+
+    {# Ouster {--> #}
+    {{ components.ouster_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.107,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    }}
     {# <!--}--> #}
 
   </model>

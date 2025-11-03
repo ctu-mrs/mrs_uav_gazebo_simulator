@@ -22,6 +22,7 @@ import yaml
 from ament_index_python.packages import get_package_share_directory
 from mrs_uav_gazebo_simulator.utils.component_wrapper import ComponentWrapper
 from mrs_uav_gazebo_simulator.utils.template_wrapper import TemplateWrapper
+from mrs_uav_gazebo_simulator.utils.sdf_to_tf_publisher import SdfTfPublisher
 
 # ROS 2 Imports
 from launch import LaunchDescription, LaunchService
@@ -131,6 +132,10 @@ class MrsDroneSpawner(Node):
 
         self.declare_parameter('extra_resource_paths', [""])
 
+        self.declare_parameter('tf_static_publisher.base_link', "base_link")
+        self.declare_parameter('tf_static_publisher.ignored_sensor_links', ["air_pressure_sensor", "magnetometer_sensor", "navsat_sensor", "imu_sensor"])
+
+
 
         # Get all parameters
         try:
@@ -144,6 +149,8 @@ class MrsDroneSpawner(Node):
 
             self.firmware_launch_delay = float(self.get_parameter('firmware_launch_delay').value)
 
+            self.tf_base_link = self.get_parameter('tf_static_publisher.base_link').value
+            self.tf_ignored_sensor_links = self.get_parameter('tf_static_publisher.ignored_sensor_links').value
 
         except rclpy.exceptions.ParameterNotDeclaredException as e:
             self.get_logger().error(f'Could not load required param. {e}')
@@ -180,7 +187,7 @@ class MrsDroneSpawner(Node):
         gazebo_simulator_path = get_package_share_directory('mrs_uav_gazebo_simulator')
         self.uav_ros_gz_bridge_launch_path = os.path.join(gazebo_simulator_path, 'launch', 'uav_ros_gz_bridge.launch.py')
         self.uav_ros_gz_bridge_config_path = os.path.join(gazebo_simulator_path, 'config')
-        self.uav_ros_gz_bridge_config_template_name = 'uav_ros_gz_bridge_config.jinja.yaml'
+        self.uav_ros_gz_bridge_config_template_name = 'uav_ros_gz_bridge_config.yaml.jinja'
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
         self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
         self.mavros_px4_config_path = os.path.join(px4_api_path, 'config')
@@ -215,6 +222,9 @@ class MrsDroneSpawner(Node):
         self.gazebo_spawn_future = None
         self.gazebo_delete_future = None
         self.gazebo_spawn_request_start_time = None
+
+        # SdfToTf Publisher
+        self.sdf_to_tf_publisher = SdfTfPublisher(self, self.tf_base_link, self.tf_ignored_sensor_links)
 
         self.is_initialized = True
         self.get_logger().info('Initialized')
@@ -319,6 +329,8 @@ class MrsDroneSpawner(Node):
             self.get_logger().error('Template did not render, spawn failed.')
             return
 
+        self.sdf_to_tf_publisher.generate_tf_publishers(sdf_content)
+
         filename = f'mrs_drone_spawner_{name}.sdf'
         filepath = os.path.join(self.tempfile_folder, filename)
 
@@ -348,10 +360,6 @@ class MrsDroneSpawner(Node):
     # #{ launch_uav_ros_gz_bridge(self, robot_params)
     def launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics):
         self.get_logger().info(f'Launching ros_gz_bridge for {uav_name}')
-
-        if len(sensor_topics['image_topics']) < 1:
-            self.get_logger().info(f'No image publisher attached, not creating ros_gz_bridge for image topics')
-            return
 
         launch_arguments = {
             'namespace': uav_name,
@@ -398,7 +406,8 @@ class MrsDroneSpawner(Node):
             ros_gz_bridge_config, sensor_topics = self.generate_uav_ros_gz_config(robot_params)
 
             try:
-                ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params['name'], ros_gz_bridge_config, sensor_topics)
+                if ros_gz_bridge_config != "":
+                    ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params['name'], ros_gz_bridge_config, sensor_topics)
                 mavros_process = self.launch_mavros(robot_params)
                 firmware_process = self.launch_px4_firmware(robot_params)
 
@@ -1264,9 +1273,10 @@ class MrsDroneSpawner(Node):
 
     # #{ get_attached_sensors(self, robot_params)
     def get_attached_sensors(self, robot_params):
-
         attached_sensors = {
-            'cameras': []
+            'cameras': [],
+            '2dlidar': [],
+            '3dlidar': []
         }
 
         # not using try-catch, it's already done during the sdf's generation
@@ -1274,16 +1284,62 @@ class MrsDroneSpawner(Node):
         sensor_blocks = xmldoc.getElementsByTagName('sensor')
 
         for sensor in sensor_blocks:
-            if sensor.getAttribute('type') == 'camera':
-                camera = {}
-                topic = sensor.getElementsByTagName('topic')
-                if topic:
-                    camera['image_topic'] = '/' + topic[0].firstChild.data
-                    camera['camera_info_topic'] = camera['image_topic'].replace('image_raw', 'camera_info')
-                    attached_sensors['cameras'].append(camera)
+            sensor_type = sensor.getAttribute('type')
+            if sensor_type == 'camera':
+                self.get_attached_camera(attached_sensors, sensor)
+            elif sensor_type == 'gpu_lidar':
+                self.get_attached_lidar(attached_sensors, sensor)
 
         return attached_sensors
     # #}
+
+    # #{ get_attached_camera(self, attached_sensors, camera_sensor)
+    def get_attached_camera(self, attached_sensors, camera_sensor) -> None:
+        camera = {}
+        topic = camera_sensor.getElementsByTagName('topic')
+        if topic:
+            camera['image_topic'] = '/' + topic[0].firstChild.data
+            camera['camera_info_topic'] = camera['image_topic'].replace('image_raw', 'camera_info')
+            attached_sensors['cameras'].append(camera)
+        return
+    # #}
+
+    # #{ get_attached_lidar(self, attached_sensors, lidar_sensor)
+    def get_attached_lidar(self, attached_sensors, lidar_sensor) -> None:
+        
+        # NOTE: PX4 requires its own bridge with the Garmin rangefinder, so we do not set it up.
+        # The Garmin rangefinder link is named 'lidar_sensor_link' in the garmin.sdf.jinja template.
+        # Do not rename the Garmin link or the rangefinder plugin, as PX4 may fail to detect it otherwise.
+        if lidar_sensor.getAttribute('name') == "lidar_sensor_link": # Garmin rangefinder
+            return
+
+        lidar = {}
+        topic = lidar_sensor.getElementsByTagName('topic')
+        if not topic:
+            return
+        lidar['laserscan_topic'] = '/' + topic[0].firstChild.data
+
+        # Differentiate between 1D/2D and 3D LiDARs, since they use different msg type.
+        # This can be determined by checking the number of vertical samples.
+        vertical_samples = self.get_number_of_vertical_samples(lidar_sensor)
+        if vertical_samples == 1:  # 2D lidar
+            attached_sensors['2dlidar'].append(lidar)
+        elif vertical_samples > 1: # 3D lidar
+            attached_sensors['3dlidar'].append(lidar)
+        else: # Incorrect lidar
+            self.get_logger().error(f"The lidar {lidar_sensor.getAttribute('name')} cannot be loaded. Check if the number of vertical samples is correct.")
+        return
+    # #}
+
+    # #{ get_number_of_vertical_samples(self, lidar_sensor)
+    def get_number_of_vertical_samples(self, lidar_sensor):
+        vertical_elements = lidar_sensor.getElementsByTagName('vertical')
+        samples_elements = vertical_elements[0].getElementsByTagName('samples')
+        vertical_samples = int(samples_elements[0].firstChild.nodeValue.strip())
+
+        return vertical_samples
+    # #}
+
 
     # #{ generate_uav_ros_gz_config(self, uav_name)
     def generate_uav_ros_gz_config(self, robot_params):
@@ -1299,15 +1355,34 @@ class MrsDroneSpawner(Node):
 
         sensor_topics = {}
 
+        # Camera
         camera_info_topic_list = []
         image_topic_list = []
         for camera in attached_sensors['cameras']:
             camera_info_topic_list.append(camera['camera_info_topic'])
             image_topic_list.append(camera['image_topic'])
 
+        # 1D/2D Lidar
+        twoD_lidar_topic_list = []
+        for lidar in attached_sensors["2dlidar"]:
+            twoD_lidar_topic_list.append(lidar["laserscan_topic"])
+
+
+        # 3D Lidar
+        threeD_lidar_topic_list = []
+        for lidar in attached_sensors["3dlidar"]:
+            threeD_lidar_topic_list.append(lidar["laserscan_topic"])
+
+
+        if len(camera_info_topic_list) == 0 and len(twoD_lidar_topic_list)==0 and len(threeD_lidar_topic_list)==0:
+            self.get_logger().info(f"There are no additional sensors. Skipping launching ros_gz_bridge for {uav_name}")
+            return  "", []
+
 
         rendered_template = template.render(
-            camera_info_topic_list = camera_info_topic_list
+            camera_info_topic_list = camera_info_topic_list,
+            twoD_lidar_topic_list = twoD_lidar_topic_list,
+            threeD_lidar_topic_list = threeD_lidar_topic_list,
         )
 
         filename = f'ros_gz_bridge_config_{uav_name}.yaml'
@@ -1321,6 +1396,11 @@ class MrsDroneSpawner(Node):
 
         return filepath, sensor_topics
     # #}
+
+    # #{ generate_uav_ros_gz_config(self, uav_name)
+
+    # #}
+
 
 def main(args=None):
     rclpy.init(args=args)

@@ -1,0 +1,96 @@
+<?xml version="1.0"? encoding="utf-8">
+{%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
+
+{# rplidar_macro {--> #}
+{%- macro rplidar_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-rplidar' -%}
+  {%- set spawner_description = 'Add the RPlidar A3 laser scanner. Do not set range outside <0.10 - 15.0> (unrealistic)' -%}
+  {%- set spawner_default_args = {'horizontal_samples': 1600, 'update_rate': 20.0, 'min_range': 0.15, 'max_range': 14.0, 'noise': 0.01} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {# -- tf from link to sensor -- #}
+    {%- set lidar_x = 0.0 -%}
+    {%- set lidar_y = 0.0 -%}
+    {%- set lidar_z = 0.0 -%}
+    {%- set lidar_roll = 0.0 -%}
+    {%- set lidar_pitch = 0.0 -%}
+    {%- set lidar_yaw = 0.0 -%}
+
+    <!-- rplidar A3 {-->
+
+    {%- set sensor_name = 'rplidar' -%}
+
+    <link name="{{ sensor_name }}_link">
+      <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+      {{ generic.zero_inertial_macro() }}
+
+      <!-- visuals {-->
+      {{ generic.visual_mesh_macro(
+        name = 'base_visual',
+        mesh_file = 'model://mrs_robots_description/meshes/sensors/rplidar.stl',
+        mesh_scale = '0.001 0.001 0.001',
+        color = 'FlatBlack',
+        x = 0,
+        y = 0,
+        z = -0.029,
+        roll = 0,
+        pitch = 0,
+        yaw = math.radians(180))
+      }}
+      <visual name="purple_visual">
+        <pose>0 0 -0.011 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.001</length>
+            <radius>0.038</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Purple</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <!--}-->
+
+      {{ generic.gazebo_lidar_plugin_macro(
+          lidar_name = sensor_name,
+          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link',
+          lidar_topic_name = spawner_args['name'] + '/' + sensor_name + '/scan',
+          sensor_x = lidar_x, sensor_y = lidar_y, sensor_z = lidar_z, sensor_roll = lidar_roll, sensor_pitch = lidar_pitch, sensor_yaw = lidar_yaw,
+          update_rate = spawner_args[spawner_keyword]['update_rate'],
+          horiz_num_samples = spawner_args[spawner_keyword]['horizontal_samples'],
+          horiz_resolution = 1,
+          horiz_min_angle = -3.1241390751,
+          horiz_max_angle = 3.1241390751,
+          vertic_num_samples = 1,
+          vertic_resolution = 0.01,
+          vertic_min_angle = 0,
+          vertic_max_angle = 0,
+          range_min = spawner_args[spawner_keyword]['min_range'],
+          range_max = spawner_args[spawner_keyword]['max_range'],
+          range_resolution = 0.01,
+          noise_mean = 0.0,
+          noise_std= spawner_args[spawner_keyword]["noise"]
+      )}}
+
+    </link>
+
+    <joint name="{{ sensor_name }}_joint" type="fixed">
+      <parent>{{ parent_link }}</parent>
+      <child>{{ sensor_name }}_link</child>
+    </joint>
+
+    <!-- mount {-->
+    {{ mount if mount }}
+    <!--}-->
+    <!--}-->
+
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}
