@@ -23,9 +23,9 @@
     {%- set x_optical_offset = 0.0 -%}
     {%- set y_optical_offset = 0.0 -%}
     {%- set z_optical_offset = 0.0 -%}
-    {%- set roll_optical_offset = -math.radians(90) -%}
-    {%- set pitch_optical_offset = 0.0 -%}
-    {%- set yaw_optical_offset = -math.radians(90) -%}
+    {%- set roll_optical_offset = 0.0 -%}
+    {%- set pitch_optical_offset = -math.radians(90) -%}
+    {%- set yaw_optical_offset = math.radians(90) -%}
 
     <!-- Realsense front {-->
     <link name="{{ camera_name }}_link">
@@ -63,16 +63,10 @@
         </material>
       </visual>
       <!--}-->
-    </link>
-
-    <link name="{{ camera_name }}_optical">
-      <!-- rotate this link into REP-103 optical frame: x right, y down, z forward -->
-      <pose relative_to="{{ camera_name }}_link">0 0 0 -1.57079632679 0 -1.57079632679</pose>
-      <!-- sensors {-->
-        {{ generic.gazebo_depth_camera_macro(
-          parent_link = parent_link,
+       <!-- sensors {-->
+        {{ generic.gazebo_rgbd_camera_macro(
           camera_name = camera_name,
-          camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
+          camera_frame_name = spawner_args['name'] + '/' + camera_name + '_link',
           camera_topic_name = spawner_args['name'] + '/' + camera_name,
           frame_rate = spawner_args[spawner_keyword]['update_rate'],
           horizontal_fov = 2.1,
@@ -91,7 +85,7 @@
         }}
         <!--}-->
     </link>
-    <!--}-->
+
 
 
     <joint name="{{ camera_name }}_joint" type="fixed">
@@ -99,10 +93,7 @@
       <child>{{ camera_name }}_link</child>
     </joint>
 
-    <joint name="{{ camera_name }}_optical_joint" type="fixed">
-      <parent>{{ camera_name }}_link</parent>
-      <child>{{ camera_name }}_optical</child>
-    </joint>
+ 
 
 
 

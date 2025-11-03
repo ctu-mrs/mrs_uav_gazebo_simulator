@@ -399,7 +399,7 @@ class MrsDroneSpawner(Node):
             response = future.result()
             if not response.success:
                 raise CouldNotSpawn(f'Call failed')
-
+            
             ros_gz_bridge_process = None
             firmware_process = None
             mavros_process = None
@@ -1276,6 +1276,7 @@ class MrsDroneSpawner(Node):
     def get_attached_sensors(self, robot_params):
         attached_sensors = {
             AttachedSensors.CAMERAS: [],
+            AttachedSensors.RGBD_CAMERAS: [],
             AttachedSensors.TWO_D_LIDAR: [],
             AttachedSensors.THREE_D_LIDAR: []
         }
@@ -1302,7 +1303,7 @@ class MrsDroneSpawner(Node):
         topic = camera_sensor.getElementsByTagName('topic')
         if topic:
             camera[SensorTopics.IMAGE] = '/' + topic[0].firstChild.data
-            camera[SensorTopics.CAMERA_INFO] = camera['image_topic'].replace('image_raw', 'camera_info')
+            camera[SensorTopics.CAMERA_INFO] = camera[SensorTopics.IMAGE].replace('image_raw', 'camera_info')
             attached_sensors[AttachedSensors.CAMERAS].append(camera)
         return
     # #}
