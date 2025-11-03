@@ -22,7 +22,8 @@ import yaml
 from ament_index_python.packages import get_package_share_directory
 from mrs_uav_gazebo_simulator.utils.component_wrapper import ComponentWrapper
 from mrs_uav_gazebo_simulator.utils.template_wrapper import TemplateWrapper
-from mrs_uav_gazebo_simulator.utils.sdf_to_tf_publisher import SdfTfPublisher
+from mrs_uav_gazebo_simulator.utils.sdf_to_tf_publisher import SdfTfPublisherSingleton
+from mrs_uav_gazebo_simulator.utils.enums import AttachedSensors, SensorTopics, GazeboSensors
 
 # ROS 2 Imports
 from launch import LaunchDescription, LaunchService
@@ -224,7 +225,7 @@ class MrsDroneSpawner(Node):
         self.gazebo_spawn_request_start_time = None
 
         # SdfToTf Publisher
-        self.sdf_to_tf_publisher = SdfTfPublisher(self, self.tf_base_link, self.tf_ignored_sensor_links)
+        self.sdf_to_tf_publisher = SdfTfPublisherSingleton(self, self.tf_base_link, self.tf_ignored_sensor_links)
 
         self.is_initialized = True
         self.get_logger().info('Initialized')
@@ -1274,9 +1275,9 @@ class MrsDroneSpawner(Node):
     # #{ get_attached_sensors(self, robot_params)
     def get_attached_sensors(self, robot_params):
         attached_sensors = {
-            'cameras': [],
-            '2dlidar': [],
-            '3dlidar': []
+            AttachedSensors.CAMERAS: [],
+            AttachedSensors.TWO_D_LIDAR: [],
+            AttachedSensors.THREE_D_LIDAR: []
         }
 
         # not using try-catch, it's already done during the sdf's generation
@@ -1285,10 +1286,12 @@ class MrsDroneSpawner(Node):
 
         for sensor in sensor_blocks:
             sensor_type = sensor.getAttribute('type')
-            if sensor_type == 'camera':
+            if sensor_type == GazeboSensors.CAMERA:
                 self.get_attached_camera(attached_sensors, sensor)
-            elif sensor_type == 'gpu_lidar':
+            elif sensor_type == GazeboSensors.LIDAR:
                 self.get_attached_lidar(attached_sensors, sensor)
+            elif sensor_type == GazeboSensors.RGBD_CAMERA:
+                self.get_attached_rgbd_camera(attached_sensors, sensor)
 
         return attached_sensors
     # #}
@@ -1298,9 +1301,23 @@ class MrsDroneSpawner(Node):
         camera = {}
         topic = camera_sensor.getElementsByTagName('topic')
         if topic:
-            camera['image_topic'] = '/' + topic[0].firstChild.data
-            camera['camera_info_topic'] = camera['image_topic'].replace('image_raw', 'camera_info')
-            attached_sensors['cameras'].append(camera)
+            camera[SensorTopics.IMAGE] = '/' + topic[0].firstChild.data
+            camera[SensorTopics.CAMERA_INFO] = camera['image_topic'].replace('image_raw', 'camera_info')
+            attached_sensors[AttachedSensors.CAMERAS].append(camera)
+        return
+    # #}
+
+    # #{ get_attached_camera(self, attached_sensors, camera_sensor)
+    def get_attached_rgbd_camera(self, attached_sensors, camera_sensor) -> None:
+        camera = {}
+        topic = camera_sensor.getElementsByTagName('topic')
+        if topic:
+            basic_topic_name = '/' + topic[0].firstChild.data
+            camera[SensorTopics.IMAGE] = basic_topic_name + '/image'
+            camera[SensorTopics.DEPTH_IMAGE] = basic_topic_name + '/depth_image'
+            camera[SensorTopics.CAMERA_INFO] = basic_topic_name + '/camera_info'
+            camera[SensorTopics.POINTS] = basic_topic_name + '/points'
+            attached_sensors[AttachedSensors.RGBD_CAMERAS].append(camera)
         return
     # #}
 
@@ -1317,15 +1334,15 @@ class MrsDroneSpawner(Node):
         topic = lidar_sensor.getElementsByTagName('topic')
         if not topic:
             return
-        lidar['laserscan_topic'] = '/' + topic[0].firstChild.data
+        lidar[SensorTopics.POINTS] = '/' + topic[0].firstChild.data
 
         # Differentiate between 1D/2D and 3D LiDARs, since they use different msg type.
         # This can be determined by checking the number of vertical samples.
         vertical_samples = self.get_number_of_vertical_samples(lidar_sensor)
         if vertical_samples == 1:  # 2D lidar
-            attached_sensors['2dlidar'].append(lidar)
+            attached_sensors[AttachedSensors.TWO_D_LIDAR].append(lidar)
         elif vertical_samples > 1: # 3D lidar
-            attached_sensors['3dlidar'].append(lidar)
+            attached_sensors[AttachedSensors.THREE_D_LIDAR].append(lidar)
         else: # Incorrect lidar
             self.get_logger().error(f"The lidar {lidar_sensor.getAttribute('name')} cannot be loaded. Check if the number of vertical samples is correct.")
         return
@@ -1358,31 +1375,46 @@ class MrsDroneSpawner(Node):
         # Camera
         camera_info_topic_list = []
         image_topic_list = []
-        for camera in attached_sensors['cameras']:
-            camera_info_topic_list.append(camera['camera_info_topic'])
-            image_topic_list.append(camera['image_topic'])
+        for camera in attached_sensors[AttachedSensors.CAMERAS]:
+            camera_info_topic_list.append(camera[SensorTopics.CAMERA_INFO])
+            image_topic_list.append(camera[SensorTopics.IMAGE])
 
         # 1D/2D Lidar
         twoD_lidar_topic_list = []
-        for lidar in attached_sensors["2dlidar"]:
-            twoD_lidar_topic_list.append(lidar["laserscan_topic"])
-
+        for lidar in attached_sensors[AttachedSensors.TWO_D_LIDAR]:
+            twoD_lidar_topic_list.append(lidar[SensorTopics.POINTS])
 
         # 3D Lidar
         threeD_lidar_topic_list = []
-        for lidar in attached_sensors["3dlidar"]:
-            threeD_lidar_topic_list.append(lidar["laserscan_topic"])
+        for lidar in attached_sensors[AttachedSensors.THREE_D_LIDAR]:
+            threeD_lidar_topic_list.append(lidar[SensorTopics.POINTS])
 
+        # RGBD Camera
+        rgbd_camera_points_topic_list = []
+        for rgbd_camera in attached_sensors[AttachedSensors.RGBD_CAMERAS]:
+            image_topic_list.append(rgbd_camera[SensorTopics.IMAGE])
+            image_topic_list.append(rgbd_camera[SensorTopics.DEPTH_IMAGE])
+            camera_info_topic_list.append(rgbd_camera[SensorTopics.CAMERA_INFO])
+            rgbd_camera_points_topic_list.append(rgbd_camera[SensorTopics.POINTS])
 
-        if len(camera_info_topic_list) == 0 and len(twoD_lidar_topic_list)==0 and len(threeD_lidar_topic_list)==0:
+        has_sensors = any(
+            attached_sensors[key]
+            for key in (
+                AttachedSensors.CAMERAS,
+                AttachedSensors.TWO_D_LIDAR,
+                AttachedSensors.THREE_D_LIDAR,
+                AttachedSensors.RGBD_CAMERAS,
+            )
+        )
+        if not has_sensors:
             self.get_logger().info(f"There are no additional sensors. Skipping launching ros_gz_bridge for {uav_name}")
             return  "", []
-
 
         rendered_template = template.render(
             camera_info_topic_list = camera_info_topic_list,
             twoD_lidar_topic_list = twoD_lidar_topic_list,
             threeD_lidar_topic_list = threeD_lidar_topic_list,
+            rgbd_camera_points_topic_list = rgbd_camera_points_topic_list,
         )
 
         filename = f'ros_gz_bridge_config_{uav_name}.yaml'

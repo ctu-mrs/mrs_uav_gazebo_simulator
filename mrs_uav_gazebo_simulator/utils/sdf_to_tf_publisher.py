@@ -14,7 +14,7 @@ class SingletonMeta(type):
         return cls._instances[cls]
 
 
-class SdfTfPublisher(metaclass=SingletonMeta):
+class SdfTfPublisherSingleton(metaclass=SingletonMeta):
     def __init__(self, ros_node, base_link, ignored_sensors):
         self._model_name = ""
         self._ignored_sensors = ignored_sensors
