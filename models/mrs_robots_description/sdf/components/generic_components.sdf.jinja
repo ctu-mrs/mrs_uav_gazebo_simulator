@@ -780,13 +780,12 @@ limitations under the License.
                       noise_mean, noise_stddev,  
                       x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
   <sensor name="{{ camera_name }}_sensor" type="camera">
-    <pose relative_to="{{ parent_link_name }}">{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
+    <pose relative_to="{{ parent_link }}">{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
     <always_on>true</always_on>
     <visualize>true</visualize>
     <topic>{{ camera_topic_name }}/image_raw</topic>
     <gz_frame_id>{{ camera_frame_name }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
-
     <camera name="{{ camera_name }}">
       <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
       <image>
@@ -812,11 +811,13 @@ limitations under the License.
 {# <!--}--> #}
 
 {# camera_macro_meshless {--> #}
-{%- macro camera_macro_meshless(parent_link, camera_name, camera_frame_name, sensor_base_frame_name, frame_rate, parent_frame_name, horizontal_fov, image_width, image_height, min_distance, max_distance, noise_mean, noise_stddev, x, y, z, roll, pitch, yaw) -%}
+{%- macro camera_macro_meshless(parent_link, camera_name, parent_frame_name, camera_frame_name, sensor_base_frame_name, camera_topic_name, frame_rate, horizontal_fov, image_width, image_height, min_distance, max_distance, noise_mean, noise_stddev, x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
 <link name="{{ camera_name }}_link">
-  <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+  <pose relative_to="{{ parent_link }}">{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
   {{ zero_inertial_macro() }}
   <sensor name="{{ camera_name }}_sensor" type="camera">
+    <topic>{{ camera_topic_name }}/image_raw</topic>
+    <gz_frame_id>{{ camera_frame_name }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
     <camera>
       <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
@@ -837,6 +838,7 @@ limitations under the License.
         <stddev>{{ noise_stddev }}</stddev>
       </noise>
     </camera>
+    {#
     <plugin name="{{ camera_name }}_plugin" filename="libMrsGazeboCommonResources_CameraPlugin.so">
       <alwaysOn>true</alwaysOn>
       <updateRate>{{ frame_rate }}</updateRate>
@@ -859,6 +861,7 @@ limitations under the License.
       <pitch>{{ pitch }}</pitch>
       <yaw>{{ yaw }}</yaw>
     </plugin>
+    #}
   </sensor>
 </link>
 
