@@ -86,16 +86,10 @@
         <!--}-->
     </link>
 
-
-
     <joint name="{{ camera_name }}_joint" type="fixed">
       <parent>{{ parent_link }}</parent>
       <child>{{ camera_name }}_link</child>
     </joint>
-
- 
-
-
 
     <!-- mount {-->
       {{ mount if mount }}
