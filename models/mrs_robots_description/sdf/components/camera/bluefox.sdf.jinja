@@ -43,7 +43,7 @@
 
       <!-- sensor {-->
       {{ generic.camera_macro(
-        parent_link = parent_link,
+        parent_link = camera_name + '_link',
         camera_name = camera_name,
         parent_frame_name = spawner_args['name'] + '/fcu',
         camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
@@ -125,7 +125,7 @@
 
       <!-- sensor {-->
       {{ generic.camera_macro(
-        parent_link = parent_link,
+        parent_link = camera_name + '_link',
         camera_name = camera_name,
         parent_frame_name = spawner_args['name'] + '/fcu',
         camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
@@ -205,7 +205,7 @@
 
       <!-- sensor {-->
       {{ generic.camera_macro(
-        parent_link = parent_link,
+        parent_link = camera_name + '_link',
         camera_name = camera_name,
         parent_frame_name = spawner_args['name'] + '/fcu',
         camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
@@ -226,7 +226,7 @@
         pitch_offset = pitch_offset,
         yaw_offset = yaw_offset)
       }}
-    <!--}-->
+      <!--}-->
     </link>
 
     <!-- mount {-->
