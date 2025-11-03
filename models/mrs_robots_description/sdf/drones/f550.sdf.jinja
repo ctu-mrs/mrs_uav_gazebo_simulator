@@ -859,6 +859,100 @@
     {{ ouster }}
     {# <!--}--> #}
 
+    {# ========================== camera sensors ======================== #}
+
+    {# Bluefox camera placements {--> #}
+
+    {# Bluefox (classic) {--> #}
+    {{ components.bluefox_camera_macro(
+      camera_name = 'bluefox_optflow',
+      parent_link = root,
+      x = 0.87 * board_radius,
+      y = 0,
+      z = -0.077,
+      mount = none,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# Bluefox reverse {--> #}
+    {{ components.bluefox_camera_reverse_macro(
+      camera_name = 'bluefox_optflow',
+      parent_link = root,
+      x = 0.87 * board_radius,
+      y = 0,
+      z = -0.077,
+      mount = none,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# <!--}--> #}
+
+    {# Mobius camera placements {--> #}
+
+    {# Mobius down {--> #}
+    {{ components.mobius_down_macro(
+      camera_name = 'mobius_down',
+      parent_link = root,
+      x = 0.144,
+      y = 0.0,
+      z = -0.092,
+      roll = 0,
+      pitch = math.radians(90),
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# Mobius front {--> #}
+    {{ components.mobius_front_macro(
+      camera_name = 'mobius_front',
+      parent_link = root,
+      x = 0.2,
+      y = 0.0,
+      z = -0.04,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# Mobius back left {--> #}
+    {{ components.mobius_back_left_macro(
+      camera_name = 'mobius_back_left',
+      parent_link = root,
+      x = -0.1,
+      y = 0.1732,
+      z = -0.04,
+      roll = 0,
+      pitch = 0,
+      yaw = math.radians(120),
+      mount = none,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# Mobius back right {--> #}
+    {{ components.mobius_back_right_macro(
+      camera_name = 'mobius_back_right',
+      parent_link = root,
+      x = -0.1,
+      y = -0.1732,
+      z = -0.04,
+      roll = 0,
+      pitch = 0,
+      yaw = -math.radians(120),
+      mount = none,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# <!--}--> #}
+
     {# ====================== conditional components ==================== #}
 
     {# 2D lidar mount {--> #}

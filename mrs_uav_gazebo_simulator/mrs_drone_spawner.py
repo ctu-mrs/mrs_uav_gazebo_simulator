@@ -1306,7 +1306,7 @@ class MrsDroneSpawner(Node):
 
     # #{ get_attached_lidar(self, attached_sensors, lidar_sensor)
     def get_attached_lidar(self, attached_sensors, lidar_sensor) -> None:
-        
+
         # NOTE: PX4 requires its own bridge with the Garmin rangefinder, so we do not set it up.
         # The Garmin rangefinder link is named 'lidar_sensor_link' in the garmin.sdf.jinja template.
         # Do not rename the Garmin link or the rangefinder plugin, as PX4 may fail to detect it otherwise.
@@ -1339,7 +1339,6 @@ class MrsDroneSpawner(Node):
 
         return vertical_samples
     # #}
-
 
     # #{ generate_uav_ros_gz_config(self, uav_name)
     def generate_uav_ros_gz_config(self, robot_params):
@@ -1396,11 +1395,6 @@ class MrsDroneSpawner(Node):
 
         return filepath, sensor_topics
     # #}
-
-    # #{ generate_uav_ros_gz_config(self, uav_name)
-
-    # #}
-
 
 def main(args=None):
     rclpy.init(args=args)

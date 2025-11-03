@@ -775,7 +775,7 @@ limitations under the License.
 {# ========================== camera sensors ========================= #}
 
 {# camera_macro {--> #}
-{%- macro camera_macro(parent_link, camera_name, camera_frame_name, camera_topic_name, frame_rate, 
+{%- macro camera_macro(parent_link, camera_name, parent_frame_name, camera_frame_name, sensor_base_frame_name, camera_topic_name, frame_rate, 
                       horizontal_fov, image_width, image_height, min_distance, max_distance, 
                       noise_mean, noise_stddev,  
                       x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
@@ -798,7 +798,7 @@ limitations under the License.
         <far>{{ max_distance }}</far>
       </clip>
        <!-- Noise is sampled independently per pixel on each frame.
-        That pixels noise value is added to each of its color
+        That pixel's noise value is added to each of its color
         channels, which at that point lie in the range [0,1]. -->
       <noise>
         <type>gaussian</type>
