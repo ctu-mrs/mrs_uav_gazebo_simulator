@@ -365,6 +365,8 @@
     {# ||                 optional sensor definitions                  || #}
     {# ================================================================== #}
 
+    {# ======================= rangefinder sensors ====================== #}
+
     {# Garmin down {--> #}
     {{ components.garmin_down_macro(
       parent_link = root,
@@ -378,6 +380,22 @@
       spawner_args = spawner_args)
     }}
 
+    {# <!--}--> #}
+
+    {# ========================== LIDAR sensors ========================= #}
+
+    {# Ouster {--> #}
+    {{ components.ouster_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.107,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    }}
     {# <!--}--> #}
 
   </model>
