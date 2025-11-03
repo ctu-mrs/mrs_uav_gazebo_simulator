@@ -579,6 +579,8 @@
     {# ||                 optional sensor definitions                  || #}
     {# ================================================================== #}
 
+    {# ======================= rangefinder sensors ====================== #}
+
     {# Garmin down {--> #}
     {%- set garmin_down = components.garmin_down_macro(
       parent_link = root,
@@ -592,6 +594,84 @@
       spawner_args = spawner_args)
     -%}
     {{ garmin_down }}
+    {# <!--}--> #}
+
+    {# ========================== LIDAR sensors ========================= #}
+
+    {# Scanse Sweep {--> #}
+    {{ components.scanse_sweep_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.12,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# Rplidar {--> #}
+    {{ components.rplidar_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.107,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = rplidar_mount,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# Velodyne {--> #}
+    {%- set velodyne = components.velodyne_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.073,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ velodyne }}
+    {# <!--}--> #}
+
+    {# Ouster {--> #}
+    {%- set ouster = components.ouster_macro(
+      parent_link = root,
+      x = 0.0,
+      y = 0.0,
+      z = 0.073,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ ouster }}
+    {# <!--}--> #}
+
+    {# ====================== conditional components ==================== #}
+
+    {# Bluefox + Garmin mount {--> #}
+    {%- if garmin_down | replace('\s', '') | length != 0 or bluefox_camera | replace('\s', '') | length != 0 or bluefox_camera_reverse | replace('\s', '') | length != 0 -%}
+      <!-- bluefox + garmin mount {-->
+      {{ bluefox_garmin_mount }}
+      <!--}-->
+    {%- endif -%}
+    {# <!--}--> #}
+
+    {# 3D lidar mount {--> #}
+    {%- if velodyne | replace('\s', '') | length != 0 or ouster | replace('\s', '') | length != 0 -%}
+      <!-- 3d lidar mount {-->
+      {{ lidar_mount_3d }}
+      <!--}-->
+    {%- endif -%}
     {# <!--}--> #}
 
   </model>
