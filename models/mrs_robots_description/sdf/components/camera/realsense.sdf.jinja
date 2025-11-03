@@ -1,0 +1,116 @@
+<?xml version="1.0"? encoding="utf-8">
+{%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
+
+{# realsense_top_macro {--> #}
+{%- macro realsense_top_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-realsense-top' -%}
+  {%- set spawner_description = 'Add Intel Realsense D435 depth camera to the vehicle [1280x720 @ 30hz], pointed forward, placed on an aluminum frame above the body' -%}
+  {%- set spawner_default_args = {'realistic': False, 'update_rate': 30, 'noise': 0.0} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {# -- tf from link to sensor -- #}
+    {%- set x_offset = 0.0 -%}
+    {%- set y_offset = 0.0 -%}
+    {%- set z_offset = 0.0 -%}
+    {%- set roll_offset = 0.0 -%}
+    {%- set pitch_offset = 0.0 -%}
+    {%- set yaw_offset = 0.0 -%}
+
+    {# -- tf from for optical frame -- #}
+    {%- set x_optical_offset = 0.0 -%}
+    {%- set y_optical_offset = 0.0 -%}
+    {%- set z_optical_offset = 0.0 -%}
+    {%- set roll_optical_offset = -math.radians(90) -%}
+    {%- set pitch_optical_offset = 0.0 -%}
+    {%- set yaw_optical_offset = -math.radians(90) -%}
+
+    <!-- Realsense front {-->
+    <link name="{{ camera_name }}_link">
+      <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+      {{ generic.zero_inertial_macro() }}
+      <!-- visuals {-->
+      <visual name="body_visual">
+        <pose>0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mrs_robots_description/meshes/sensors/realsense_body.stl</uri>
+            <scale>0.001 0.001 0.001</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/White</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name="glass_visual">
+        <pose>0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mrs_robots_description/meshes/sensors/realsense_glass.stl</uri>
+            <scale>0.001 0.001 0.001</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/BlackTransparent</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <!--}-->
+    </link>
+
+    <link name="{{ camera_name }}_optical">
+      <!-- rotate this link into REP-103 optical frame: x right, y down, z forward -->
+      <pose relative_to="{{ camera_name }}_link">0 0 0 -1.57079632679 0 -1.57079632679</pose>
+      <!-- sensors {-->
+        {{ generic.gazebo_depth_camera_macro(
+          parent_link = parent_link,
+          camera_name = camera_name,
+          camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
+          camera_topic_name = spawner_args['name'] + '/' + camera_name,
+          frame_rate = spawner_args[spawner_keyword]['update_rate'],
+          horizontal_fov = 2.1,
+          image_width = 752,
+          image_height = 480,
+          min_distance = 0.1,
+          max_distance = 80,
+          noise_mean = 0.0,
+          noise_stddev = spawner_args[spawner_keyword]['noise'],
+          x_offset = 0.0,
+          y_offset = 0.0,
+          z_offset = 0.0,
+          roll_offset = 0.0,
+          pitch_offset = 0.0,
+          yaw_offset = 0.0)
+        }}
+        <!--}-->
+    </link>
+    <!--}-->
+
+
+    <joint name="{{ camera_name }}_joint" type="fixed">
+      <parent>{{ parent_link }}</parent>
+      <child>{{ camera_name }}_link</child>
+    </joint>
+
+    <joint name="{{ camera_name }}_optical_joint" type="fixed">
+      <parent>{{ camera_name }}_link</parent>
+      <child>{{ camera_name }}_optical</child>
+    </joint>
+
+
+
+    <!-- mount {-->
+      {{ mount if mount }}
+    <!--}-->
+
+    <!--}-->
+  {%- endif -%}
+
+{%- endmacro -%}

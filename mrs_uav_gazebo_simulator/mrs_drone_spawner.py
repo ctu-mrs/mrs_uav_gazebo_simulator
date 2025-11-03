@@ -365,7 +365,7 @@ class MrsDroneSpawner(Node):
         launch_arguments = {
             'namespace': uav_name,
             'ros_gz_bridge_config': str(ros_gz_bridge_config),
-            'ros_gz_image_topics': ' '.join(sensor_topics['image_topics']),
+            'ros_gz_image_topics': ' '.join(sensor_topics[SensorTopics.IMAGE]),
             'bridge_debug': 'false',
         }
 
@@ -1424,7 +1424,7 @@ class MrsDroneSpawner(Node):
             f.write(rendered_template)
             self.get_logger().info(f'ros_gz_bridge config for {uav_name} written to {filepath}')
 
-        sensor_topics['image_topics'] = image_topic_list
+        sensor_topics[SensorTopics.IMAGE] = image_topic_list
 
         return filepath, sensor_topics
     # #}

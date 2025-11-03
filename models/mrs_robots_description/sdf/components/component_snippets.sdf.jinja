@@ -171,18 +171,6 @@ limitations under the License.
 {%- endmacro -%}
 
 
-{# ==== Teraranger ==== #}
-{# TODO: Not tested in ROS2 #}
-{%- import "mrs_robots_description/sdf/components/rangefinder/teraranger.sdf.jinja" as teraranger_rangefinder -%}
-
-{%- macro teraranger_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ teraranger_rangefinder.teraranger_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
-{%- endmacro -%}
-{%- macro teraranger_evo_tower_macro(parent_link, visualize, frame_name, parent_frame_name, gaussian_noise, x, y, z, roll, pitch, yaw, spawner_args) -%}
-  {{ teraranger_rangefinder.teraranger_evo_tower_macro(parent_link, visualize, frame_name, parent_frame_name, gaussian_noise, x, y, z, roll, pitch, yaw, spawner_args) }}
-{%- endmacro -%}
-
-
 {# ========================== 2D LIDAR sensors ========================= #}
 {# ==== RP lidar ==== #}
 {%- import "mrs_robots_description/sdf/components/lidar/rplidar.sdf.jinja" as rplidar_lidar -%}
