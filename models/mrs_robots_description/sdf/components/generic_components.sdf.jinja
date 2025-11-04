@@ -813,7 +813,7 @@ limitations under the License.
 
 
 {# gazebo_rgbd_camera_macro {--> #}
-{%- macro gazebo_rgbd_camera_macro(camera_name, camera_frame_name, camera_topic_name, frame_rate, 
+{%- macro gazebo_rgbd_camera_macro(camera_name, camera_gz_frame_id, camera_topic_name, frame_rate, 
                                     horizontal_fov, image_width, image_height, min_distance, max_distance, 
                                     noise_mean, noise_stddev,  
                                     x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
@@ -822,7 +822,7 @@ limitations under the License.
     <always_on>1</always_on>
 		<visualize>true</visualize>
     <topic>{{ camera_topic_name }}</topic>
-    <gz_frame_id>{{ camera_frame_name }}</gz_frame_id>
+    <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
 
 

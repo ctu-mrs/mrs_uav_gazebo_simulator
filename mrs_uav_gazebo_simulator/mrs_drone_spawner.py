@@ -23,7 +23,7 @@ from ament_index_python.packages import get_package_share_directory
 from mrs_uav_gazebo_simulator.utils.component_wrapper import ComponentWrapper
 from mrs_uav_gazebo_simulator.utils.template_wrapper import TemplateWrapper
 from mrs_uav_gazebo_simulator.utils.sdf_to_tf_publisher import SdfTfPublisherSingleton
-from mrs_uav_gazebo_simulator.utils.enums import AttachedSensors, SensorTopics, GazeboSensors
+from mrs_uav_gazebo_simulator.utils.spawner_enums import AttachedSensors, SensorTopics, GazeboSensors
 
 # ROS 2 Imports
 from launch import LaunchDescription, LaunchService

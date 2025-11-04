@@ -16,5 +16,3 @@ class SensorTopics(Enum):
     DEPTH_IMAGE = 1
     CAMERA_INFO = 2
     POINTS = 3
-
-

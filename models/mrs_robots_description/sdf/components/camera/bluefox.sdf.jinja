@@ -40,14 +40,10 @@
         pitch = 0,
         yaw = 0)
         }}
-    </link>
-
-    <link name="{{ camera_name }}_optical">
-      <pose relative_to="{{camera_name}}_link">0 0 0 {{ -math.radians(90) }} 0.0 {{ -math.radians(90) }}</pose>
       <!-- sensor {-->
       {{ generic.camera_macro(
         camera_name = camera_name,
-        camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
+        camera_frame_name = spawner_args['name'] + '/' + camera_name + '_link_optical',
         camera_topic_name = spawner_args['name'] + '/' + camera_name,
         frame_rate = spawner_args[spawner_keyword]['update_rate'],
         horizontal_fov = 2.1,
@@ -67,6 +63,10 @@
       <!--}-->
     </link>
 
+    <link name="{{ camera_name }}_link_optical">
+      <pose relative_to="{{camera_name}}_link">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+    </link>
+
     <joint name="{{ camera_name }}_joint" type="fixed">
       <parent>{{ parent_link }}</parent>
       <child>{{ camera_name }}_link</child>
@@ -74,7 +74,7 @@
 
     <joint name="{{ camera_name }}_optical_joint" type="fixed">
       <parent>{{ camera_name }}_link</parent>
-      <child>{{ camera_name }}_optical</child>
+      <child>{{ camera_name }}_link_optical</child>
     </joint>
 
 
@@ -210,8 +210,8 @@
       <!-- sensor {-->
       {{ generic.camera_macro(
         camera_name = camera_name,
-        camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
-        sensor_base_frame_name = spawner_args['name'] + '/' + camera_name,
+        camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '_optical',
+        camera_topic_name = spawner_args['name'] + '/' + camera_name,
         frame_rate = spawner_args[spawner_keyword]['update_rate'],
         horizontal_fov = 2.1,
         image_width = 752,
