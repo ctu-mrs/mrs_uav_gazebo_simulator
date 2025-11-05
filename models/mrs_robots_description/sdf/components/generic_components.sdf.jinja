@@ -737,7 +737,7 @@ limitations under the License.
 
 {# gazebo_threed_lidar_plugin_macro {--> #}
 {# --- sensor is always defined with respect to the sensor_link frame #}
-{%- macro gazebo_twod_lidar_plugin_macro( 
+{%- macro gazebo_threed_lidar_plugin_macro( 
                       lidar_name, lidar_frame_name, lidar_topic_name,
                       sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
                       update_rate, 
@@ -783,9 +783,6 @@ limitations under the License.
   </sensor>
 {%- endmacro -%}
 {# <!--}--> #}
-
-
-
 
 {# rangefinder_sensor_macro {--> #}
 {%- macro rangefinder_sensor_macro(name, update_rate, sensor_link_name, parent_link_name, samples, min_distance, max_distance, resolution, x, y, z, roll, pitch, yaw) -%}
