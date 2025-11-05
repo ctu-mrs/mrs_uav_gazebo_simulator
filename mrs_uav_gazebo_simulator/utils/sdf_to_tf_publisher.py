@@ -60,7 +60,10 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
                 # Compute transform of the optical frame with respect to the sensor link
                 T_SensorPlugin_OpticalFrame = self._get_transform_from_string_pose(pose_SensorLink_OpticalFrame_str)
                 
-                T_W_OpticalFrame = T_W_SensorLink @ T_SensorLink_SensorPlugin @ T_SensorPlugin_OpticalFrame
+                T_W_SensorPlugin = T_W_SensorLink @ T_SensorLink_SensorPlugin
+                T_W_OpticalFrame = T_W_SensorPlugin @ T_SensorPlugin_OpticalFrame
+
+                T_World_Sensors[link_name] = T_W_SensorPlugin
                 T_World_Sensors[gz_frame_id] = T_W_OpticalFrame
             
         return T_World_Sensors
@@ -154,11 +157,11 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
         time_now = self._ros_node.get_clock().now().to_msg()
 
         transforms = []
-        for sensor_gz_frame_id, T_W_Sensor in sensors_tf.items():
+        for frame_name, T_W_Sensor in sensors_tf.items():
             t = TransformStamped()
             t.header.stamp = time_now
             t.header.frame_id = self._model_name + "/" + self._base_frame
-            t.child_frame_id = sensor_gz_frame_id
+            t.child_frame_id = frame_name
             t.transform = self._matrix_to_tf_pose(T_W_Sensor)
             transforms.append(t)
 
