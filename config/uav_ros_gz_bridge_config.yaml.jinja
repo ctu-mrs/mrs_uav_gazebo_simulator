@@ -6,7 +6,7 @@
   direction: GZ_TO_ROS
 {% endfor %}
 
-{%- for topic in twoD_lidar_topic_list -%}
+{%- for topic in laser_scan_topic_list -%}
 - ros_topic_name: "{{ topic }}"
   gz_topic_name: "{{ topic }}"
   ros_type_name: "sensor_msgs/msg/LaserScan"
@@ -14,15 +14,7 @@
   direction: GZ_TO_ROS
 {% endfor %}
 
-{%- for topic in threeD_lidar_topic_list -%}
-- ros_topic_name: "{{ topic }}/points"
-  gz_topic_name: "{{ topic }}/points"
-  ros_type_name: "sensor_msgs/msg/PointCloud2"
-  gz_type_name: "gz.msgs.PointCloudPacked"
-  direction: GZ_TO_ROS
-{% endfor %}
-
-{%- for topic in rgbd_camera_points_topic_list -%}
+{%- for topic in point_cloud_topic_list -%}
 - ros_topic_name: "{{ topic }}"
   gz_topic_name: "{{ topic }}"
   ros_type_name: "sensor_msgs/msg/PointCloud2"

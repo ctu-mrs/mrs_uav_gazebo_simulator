@@ -686,10 +686,58 @@ limitations under the License.
 </sensor>{%- endmacro -%}
 {# <!--}--> #}
 
-
-{# gazebo_lidar_plugin_macro {--> #}
+{# gazebo_twod_lidar_plugin_macro {--> #}
 {# --- sensor is always defined with respect to the sensor_link frame #}
-{%- macro gazebo_lidar_plugin_macro( 
+{%- macro gazebo_twod_lidar_plugin_macro( 
+                      lidar_name, lidar_frame_name, lidar_topic_name,
+                      sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
+                      update_rate, 
+                      horiz_num_samples, horiz_resolution, horiz_min_angle, horiz_max_angle, 
+                      range_min, range_max, range_resolution,
+                      noise_mean, noise_std
+                      ) -%}
+
+  <sensor name="{{ lidar_name }}_sensor" type='gpu_lidar'>
+    <pose>{{ sensor_x }} {{ sensor_y }} {{ sensor_z }} {{ sensor_roll }} {{ sensor_pitch }} {{ sensor_yaw }}</pose>
+    <topic>{{ lidar_topic_name }}/scan</topic>
+    <update_rate>{{ update_rate }}</update_rate>
+    <gz_frame_id>{{ lidar_frame_name }}</gz_frame_id>
+    <ray>
+        <scan>
+            <horizontal>
+                <samples>{{horiz_num_samples | int }}</samples>
+                <resolution>{{horiz_resolution}}</resolution>
+                <min_angle>{{horiz_min_angle}}</min_angle>
+                <max_angle>{{horiz_max_angle}}</max_angle>
+            </horizontal>
+            <vertical>
+                <samples>1</samples>
+                <resolution>0.01</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+            </vertical>
+        </scan>
+        <range>
+            <min>{{range_min}}</min>
+            <max>{{range_max}}</max>
+            <resolution>{{range_resolution}}</resolution>
+        </range>
+        <noise>
+            <type>gaussian</type>
+            <mean>{{noise_mean}}</mean>
+            <stddev>{{noise_std}}</stddev>
+        </noise>
+    </ray>
+    <always_on>1</always_on>
+    <visualize>true</visualize>
+  </sensor>
+{%- endmacro -%}
+{# <!--}--> #}
+
+
+{# gazebo_threed_lidar_plugin_macro {--> #}
+{# --- sensor is always defined with respect to the sensor_link frame #}
+{%- macro gazebo_twod_lidar_plugin_macro( 
                       lidar_name, lidar_frame_name, lidar_topic_name,
                       sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
                       update_rate, 
@@ -738,6 +786,7 @@ limitations under the License.
 
 
 
+
 {# rangefinder_sensor_macro {--> #}
 {%- macro rangefinder_sensor_macro(name, update_rate, sensor_link_name, parent_link_name, samples, min_distance, max_distance, resolution, x, y, z, roll, pitch, yaw) -%}
   <sensor name="{{ name }}" type="gpu_lidar">
@@ -783,7 +832,7 @@ limitations under the License.
     <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
     <always_on>true</always_on>
     <visualize>true</visualize>
-    <topic>{{ camera_topic_name }}</topic>
+    <topic>{{ camera_topic_name }}/image</topic>
     <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
 
@@ -846,5 +895,39 @@ limitations under the License.
 {%- endmacro -%}
 {# <!--}--> #}
 
+
+{# gazebo_depth_camera_macro {--> #}
+{%- macro gazebo_depth_camera_macro(camera_name, camera_gz_frame_id, camera_topic_name, 
+                                   frame_rate, horizontal_fov, image_width, image_height, 
+                                   min_distance, max_distance, noise_mean, noise_stddev,  
+                                   x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
+  <sensor name="{{ camera_name }}_camera" type="depth_camera">
+    <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
+    <always_on>true</always_on>
+    <visualize>true</visualize>
+    <topic>{{ camera_topic_name }}/depth_image</topic>
+    <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
+    <update_rate>{{ frame_rate }}</update_rate>
+
+    <camera name="{{ camera_name }}">
+      <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
+      <image>
+        <width> {{ image_width }} </width>
+        <height>{{ image_height }}</height>
+        <format>R_FLOAT32</format>
+      </image>
+      <clip>
+        <near>{{ min_distance }}</near>
+        <far>{{ max_distance }}</far>
+      </clip>
+      <noise>
+        <type>gaussian</type>
+        <mean>{{ noise_mean }}</mean>
+        <stddev>{{ noise_stddev }}</stddev>
+      </noise>
+    </camera>
+  </sensor>
+{%- endmacro -%}
+{# <!--}--> #}
 
 </sdf>

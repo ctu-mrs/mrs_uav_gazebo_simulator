@@ -24,7 +24,7 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
         if self._base_link is None:
             raise RuntimeError(f"[Sdf2Tf_Publisher] base_link (parent link) is not defined in the config file, cannot create tf publisher")
         self._ros_node = ros_node
-        self._camera_types = ["camera", "rgbd_camera"]
+        self._camera_types = ["camera", "rgbd_camera", "depth_camera"]
 
     def generate_tf_publishers(self, sdf_xml):
         root_xml = ET.fromstring(sdf_xml)
@@ -100,7 +100,7 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
                     sensor_name = sensor.get("name")
                     sensor_offset_pose_str = sensor.findtext('pose')
                     gz_frame_name = sensor.findtext("gz_frame_id")
-                    print(f"\n\nLink: {link_sensor_name} has the following gz_frame: {gz_frame_name}")
+
                     # Detect optical frames for cameras
                     pose_SensorLink_OpticalFrame_str = None
                     if sensor.get("type") in self._camera_types:

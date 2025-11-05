@@ -225,6 +225,7 @@ limitations under the License.
 
 
 {# ============================= RGB-D cameras ============================ #}
+{# Note: All of these cameras have misaligned point clouds. We are waiting for a fix. #}
 {# ==== Realsense camera ==== #}
 {%- import "mrs_robots_description/sdf/components/camera/realsense.sdf.jinja" as realsense_camera -%}
 
@@ -232,4 +233,10 @@ limitations under the License.
   {{ realsense_camera.realsense_top_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
+{# ==== OAK-D camera ==== #}
+{%- import "mrs_robots_description/sdf/components/camera/oak_d.sdf.jinja" as oak_d_camera -%}
+
+{%- macro oak_d_top_macro_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ oak_d_camera.oak_d_top_macro_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
 </sdf>

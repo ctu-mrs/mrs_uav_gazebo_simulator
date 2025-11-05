@@ -23,7 +23,7 @@ from ament_index_python.packages import get_package_share_directory
 from mrs_uav_gazebo_simulator.utils.component_wrapper import ComponentWrapper
 from mrs_uav_gazebo_simulator.utils.template_wrapper import TemplateWrapper
 from mrs_uav_gazebo_simulator.utils.sdf_to_tf_publisher import SdfTfPublisherSingleton
-from mrs_uav_gazebo_simulator.utils.spawner_enums import AttachedSensors, SensorTopics, GazeboSensors
+from mrs_uav_gazebo_simulator.utils.spawner_enums import AttachedSensors, SensorTopics, GazeboSensors, SensorTopicsGzBridge
 
 # ROS 2 Imports
 from launch import LaunchDescription, LaunchService
@@ -365,7 +365,7 @@ class MrsDroneSpawner(Node):
         launch_arguments = {
             'namespace': uav_name,
             'ros_gz_bridge_config': str(ros_gz_bridge_config),
-            'ros_gz_image_topics': ' '.join(sensor_topics[SensorTopics.IMAGE]),
+            'ros_gz_image_topics': ' '.join(sensor_topics[SensorTopicsGzBridge.IMAGE]),
             'bridge_debug': 'false',
         }
 
@@ -1278,7 +1278,8 @@ class MrsDroneSpawner(Node):
             AttachedSensors.CAMERAS: [],
             AttachedSensors.RGBD_CAMERAS: [],
             AttachedSensors.TWO_D_LIDAR: [],
-            AttachedSensors.THREE_D_LIDAR: []
+            AttachedSensors.THREE_D_LIDAR: [],
+            AttachedSensors.DEPTH_CAMERAS: [],
         }
 
         # not using try-catch, it's already done during the sdf's generation
@@ -1293,6 +1294,8 @@ class MrsDroneSpawner(Node):
                 self.get_attached_lidar(attached_sensors, sensor)
             elif sensor_type == GazeboSensors.RGBD_CAMERA:
                 self.get_attached_rgbd_camera(attached_sensors, sensor)
+            elif sensor_type == GazeboSensors.DEPTH_CAMERA:
+                self.get_attached_depth_camera(attached_sensors, sensor)
 
         return attached_sensors
     # #}
@@ -1302,13 +1305,14 @@ class MrsDroneSpawner(Node):
         camera = {}
         topic = camera_sensor.getElementsByTagName('topic')
         if topic:
-            camera[SensorTopics.IMAGE] = '/' + topic[0].firstChild.data
-            camera[SensorTopics.CAMERA_INFO] = camera[SensorTopics.IMAGE].replace('image_raw', 'camera_info')
+            basic_topic_name = '/' + topic[0].firstChild.data
+            camera[SensorTopics.IMAGE] = basic_topic_name
+            camera[SensorTopics.CAMERA_INFO] = basic_topic_name.replace('image', 'camera_info')
             attached_sensors[AttachedSensors.CAMERAS].append(camera)
         return
     # #}
 
-    # #{ get_attached_camera(self, attached_sensors, camera_sensor)
+    # #{ get_attached_rgbd_camera(self, attached_sensors, camera_sensor)
     def get_attached_rgbd_camera(self, attached_sensors, camera_sensor) -> None:
         camera = {}
         topic = camera_sensor.getElementsByTagName('topic')
@@ -1322,30 +1326,42 @@ class MrsDroneSpawner(Node):
         return
     # #}
 
+    # #{ get_attached_depth_camera(self, attached_sensors, camera_sensor)
+    def get_attached_depth_camera(self, attached_sensors, camera_sensor) -> None:
+        camera = {}
+        topic = camera_sensor.getElementsByTagName('topic')
+        if topic:
+            basic_topic_name = '/' + topic[0].firstChild.data 
+            camera[SensorTopics.DEPTH_IMAGE] = basic_topic_name
+            camera[SensorTopics.POINTS] = camera[SensorTopics.DEPTH_IMAGE] + '/points'
+            camera[SensorTopics.CAMERA_INFO] = basic_topic_name.replace('depth_image', 'camera_info')
+            attached_sensors[AttachedSensors.DEPTH_CAMERAS].append(camera)
+        return
+    # #}
+
     # #{ get_attached_lidar(self, attached_sensors, lidar_sensor)
     def get_attached_lidar(self, attached_sensors, lidar_sensor) -> None:
-        
         # NOTE: PX4 requires its own bridge with the Garmin rangefinder, so we do not set it up.
         # The Garmin rangefinder link is named 'lidar_sensor_link' in the garmin.sdf.jinja template.
         # Do not rename the Garmin link or the rangefinder plugin, as PX4 may fail to detect it otherwise.
         if lidar_sensor.getAttribute('name') == "lidar_sensor_link": # Garmin rangefinder
             return
-
+        
         lidar = {}
         topic = lidar_sensor.getElementsByTagName('topic')
-        if not topic:
-            return
-        lidar[SensorTopics.POINTS] = '/' + topic[0].firstChild.data
-
-        # Differentiate between 1D/2D and 3D LiDARs, since they use different msg type.
-        # This can be determined by checking the number of vertical samples.
-        vertical_samples = self.get_number_of_vertical_samples(lidar_sensor)
-        if vertical_samples == 1:  # 2D lidar
-            attached_sensors[AttachedSensors.TWO_D_LIDAR].append(lidar)
-        elif vertical_samples > 1: # 3D lidar
-            attached_sensors[AttachedSensors.THREE_D_LIDAR].append(lidar)
-        else: # Incorrect lidar
-            self.get_logger().error(f"The lidar {lidar_sensor.getAttribute('name')} cannot be loaded. Check if the number of vertical samples is correct.")
+        if topic:
+            # Differentiate between 1D/2D and 3D LiDARs, since they use different msg type.
+            # This can be determined by checking the number of vertical samples.
+            vertical_samples = self.get_number_of_vertical_samples(lidar_sensor)
+            if vertical_samples == 1:  # 2D lidar
+                lidar[SensorTopics.POINTS] = '/' + topic[0].firstChild.data
+                attached_sensors[AttachedSensors.TWO_D_LIDAR].append(lidar)
+            elif vertical_samples > 1: # 3D lidar
+                lidar[SensorTopics.POINTS] = '/' + topic[0].firstChild.data + '/points'
+                attached_sensors[AttachedSensors.THREE_D_LIDAR].append(lidar)
+            else: # Incorrect lidar
+                self.get_logger().error(f"The lidar {lidar_sensor.getAttribute('name')} cannot be loaded. Check if the number of vertical samples is correct.")
+        
         return
     # #}
 
@@ -1358,6 +1374,54 @@ class MrsDroneSpawner(Node):
         return vertical_samples
     # #}
 
+    # #{ get_sensor_topics(self, attached_sensors: dict) -> dict:
+    def get_sensor_topics(self, attached_sensors: dict) -> dict:
+        sensor_topics = {
+            SensorTopicsGzBridge.IMAGE : [],
+            SensorTopicsGzBridge.CAMERA_INFO : [],
+            SensorTopicsGzBridge.DEPTH_IMAGE : [],
+            SensorTopicsGzBridge.LASER_SCAN : [],
+            SensorTopicsGzBridge.POINTCLOUDS : [],
+        }
+
+        for camera in attached_sensors[AttachedSensors.CAMERAS]:
+            sensor_topics[SensorTopicsGzBridge.CAMERA_INFO].append(camera[SensorTopics.CAMERA_INFO])
+            sensor_topics[SensorTopicsGzBridge.IMAGE].append(camera[SensorTopics.IMAGE])
+
+        for two_d_lidar in attached_sensors[AttachedSensors.TWO_D_LIDAR]:
+            sensor_topics[SensorTopicsGzBridge.LASER_SCAN].append(two_d_lidar[SensorTopics.POINTS])
+
+        for three_d_lidar in attached_sensors[AttachedSensors.THREE_D_LIDAR]:
+            sensor_topics[SensorTopicsGzBridge.POINTCLOUDS].append(three_d_lidar[SensorTopics.POINTS])
+
+        for rgbd_camera in attached_sensors[AttachedSensors.RGBD_CAMERAS]:
+            sensor_topics[SensorTopicsGzBridge.IMAGE].append(rgbd_camera[SensorTopics.IMAGE])
+            sensor_topics[SensorTopicsGzBridge.IMAGE].append(rgbd_camera[SensorTopics.DEPTH_IMAGE])
+            sensor_topics[SensorTopicsGzBridge.CAMERA_INFO].append(rgbd_camera[SensorTopics.CAMERA_INFO])
+            sensor_topics[SensorTopicsGzBridge.POINTCLOUDS].append(rgbd_camera[SensorTopics.POINTS])
+
+        for depth_camera in attached_sensors[AttachedSensors.DEPTH_CAMERAS]:
+            sensor_topics[SensorTopicsGzBridge.IMAGE].append(depth_camera[SensorTopics.DEPTH_IMAGE])
+            sensor_topics[SensorTopicsGzBridge.POINTCLOUDS].append(depth_camera[SensorTopics.POINTS])
+        
+        return sensor_topics
+    # #}
+
+    # #{ has_attached_sensors(self, attached_sensors)
+    def has_attached_sensors(self, attached_sensors):
+        flag = any(
+            attached_sensors[key]
+            for key in (
+                AttachedSensors.CAMERAS,
+                AttachedSensors.TWO_D_LIDAR,
+                AttachedSensors.THREE_D_LIDAR,
+                AttachedSensors.RGBD_CAMERAS,
+                AttachedSensors.DEPTH_CAMERAS,
+            )
+        )
+        
+        return flag
+    # #}
 
     # #{ generate_uav_ros_gz_config(self, uav_name)
     def generate_uav_ros_gz_config(self, robot_params):
@@ -1370,52 +1434,16 @@ class MrsDroneSpawner(Node):
         template = jinja_env.get_template(self.uav_ros_gz_bridge_config_template_name)
 
         attached_sensors = self.get_attached_sensors(robot_params)
-
-        sensor_topics = {}
-
-        # Camera
-        camera_info_topic_list = []
-        image_topic_list = []
-        for camera in attached_sensors[AttachedSensors.CAMERAS]:
-            camera_info_topic_list.append(camera[SensorTopics.CAMERA_INFO])
-            image_topic_list.append(camera[SensorTopics.IMAGE])
-
-        # 1D/2D Lidar
-        twoD_lidar_topic_list = []
-        for lidar in attached_sensors[AttachedSensors.TWO_D_LIDAR]:
-            twoD_lidar_topic_list.append(lidar[SensorTopics.POINTS])
-
-        # 3D Lidar
-        threeD_lidar_topic_list = []
-        for lidar in attached_sensors[AttachedSensors.THREE_D_LIDAR]:
-            threeD_lidar_topic_list.append(lidar[SensorTopics.POINTS])
-
-        # RGBD Camera
-        rgbd_camera_points_topic_list = []
-        for rgbd_camera in attached_sensors[AttachedSensors.RGBD_CAMERAS]:
-            image_topic_list.append(rgbd_camera[SensorTopics.IMAGE])
-            image_topic_list.append(rgbd_camera[SensorTopics.DEPTH_IMAGE])
-            camera_info_topic_list.append(rgbd_camera[SensorTopics.CAMERA_INFO])
-            rgbd_camera_points_topic_list.append(rgbd_camera[SensorTopics.POINTS])
-
-        has_sensors = any(
-            attached_sensors[key]
-            for key in (
-                AttachedSensors.CAMERAS,
-                AttachedSensors.TWO_D_LIDAR,
-                AttachedSensors.THREE_D_LIDAR,
-                AttachedSensors.RGBD_CAMERAS,
-            )
-        )
-        if not has_sensors:
+        if not self.has_attached_sensors(attached_sensors):
             self.get_logger().info(f"There are no additional sensors. Skipping launching ros_gz_bridge for {uav_name}")
             return  "", []
 
+        sensor_topics = self.get_sensor_topics(attached_sensors)
+
         rendered_template = template.render(
-            camera_info_topic_list = camera_info_topic_list,
-            twoD_lidar_topic_list = twoD_lidar_topic_list,
-            threeD_lidar_topic_list = threeD_lidar_topic_list,
-            rgbd_camera_points_topic_list = rgbd_camera_points_topic_list,
+            camera_info_topic_list = sensor_topics[SensorTopicsGzBridge.CAMERA_INFO],
+            laser_scan_topic_list = sensor_topics[SensorTopicsGzBridge.LASER_SCAN],
+            point_cloud_topic_list = sensor_topics[SensorTopicsGzBridge.POINTCLOUDS],
         )
 
         filename = f'ros_gz_bridge_config_{uav_name}.yaml'
@@ -1424,8 +1452,6 @@ class MrsDroneSpawner(Node):
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(rendered_template)
             self.get_logger().info(f'ros_gz_bridge config for {uav_name} written to {filepath}')
-
-        sensor_topics[SensorTopics.IMAGE] = image_topic_list
 
         return filepath, sensor_topics
     # #}
