@@ -1542,27 +1542,16 @@ limitations under the License.
       <pose>0 0.0 0.0 0 0 0</pose>
       <camera name="{{ namespace}}/{{ camera_name }}{{ camera_suffix }}_aligned_depth_to_color">
 
-        <!-- global shutter parameters -->
-        {# 
-        <horizontal_fov>1.3962634</horizontal_fov>
-        <image>
-          <width>1280</width>
-          <height>800</height>
-          <format>RGB_INT8</format>
-        </image>
-        #}
-
         <!-- rolling shutter parameters -->
-        <horizontal_fov>1.2042772</horizontal_fov>
+        <horizontal_fov>1.396263402</horizontal_fov>
         <image>
           <width>1280</width>
           <height>800</height>
-          <format>RGB_INT8</format>
         </image>
 
         <clip>
           <near>0.3</near>
-          <far>12</far>
+          <far>240</far>
         </clip>
         <noise>
           <type>gaussian</type>
@@ -1591,6 +1580,7 @@ limitations under the License.
     <imageScaling>4</imageScaling>
     <blurSize>15</blurSize>
     <erosionSize>5</erosionSize>
+    <maxRange>12</maxRange>
     <parentFrameName>{{ frame_fcu }}</parentFrameName>
     <x>{{ x }}</x>
     <y>{{ y }}</y>
