@@ -17,12 +17,12 @@ class SingletonMeta(type):
 
 
 class SdfTfPublisherSingleton(metaclass=SingletonMeta):
-    def __init__(self, ros_node, base_link, ignored_sensors):
+    def __init__(self, ros_node, base_frame, ignored_sensors):
         self._model_name = ""
         self._ignored_sensors = ignored_sensors
-        self._base_link = base_link
-        if self._base_link is None:
-            raise RuntimeError(f"[Sdf2Tf_Publisher] base_link (parent link) is not defined in the config file, cannot create tf publisher")
+        self._base_frame = base_frame
+        if self._base_frame is None:
+            raise RuntimeError(f"[Sdf2Tf_Publisher] base_frame is not defined in the config file, cannot create tf publisher")
         self._ros_node = ros_node
         self._camera_types = ["camera", "rgbd_camera", "depth_camera"]
 
@@ -157,13 +157,13 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
         for sensor_gz_frame_id, T_W_Sensor in sensors_tf.items():
             t = TransformStamped()
             t.header.stamp = time_now
-            t.header.frame_id = self._model_name + "/" + self._base_link
+            t.header.frame_id = self._model_name + "/" + self._base_frame
             t.child_frame_id = sensor_gz_frame_id
             t.transform = self._matrix_to_tf_pose(T_W_Sensor)
             transforms.append(t)
 
         broadcaster.sendTransform(transforms)
-        self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Published {len(transforms)} static transforms relative to {self._base_link}")
+        self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Published {len(transforms)} static transforms relative to {self._base_frame}")
 
     def _matrix_to_tf_pose(self, T_W_Sensor: np.ndarray) -> Transform:
         pose = Transform()

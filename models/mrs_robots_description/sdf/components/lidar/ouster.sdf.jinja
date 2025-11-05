@@ -124,7 +124,7 @@
     {# <!--}--> #}
 
     <!-- Ouster {-->
-    <link name="{{sensor_name}}_link">
+    <link name="{{sensor_name}}_frame">
 
       <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       {{ generic.zero_inertial_macro() }}
@@ -162,7 +162,7 @@
       <!-- sensor + plugin {-->
       {{ generic.gazebo_threed_lidar_plugin_macro(
           lidar_name = sensor_name,
-          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_link',
+          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_frame',
           lidar_topic_name = spawner_args['name'] + '/' + sensor_name,
           sensor_x = lidar_x, sensor_y = lidar_y, sensor_z = lidar_z, sensor_roll = lidar_roll, sensor_pitch =lidar_pitch, sensor_yaw =lidar_yaw,
           update_rate = spawner_args[spawner_keyword]['update_rate'],
@@ -186,7 +186,7 @@
 
     <joint name="{{ sensor_name }}_joint" type="fixed">
       <parent>{{ parent_link }}</parent>
-      <child>{{ sensor_name }}_link</child>
+      <child>{{ sensor_name }}_frame</child>
     </joint>
     <!--}-->
 

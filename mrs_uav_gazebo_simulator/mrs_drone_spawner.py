@@ -133,8 +133,8 @@ class MrsDroneSpawner(Node):
 
         self.declare_parameter('extra_resource_paths', [""])
 
-        self.declare_parameter('tf_static_publisher.base_link', "base_link")
-        self.declare_parameter('tf_static_publisher.ignored_sensor_links', ["air_pressure_sensor", "magnetometer_sensor", "navsat_sensor", "imu_sensor"])
+        self.declare_parameter('tf_static_publisher.base_frame', "fcu")
+        self.declare_parameter('tf_static_publisher.ignored_sensor_frames', ["air_pressure_sensor", "magnetometer_sensor", "navsat_sensor", "imu_sensor"])
 
 
 
@@ -150,8 +150,8 @@ class MrsDroneSpawner(Node):
 
             self.firmware_launch_delay = float(self.get_parameter('firmware_launch_delay').value)
 
-            self.tf_base_link = self.get_parameter('tf_static_publisher.base_link').value
-            self.tf_ignored_sensor_links = self.get_parameter('tf_static_publisher.ignored_sensor_links').value
+            self.tf_base_frame = self.get_parameter('tf_static_publisher.base_frame').value
+            self.tf_ignored_sensor_frames = self.get_parameter('tf_static_publisher.ignored_sensor_frames').value
 
         except rclpy.exceptions.ParameterNotDeclaredException as e:
             self.get_logger().error(f'Could not load required param. {e}')
@@ -225,7 +225,7 @@ class MrsDroneSpawner(Node):
         self.gazebo_spawn_request_start_time = None
 
         # SdfToTf Publisher
-        self.sdf_to_tf_publisher = SdfTfPublisherSingleton(self, self.tf_base_link, self.tf_ignored_sensor_links)
+        self.sdf_to_tf_publisher = SdfTfPublisherSingleton(self, self.tf_base_frame, self.tf_ignored_sensor_frames)
 
         self.is_initialized = True
         self.get_logger().info('Initialized')
