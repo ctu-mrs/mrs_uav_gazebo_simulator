@@ -218,18 +218,10 @@ limitations under the License.
 {# ==== Mobius camera ==== #}
 {%- import "mrs_robots_description/sdf/components/camera/mobius.sdf.jinja" as mobius_camera -%}
 
-{%- macro mobius_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ mobius_camera.mobius_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- macro mobius_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ mobius_camera.mobius_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
-{%- macro mobius_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ mobius_camera.mobius_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
-{%- endmacro -%}
-{%- macro mobius_back_left_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ mobius_camera.mobius_back_left_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
-{%- endmacro -%}
-{%- macro mobius_back_right_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ mobius_camera.mobius_back_right_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
-{%- endmacro -%}
+
 
 
 {# ============================= RGB-D cameras ============================ #}

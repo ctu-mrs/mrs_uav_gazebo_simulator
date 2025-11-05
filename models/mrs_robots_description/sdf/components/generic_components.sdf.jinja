@@ -774,17 +774,17 @@ limitations under the License.
 
 {# ========================== camera sensors ========================= #}
 
-{# camera_macro {--> #}
-{%- macro camera_macro(camera_name, camera_frame_name, camera_topic_name, frame_rate, 
-                      horizontal_fov, image_width, image_height, min_distance, max_distance, 
-                      noise_mean, noise_stddev,  
-                      x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
-  <sensor name="{{ camera_name }}_sensor" type="camera">
-    <pose relative_to="{{ parent_link_name }}">{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
+{# rgb_camera_macro {--> #}
+{%- macro gazebo_rgb_camera_macro(camera_name, camera_gz_frame_id, camera_topic_name, 
+                                  frame_rate, horizontal_fov, image_width, image_height, 
+                                  min_distance, max_distance, noise_mean, noise_stddev,  
+                                  x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
+  <sensor name="{{ camera_name }}_camera" type="camera">
+    <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
     <always_on>true</always_on>
     <visualize>true</visualize>
-    <topic>{{ camera_topic_name }}/image_raw</topic>
-    <gz_frame_id>{{ camera_frame_name }}</gz_frame_id>
+    <topic>{{ camera_topic_name }}</topic>
+    <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
 
     <camera name="{{ camera_name }}">
@@ -813,18 +813,17 @@ limitations under the License.
 
 
 {# gazebo_rgbd_camera_macro {--> #}
-{%- macro gazebo_rgbd_camera_macro(camera_name, camera_gz_frame_id, camera_topic_name, frame_rate, 
-                                    horizontal_fov, image_width, image_height, min_distance, max_distance, 
-                                    noise_mean, noise_stddev,  
-                                    x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
-  <sensor name="{{ camera_name }}_sensor" type="rgbd_camera">
-    <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>				
-    <always_on>1</always_on>
-		<visualize>true</visualize>
+{%- macro gazebo_rgbd_camera_macro(camera_name, camera_gz_frame_id, camera_topic_name, 
+                                   frame_rate, horizontal_fov, image_width, image_height, 
+                                   min_distance, max_distance, noise_mean, noise_stddev,  
+                                   x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
+  <sensor name="{{ camera_name }}_camera" type="rgbd_camera">
+    <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
+    <always_on>true</always_on>
+    <visualize>true</visualize>
     <topic>{{ camera_topic_name }}</topic>
     <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
-
 
     <camera name="{{ camera_name }}">
       <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>

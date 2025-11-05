@@ -1,6 +1,7 @@
 <?xml version="1.0"? encoding="utf-8">
 {%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
 
+{# ============================= Bluefox Camera Macro ============================ #}
 {# bluefox_camera_macro {--> #}
 {%- macro bluefox_camera_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
 
@@ -11,6 +12,13 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
+    {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/optical_link' -%}
+
+    {# -- rotation from parent_link to sensor -- #}
+    {%- set roll = 0.0 -%}
+    {%- set pitch = math.radians(90) -%}
+    {%- set yaw = 0.0 -%}
+
     {# -- tf from link to sensor -- #}
     {%- set x_offset = 0.0 -%}
     {%- set y_offset = 0.0 -%}
@@ -18,11 +26,6 @@
     {%- set roll_offset = 0.0 -%}
     {%- set pitch_offset = 0.0 -%}
     {%- set yaw_offset = 0.0 -%}
-
-    {%- set roll = 0.0 -%}
-    {%- set pitch = math.radians(90) -%}
-    {%- set yaw = 0.0 -%}
-
 
     <!-- bluefox camera {-->
     <link name="{{ camera_name }}_link">
@@ -41,10 +44,10 @@
         yaw = 0)
         }}
       <!-- sensor {-->
-      {{ generic.camera_macro(
+      {{ generic.gazebo_rgb_camera_macro(
         camera_name = camera_name,
-        camera_frame_name = spawner_args['name'] + '/' + camera_name + '_link_optical',
-        camera_topic_name = spawner_args['name'] + '/' + camera_name,
+        camera_gz_frame_id = camera_gz_frame_id,
+        camera_topic_name = spawner_args['name'] + '/' + camera_name + '/image_raw',
         frame_rate = spawner_args[spawner_keyword]['update_rate'],
         horizontal_fov = 2.1,
         image_width = 752,
@@ -63,7 +66,7 @@
       <!--}-->
     </link>
 
-    <link name="{{ camera_name }}_link_optical">
+    <link name="{{ camera_gz_frame_id }}">
       <pose relative_to="{{camera_name}}_link">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
     </link>
 
@@ -72,11 +75,10 @@
       <child>{{ camera_name }}_link</child>
     </joint>
 
-    <joint name="{{ camera_name }}_optical_joint" type="fixed">
+    <joint name="{{ camera_gz_frame_id }}_joint" type="fixed">
       <parent>{{ camera_name }}_link</parent>
-      <child>{{ camera_name }}_link_optical</child>
+      <child>{{ camera_gz_frame_id }}</child>
     </joint>
-
 
     <!-- mount {-->
     {{ mount if mount }}
@@ -88,6 +90,7 @@
 {%- endmacro -%}
 {# <!--}--> #}
 
+{# ============================= Bluefox Camera Reverse Macro ============================ #}
 {# bluefox_camera_reverse_macro {--> #}
 {%- macro bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
 
@@ -98,6 +101,7 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
+    {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/optical_link' -%}
 
     {# -- tf from link to sensor -- #}
     {%- set x_offset = 0.0 -%}
@@ -129,12 +133,10 @@
         }}
 
       <!-- sensor {-->
-      {{ generic.camera_macro(
-        parent_link = parent_link,
+      {{ generic.gazebo_rgb_camera_macro(
         camera_name = camera_name,
-        parent_frame_name = spawner_args['name'] + '/fcu',
-        camera_frame_name = spawner_args['name'] + '/' + camera_name + '_optical',
-        sensor_base_frame_name = spawner_args['name'] + '/' + camera_name,
+        camera_gz_frame_id = camera_gz_frame_id,
+        camera_topic_name = spawner_args['name'] + '/' + camera_name + '/image_raw',
         frame_rate = spawner_args[spawner_keyword]['update_rate'],
         horizontal_fov = 2.1,
         image_width = 752,
@@ -153,9 +155,18 @@
       <!--}-->
     </link>
 
+    <link name="{{ camera_gz_frame_id }}">
+      <pose relative_to="{{camera_name}}_link">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+    </link>
+
     <joint name="{{ camera_name }}_joint" type="fixed">
       <parent>{{ parent_link }}</parent>
       <child>{{ camera_name }}_link</child>
+    </joint>
+
+    <joint name="{{ camera_gz_frame_id }}_joint" type="fixed">
+      <parent>{{ camera_name }}_link</parent>
+      <child>{{ camera_gz_frame_id }}</child>
     </joint>
 
     <!-- mount {-->
@@ -168,6 +179,7 @@
 {%- endmacro -%}
 {# <!--}--> #}
 
+{# ============================= Bluefox Camera Front Macro ============================ #}
 {# bluefox_camera_front_macro {--> #}
 {%- macro bluefox_camera_front_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
 
@@ -177,6 +189,8 @@
 
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/optical_link' -%}
 
     {# -- tf from link to sensor -- #}
     {%- set x_offset = 0.0 -%}
@@ -208,10 +222,10 @@
         }}
 
       <!-- sensor {-->
-      {{ generic.camera_macro(
+      {{ generic.gazebo_rgb_camera_macro(
         camera_name = camera_name,
-        camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '_optical',
-        camera_topic_name = spawner_args['name'] + '/' + camera_name,
+        camera_gz_frame_id = camera_gz_frame_id,
+        camera_topic_name = spawner_args['name'] + '/' + camera_name + '/image_raw',
         frame_rate = spawner_args[spawner_keyword]['update_rate'],
         horizontal_fov = 2.1,
         image_width = 752,
@@ -230,17 +244,25 @@
     <!--}-->
     </link>
 
-    <!-- mount {-->
-    {{ mount if mount }}
-    <!--}-->
+    <link name="{{ camera_gz_frame_id }}">
+      <pose relative_to="{{camera_name}}_link">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+    </link>
 
     <joint name="{{ camera_name }}_joint" type="fixed">
       <parent>{{ parent_link }}</parent>
       <child>{{ camera_name }}_link</child>
     </joint>
 
+    <joint name="{{ camera_gz_frame_id }}_joint" type="fixed">
+      <parent>{{ camera_name }}_link</parent>
+      <child>{{ camera_gz_frame_id }}</child>
+    </joint>
+
+    <!-- mount {-->
+    {{ mount if mount }}
     <!--}-->
 
+    <!--}-->
   {%- endif -%}
 {%- endmacro -%}
 {# <!--}--> #}
