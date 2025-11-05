@@ -62,9 +62,10 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
                 
                 T_W_SensorPlugin = T_W_SensorLink @ T_SensorLink_SensorPlugin
                 T_W_OpticalFrame = T_W_SensorPlugin @ T_SensorPlugin_OpticalFrame
-
-                T_World_Sensors[link_name] = T_W_SensorPlugin
                 T_World_Sensors[gz_frame_id] = T_W_OpticalFrame
+
+                if self._has_optical_frame(pose_SensorLink_OpticalFrame_str):
+                    T_World_Sensors[self._model_name + "/" + link_name] = T_W_SensorPlugin
             
         return T_World_Sensors
 
@@ -87,6 +88,11 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
             raise ValueError(f"[Sdf2Tf_Publisher] Expected 6 elements in pose string, got {len(parts)}: {pose_str}")
         x, y, z, roll, pitch, yaw = map(float, parts)
         return np.array([x, y, z, roll, pitch, yaw])
+    
+    def _has_optical_frame(self, pose_SensorLink_OpticalFrame_str):
+        if pose_SensorLink_OpticalFrame_str is not None and (pose_SensorLink_OpticalFrame_str != ""):
+            return True
+        return False
 
     def _detect_sensor_links(self, model_xml):
         link_to_sensors = {}
