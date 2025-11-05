@@ -731,7 +731,7 @@ limitations under the License.
         </noise>
     </ray>
     <always_on>1</always_on>
-    <visualize>true</visualize>
+    <visualize>false</visualize> <!-- this has no effect -->
   </sensor>
 {%- endmacro -%}
 {# <!--}--> #}
@@ -764,7 +764,7 @@ limitations under the License.
       <resolution>{{ resolution }}</resolution>
     </range>
   </lidar>
-  <visualize>true</visualize>
+  <visualize>false</visualize> <!-- this has no effect -->
   <always_on>1</always_on>
 </sensor>
 {%- endmacro -%}
@@ -782,7 +782,7 @@ limitations under the License.
   <sensor name="{{ camera_name }}_sensor" type="camera">
     <pose relative_to="{{ parent_link }}">{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
     <always_on>true</always_on>
-    <visualize>true</visualize>
+    <visualize>false</visualize> <!-- this has no effect -->
     <topic>{{ camera_topic_name }}/image_raw</topic>
     <gz_frame_id>{{ camera_frame_name }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
