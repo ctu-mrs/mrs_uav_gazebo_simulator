@@ -29,7 +29,7 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
     def generate_tf_publishers(self, sdf_xml):
         root_xml = ET.fromstring(sdf_xml)
         model_xml = root_xml.find(".//model")
-        self._model_name = model_xml.attrib["name"]
+        self._model_name = model_xml.get["name"]
 
         links_to_sensors = self._detect_sensor_links(model_xml)
         sensors_tf = self._detect_sensors_transformations(links_to_sensors)
@@ -65,13 +65,14 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
                 T_World_Sensors[gz_frame_id] = T_W_OpticalFrame
 
                 if self._has_optical_frame(pose_SensorLink_OpticalFrame_str):
+                    # Publish sensor_frame as well
                     T_World_Sensors[self._model_name + "/" + link_name] = T_W_SensorPlugin
             
         return T_World_Sensors
 
     def _get_transform_from_string_pose(self, pose_rpy_str: str) -> np.ndarray:
         T_frame = np.eye(4)
-        if pose_rpy_str is not None and(pose_rpy_str != ""):
+        if pose_rpy_str is not None and (pose_rpy_str != ""):
             pose_rpy = self._str_to_pose(pose_rpy_str)
             T_frame = self._pose_rpy_to_matrix(pose_rpy)
         return T_frame
@@ -154,7 +155,7 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
         if link_name is None:
             return ""
         for link in model_xml.findall('.//link'):
-            if link.attrib["name"] == link_name:
+            if link.get["name"] == link_name:
                 return link.findtext('pose')
         return ""
         
