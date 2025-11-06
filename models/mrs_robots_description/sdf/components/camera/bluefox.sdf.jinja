@@ -136,7 +136,7 @@
         }}
 
       <!-- sensor {-->
-      {{ generic.gazebo_rgb_camera_macro(
+      {{ generic.camera_macro(
         camera_name = camera_name,
         camera_gz_frame_id = camera_gz_frame_id,
         camera_topic_name = spawner_args['name'] + '/' + camera_name,
@@ -231,6 +231,7 @@
         camera_gz_frame_id = camera_gz_frame_id,
         camera_topic_name = spawner_args['name'] + '/' + camera_name,
         frame_rate = spawner_args[spawner_keyword]['update_rate'],
+        frame_rate = spawner_args[spawner_keyword]['update_rate'],
         horizontal_fov = 2.1,
         image_width = 752,
         image_height = 480,
@@ -245,7 +246,7 @@
         pitch_offset = pitch_offset,
         yaw_offset = yaw_offset)
       }}
-    <!--}-->
+      <!--}-->
     </link>
 
     <link name="{{ camera_gz_frame_id }}">

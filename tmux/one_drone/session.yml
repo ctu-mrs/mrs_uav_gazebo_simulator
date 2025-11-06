@@ -51,7 +51,7 @@ windows:
   - rviz:
       layout: tiled
       panes:
-        - waitForCore; ros2 run rviz2 rviz2 -d ./rviz.rviz
+        - waitForCore; ros2 run rviz2 rviz2 -d ./rviz.rviz --ros-args -p use_sim_time:=true
   - layout:
       layout: tiled
       panes:

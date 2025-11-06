@@ -779,7 +779,7 @@ limitations under the License.
         </noise>
     </ray>
     <always_on>1</always_on>
-    <visualize>true</visualize>
+    <visualize>false</visualize> <!-- this has no effect -->
   </sensor>
 {%- endmacro -%}
 {# <!--}--> #}
@@ -810,7 +810,7 @@ limitations under the License.
       <resolution>{{ resolution }}</resolution>
     </range>
   </lidar>
-  <visualize>true</visualize>
+  <visualize>false</visualize> <!-- this has no effect -->
   <always_on>1</always_on>
 </sensor>
 {%- endmacro -%}
@@ -820,7 +820,7 @@ limitations under the License.
 
 {# ========================== camera sensors ========================= #}
 
-{# rgb_camera_macro {--> #}
+{# gazebo_rgb_camera_macro {--> #}
 {%- macro gazebo_rgb_camera_macro(camera_name, camera_gz_frame_id, camera_topic_name, 
                                   frame_rate, horizontal_fov, image_width, image_height, 
                                   min_distance, max_distance, noise_mean, noise_stddev,  
@@ -832,7 +832,7 @@ limitations under the License.
     <topic>{{ camera_topic_name }}/image</topic>
     <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
-
+    
     <camera name="{{ camera_name }}">
       <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
       <image>
@@ -844,7 +844,7 @@ limitations under the License.
         <far>{{ max_distance }}</far>
       </clip>
        <!-- Noise is sampled independently per pixel on each frame.
-        That pixels noise value is added to each of its color
+        That pixel's noise value is added to each of its color
         channels, which at that point lie in the range [0,1]. -->
       <noise>
         <type>gaussian</type>
@@ -870,7 +870,7 @@ limitations under the License.
     <topic>{{ camera_topic_name }}</topic>
     <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
-
+    
     <camera name="{{ camera_name }}">
       <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
       <image>

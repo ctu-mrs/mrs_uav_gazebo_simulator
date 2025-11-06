@@ -237,6 +237,100 @@
     }}
     {# <!--}--> #}
 
+    {# ================================================================== #}
+    {# ||                  optional sensor definitions                 || #}
+    {# ================================================================== #}
+
+    {# ========================== camera sensors ======================== #}
+
+    {# camera_front {--> #}
+
+    {%- macro camera_front_macro(spawner_args) -%}
+
+      {%- set spawner_keyword = 'enable-camera-front' -%}
+      {%- set spawner_description = 'Enable front-facing camera' -%}
+      {%- set spawner_default_args = {'rate': 20, 'noise': 0.007} -%}
+
+      {%- if spawner_keyword in spawner_args.keys() -%}
+        {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+        {{ generic.camera_macro_meshless(
+          parent_link = root,
+          camera_name = 'camera_front',
+          parent_frame_name = spawner_args['name'] + '/fcu',
+          camera_frame_name = spawner_args['name'] + '/camera_front_optical',
+          sensor_base_frame_name = spawner_args['name'] + '/camera_front',
+          camera_topic_name = spawner_args['name'] + '/camera_front',
+          frame_rate = spawner_args[spawner_keyword]['rate'],
+          horizontal_fov = 0.79622,
+          image_width = 728,
+          image_height = 544,
+          min_distance = 0.02,
+          max_distance = 80,
+          noise_mean = 0.0,
+          noise_stddev = spawner_args[spawner_keyword]['noise'],
+          x_offset = 0.1,
+          y_offset = 0.0,
+          z_offset = 0.02143,
+          roll_offset = 0,
+          pitch_offset = 0,
+          yaw_offset = 0)
+        }}
+
+      {%- endif -%}
+
+    {%- endmacro -%}
+
+    {{ camera_front_macro(
+      spawner_args = spawner_args)
+    }}
+
+    {# <!--}--> #}
+
+    {# camera_down {--> #}
+
+    {%- macro camera_down_macro(spawner_args) -%}
+
+      {%- set spawner_keyword = 'enable-camera-down' -%}
+      {%- set spawner_description = 'Enable down-facing camera' -%}
+      {%- set spawner_default_args = {'rate': 20, 'noise': 0.007} -%}
+
+      {%- if spawner_keyword in spawner_args.keys() -%}
+        {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+        {{ generic.camera_macro_meshless(
+          parent_link = root,
+          camera_name = 'camera_down',
+          parent_frame_name = spawner_args['name'] + '/fcu',
+          camera_frame_name = spawner_args['name'] + '/camera_down_optical',
+          sensor_base_frame_name = spawner_args['name'] + '/camera_down',
+          camera_topic_name = spawner_args['name'] + '/camera_down',
+          frame_rate = spawner_args[spawner_keyword]['rate'],
+          horizontal_fov = 1.5476,
+          image_width = 1280,
+          image_height = 800,
+          min_distance = 0.02,
+          max_distance = 80,
+          noise_mean = 0.0,
+          noise_stddev = spawner_args[spawner_keyword]['noise'],
+          x_offset = 0.0821,
+          y_offset = 0.0,
+          z_offset = -0.01,
+          roll_offset = 3.14,
+          pitch_offset = 1.57,
+          yaw_offset = 0.0)
+        }}
+
+      {%- endif -%}
+
+    {%- endmacro -%}
+
+    {{ camera_down_macro(
+      spawner_args = spawner_args)
+    }}
+
+    {# <!--}--> #}
+
   </model>
 
 </sdf>

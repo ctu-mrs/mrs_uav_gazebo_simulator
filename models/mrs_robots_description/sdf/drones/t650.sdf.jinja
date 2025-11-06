@@ -656,6 +656,57 @@
     {{ ouster }}
     {# <!--}--> #}
 
+    {# ========================= camera sensors ========================= #}
+
+    {# Bluefox camera placements {--> #}
+
+    {# bluefox (classic) {--> #}
+    {%- set bluefox_camera = components.bluefox_camera_macro(
+      camera_name = 'bluefox_optflow',
+      parent_link = root,
+      x = 0.0,
+      y = -0.15,
+      z = -0.057,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ bluefox_camera }}
+    {# <!--}--> #}
+
+    {# bluefox reverse {--> #}
+    {%- set bluefox_camera_reverse = components.bluefox_camera_reverse_macro(
+      camera_name = 'bluefox_optflow',
+      parent_link = root,
+      x = 0.0,
+      y = -0.15,
+      z = -0.057,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ bluefox_camera_reverse }}
+    {# <!--}--> #}
+
+    {# <!--}--> #}
+
+    {# Mobius placements {--> #}
+
+    {# mobius front {--> #}
+    {{ components.mobius_front_macro(
+      camera_name = 'mobius_front',
+      parent_link = root,
+      x = 0.2,
+      y = 0.0,
+      z = -0.04,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# <!--}--> #}
+
     {# ====================== conditional components ==================== #}
 
     {# Bluefox + Garmin mount {--> #}

@@ -11,7 +11,8 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
-    {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/optical_frame' -%}
+    {%- set camera_link_name = spawner_args['name'] + '/' + camera_name -%}
+    {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/color_optical' -%}
 
     {# -- tf from link to sensor -- #}
     {%- set x_offset = 0.0 -%}
@@ -22,8 +23,8 @@
     {%- set yaw_offset = 0.0 -%}
 
     <!-- Mobius down {-->
-    <link name="{{ camera_name }}_frame">
-      <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+    <link name="{{ camera_link_name }}">
+      <pose relative_to="{{ parent_link }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       {{ zero_inertial_macro() }}
       {{ visual_mesh_macro(
         name = camera_name + "_visual",
@@ -62,16 +63,16 @@
     </link>
 
     <link name="{{ camera_gz_frame_id }}">
-      <pose relative_to="{{ camera_name }}_frame">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+      <pose relative_to="{{ camera_link_name }}">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
     </link>
 
     <joint name="{{ camera_name }}_joint" type="fixed">
       <parent>{{ parent_link }}</parent>
-      <child>{{ camera_name }}_frame</child>
+      <child>{{ camera_link_name }}</child>
     </joint>
 
     <joint name="{{ camera_gz_frame_id }}_joint" type="fixed">
-      <parent>{{ camera_name }}_frame</parent>
+      <parent>{{ camera_link_name }}</parent>
       <child>{{ camera_gz_frame_id }}</child>
     </joint>
 
