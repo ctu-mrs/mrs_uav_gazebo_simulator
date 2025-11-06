@@ -2,7 +2,7 @@
 ### RGB Camera
 Due to different frame conventions, an additional optical frame is required. You may change its name, since the TF publisher will read it from the SDF file. For example, I recommend checking the [bluefox_camera_macro](./components/camera/bluefox.sdf.jinja).
 ```
-{%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/optical_link' -%}
+{%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/color_optical' -%}
 ```
 
 The resulting camera-related topics will look like as follows:
@@ -12,7 +12,7 @@ The resulting camera-related topics will look like as follows:
 ### Depth Camera
 Due to different frame conventions, an additional optical frame is required. You may change its name, since the TF publisher will read it from the SDF file. For example, I recommend checking the [realsense_depth_macro](./components/camera/realsense.sdf.jinja).
 ```
-{%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/optical_link' -%}
+{%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/depth_optical' -%}
 ```
 
 The resulting camera-related topics will look like as follows:
@@ -24,7 +24,7 @@ The resulting camera-related topics will look like as follows:
 ### RGB-D Camera
 Due to different frame conventions, an additional optical frame is required. However, there is currently a bug that causes the point cloud to be misaligned with the camera's optical frame. As a result, the point cloud data must be manually transformed, which is not implemented on our side. Nevertheless, we still provide the optical frame for the RGB data.
 ```
-{%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/optical_link' -%}
+{%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/camera_optical' -%}
 ```
 
 The resulting camera-related topics will look like as follows:
