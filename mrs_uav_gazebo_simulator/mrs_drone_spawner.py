@@ -532,9 +532,9 @@ class MrsDroneSpawner(Node):
             robot_params = self.vehicle_queue.pop(0)
 
         self.spawn_gazebo_model(robot_params)
+
         if len(self.vehicle_queue) == 0:
             self.sdf_to_tf_publisher.publish_sensor_tfs()
-
     # #}
 
     # #{ callback_diagnostics_timer(self)
