@@ -29,46 +29,65 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
     def generate_tf_publishers(self, sdf_xml):
         root_xml = ET.fromstring(sdf_xml)
         model_xml = root_xml.find(".//model")
-        self._model_name = model_xml.get["name"]
+        self._model_name = model_xml.get("name")
 
         links_to_sensors = self._detect_sensor_links(model_xml)
-        sensors_tf = self._detect_sensors_transformations(links_to_sensors)
-        self._generate_static_tf_broadcasters(sensors_tf)
+        self._detect_sensors_transformations(links_to_sensors)
+        # self._generate_static_tf_broadcasters(sensors_tf)
 
     def _detect_sensors_transformations(self, links_to_sensors):
         T_World_Sensors = {}
-        for link_name, data in links_to_sensors.items():
+        for link_name, data in links_to_sensors.items():            
+            # Publish transform of the sensor link with respect to the world frame
             pose_World_SensorLink_str = data[LinkToSensorData.LINK_POSE_STR]
-            sensors = data[LinkToSensorData.SENSORS]
-
-            for sensor in sensors:
-                gz_frame_id = sensor[SensorLinkData.GZ_FRAME_ID]
-                pose_Link_SensorOffset_str = sensor[SensorLinkData.SENSOR_OFFSET_POSE_STR]
-                pose_SensorLink_OpticalFrame_str = sensor[SensorLinkData.GZ_FRAME_POSE_STR]
-
-                # Compute transform of the sensor link with respect to the world frame
-                if pose_World_SensorLink_str is None or (pose_World_SensorLink_str == ""):
-                    self._ros_node.get_logger().info(
-                        f"[Sdf2Tf_Publisher] Sensor link {link_name} has no pose, cannot create its tf publisher"
-                        )
-                    continue
-                T_W_SensorLink = self._get_transform_from_string_pose(pose_World_SensorLink_str)
-
-                # Compute transform of the sensor plugin with respect to the sensor link
-                T_SensorLink_SensorPlugin = self._get_transform_from_string_pose(pose_Link_SensorOffset_str)
-
-                # Compute transform of the optical frame with respect to the sensor link
-                T_SensorPlugin_OpticalFrame = self._get_transform_from_string_pose(pose_SensorLink_OpticalFrame_str)
-                
-                T_W_SensorPlugin = T_W_SensorLink @ T_SensorLink_SensorPlugin
-                T_W_OpticalFrame = T_W_SensorPlugin @ T_SensorPlugin_OpticalFrame
-                T_World_Sensors[gz_frame_id] = T_W_OpticalFrame
-
-                if self._has_optical_frame(pose_SensorLink_OpticalFrame_str):
-                    # Publish sensor_frame as well
-                    T_World_Sensors[self._model_name + "/" + link_name] = T_W_SensorPlugin
+            if pose_World_SensorLink_str is None or (pose_World_SensorLink_str == ""):
+                self._ros_node.get_logger().info(
+                                f"[Sdf2Tf_Publisher] Sensor link {link_name} has no pose, cannot create its tf publisher"
+                                )
+                continue
+            T_W_SensorLink = self._get_transform_from_string_pose(pose_World_SensorLink_str)
+            self._publish_static_tf(child_frame = link_name,
+                                    parent_frame = self._base_frame, 
+                                    tf_matrix =  T_W_SensorLink)
             
-        return T_World_Sensors
+            sensors = data[LinkToSensorData.SENSORS]
+            for sensor in sensors:
+                # Publish transform of the sensor plugin with respect to the sensor link
+                T_SensorLink_SensorPlugin = self._get_transform_from_string_pose(
+                    sensor[SensorLinkData.SENSOR_OFFSET_POSE_STR]
+                    )
+                self._publish_static_tf(child_frame = sensor[SensorLinkData.SENSOR_NAME],
+                                        parent_frame = link_name, 
+                                        tf_matrix =  T_SensorLink_SensorPlugin)
+                
+                # Publish transform of the optical frame with respect to the sensor plugin
+                if self._has_optical_frame(sensor[SensorLinkData.OPTICAL_FRAME_POSE_STR]):
+                    T_SensorPlugin_OpticalFrame = self._get_transform_from_string_pose(
+                        sensor[SensorLinkData.OPTICAL_FRAME_POSE_STR]
+                        )
+                    self._publish_static_tf(child_frame = sensor[SensorLinkData.OPTICAL_FRAME_NAME],
+                                            parent_frame = sensor[SensorLinkData.SENSOR_NAME], 
+                                            tf_matrix =  T_SensorPlugin_OpticalFrame)
+    
+
+    def _publish_static_tf(self, child_frame, parent_frame, tf_matrix):
+        prefix = self._model_name + "/"
+        if not parent_frame.startswith(prefix):
+            parent_frame = prefix + parent_frame
+        if not child_frame.startswith(prefix):
+            child_frame = prefix + child_frame
+
+        broadcaster = StaticTransformBroadcaster(self._ros_node)
+        time_now = self._ros_node.get_clock().now().to_msg()
+
+        t = TransformStamped()
+        t.header.stamp = time_now
+        t.header.frame_id = parent_frame
+        t.child_frame_id = child_frame
+        t.transform = self._matrix_to_tf_pose(tf_matrix)
+
+        broadcaster.sendTransform(t)
+        self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Published static transforms for {child_frame} with respect to {parent_frame}.")
 
     def _get_transform_from_string_pose(self, pose_rpy_str: str) -> np.ndarray:
         T_frame = np.eye(4)
@@ -119,7 +138,6 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
                             self._ros_node.get_logger().info(
                                 f"[Sdf2Tf_Publisher] Link '{link_sensor_name}' may have an error in setting up the optical frame. Check the sdf file for the sensor."
                             )
-                            gz_frame_name = ""
                         else:
                             pose_SensorLink_OpticalFrame_str = self._find_pose_by_link_name(model_xml, gz_frame_name)
 
@@ -127,8 +145,8 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
                         SensorLinkData.SENSOR_NAME : sensor_name,
                         SensorLinkData.SENSOR_TYPE : sensor.get("type"),
                         SensorLinkData.SENSOR_OFFSET_POSE_STR : sensor_offset_pose_str,
-                        SensorLinkData.GZ_FRAME_POSE_STR : pose_SensorLink_OpticalFrame_str,
-                        SensorLinkData.GZ_FRAME_ID : gz_frame_name,
+                        SensorLinkData.OPTICAL_FRAME_POSE_STR : pose_SensorLink_OpticalFrame_str,
+                        SensorLinkData.OPTICAL_FRAME_NAME : gz_frame_name,
                     })
 
                 link_to_sensors[link_sensor_name] = {
@@ -155,7 +173,7 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
         if link_name is None:
             return ""
         for link in model_xml.findall('.//link'):
-            if link.get["name"] == link_name:
+            if link.get("name") == link_name:
                 return link.findtext('pose')
         return ""
         

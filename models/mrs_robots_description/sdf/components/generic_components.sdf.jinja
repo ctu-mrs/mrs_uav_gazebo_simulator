@@ -825,7 +825,7 @@ limitations under the License.
                                   frame_rate, horizontal_fov, image_width, image_height, 
                                   min_distance, max_distance, noise_mean, noise_stddev,  
                                   x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
-  <sensor name="{{ camera_name }}_camera" type="camera">
+  <sensor name="{{ camera_name }}/color" type="camera">
     <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
     <always_on>true</always_on>
     <visualize>true</visualize>
@@ -863,7 +863,7 @@ limitations under the License.
                                    frame_rate, horizontal_fov, image_width, image_height, 
                                    min_distance, max_distance, noise_mean, noise_stddev,  
                                    x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
-  <sensor name="{{ camera_name }}_camera" type="rgbd_camera">
+  <sensor name="{{ camera_name }}/camera" type="rgbd_camera">
     <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
     <always_on>true</always_on>
     <visualize>true</visualize>
@@ -898,7 +898,7 @@ limitations under the License.
                                    frame_rate, horizontal_fov, image_width, image_height, 
                                    min_distance, max_distance, noise_mean, noise_stddev,  
                                    x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
-  <sensor name="{{ camera_name }}_camera" type="depth_camera">
+  <sensor name="{{ camera_name }}/depth" type="depth_camera">
     <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
     <always_on>true</always_on>
     <visualize>true</visualize>
