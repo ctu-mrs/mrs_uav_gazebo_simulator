@@ -12,7 +12,7 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
-    {%- set camera_link_name = spawner_args['name'] + '/' + camera_name -%}
+    {%- set camera_link_name = camera_name -%}
     {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/camera_optical' -%}
 
     {# -- tf from link to sensor -- #}
@@ -116,7 +116,7 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
-    {%- set camera_link_name = spawner_args['name'] + '/' + camera_name -%}
+    {%- set camera_link_name = camera_name -%}
     {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/optical' -%}
 
     {# -- tf from link to sensor -- #}

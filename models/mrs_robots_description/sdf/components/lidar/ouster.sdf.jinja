@@ -10,10 +10,12 @@
 
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
-
+    
     {# model selection {--> #}
     {%- set sensor_name = 'ouster' -%}
     {%- set ouster_model = spawner_args[spawner_keyword]['model'] -%}
+    {%- set sensor_link_name = sensor_name -%}
+    {%- set sensor_gz_frame_id = spawner_args['name'] + '/' + sensor_name + '/sensor' -%}
 
     {# OS0 {--> #}
 
@@ -124,9 +126,9 @@
     {# <!--}--> #}
 
     <!-- Ouster {-->
-    <link name="{{sensor_name}}_frame">
+    <link name="{{ sensor_link_name }}">
 
-      <pose relative_to="{{parent_link}}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+      <pose relative_to="{{ parent_link }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       {{ generic.zero_inertial_macro() }}
 
       <!-- visuals {-->
@@ -162,7 +164,7 @@
       <!-- sensor + plugin {-->
       {{ generic.gazebo_threed_lidar_plugin_macro(
           lidar_name = sensor_name,
-          lidar_frame_name = spawner_args['name'] + '/' + sensor_name + '_frame',
+          lidar_gz_frame_id = sensor_gz_frame_id,
           lidar_topic_name = spawner_args['name'] + '/' + sensor_name,
           sensor_x = lidar_x, sensor_y = lidar_y, sensor_z = lidar_z, sensor_roll = lidar_roll, sensor_pitch =lidar_pitch, sensor_yaw =lidar_yaw,
           update_rate = spawner_args[spawner_keyword]['update_rate'],
@@ -186,7 +188,7 @@
 
     <joint name="{{ sensor_name }}_joint" type="fixed">
       <parent>{{ parent_link }}</parent>
-      <child>{{ sensor_name }}_frame</child>
+      <child>{{ sensor_link_name }}</child>
     </joint>
     <!--}-->
 

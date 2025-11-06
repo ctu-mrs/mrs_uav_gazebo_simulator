@@ -689,7 +689,7 @@ limitations under the License.
 {# gazebo_twod_lidar_plugin_macro {--> #}
 {# --- sensor is always defined with respect to the sensor_link frame #}
 {%- macro gazebo_twod_lidar_plugin_macro( 
-                      lidar_name, lidar_frame_name, lidar_topic_name,
+                      lidar_name, lidar_gz_frame_id, lidar_topic_name,
                       sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
                       update_rate, 
                       horiz_num_samples, horiz_resolution, horiz_min_angle, horiz_max_angle, 
@@ -697,11 +697,11 @@ limitations under the License.
                       noise_mean, noise_std
                       ) -%}
 
-  <sensor name="{{ lidar_name }}_sensor" type='gpu_lidar'>
+  <sensor name="{{ lidar_name }}/sensor" type='gpu_lidar'>
     <pose>{{ sensor_x }} {{ sensor_y }} {{ sensor_z }} {{ sensor_roll }} {{ sensor_pitch }} {{ sensor_yaw }}</pose>
     <topic>{{ lidar_topic_name }}/scan</topic>
     <update_rate>{{ update_rate }}</update_rate>
-    <gz_frame_id>{{ lidar_frame_name }}</gz_frame_id>
+    <gz_frame_id>{{ lidar_gz_frame_id }}</gz_frame_id>
     <ray>
         <scan>
             <horizontal>
@@ -738,7 +738,7 @@ limitations under the License.
 {# gazebo_threed_lidar_plugin_macro {--> #}
 {# --- sensor is always defined with respect to the sensor_link frame #}
 {%- macro gazebo_threed_lidar_plugin_macro( 
-                      lidar_name, lidar_frame_name, lidar_topic_name,
+                      lidar_name, lidar_gz_frame_id, lidar_topic_name,
                       sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
                       update_rate, 
                       horiz_num_samples, horiz_resolution, horiz_min_angle, horiz_max_angle, 
@@ -747,11 +747,11 @@ limitations under the License.
                       noise_mean, noise_std
                       ) -%}
 
-  <sensor name="{{ lidar_name }}_sensor" type='gpu_lidar'>
+  <sensor name="{{ lidar_name }}/sensor" type='gpu_lidar'>
     <pose>{{ sensor_x }} {{ sensor_y }} {{ sensor_z }} {{ sensor_roll }} {{ sensor_pitch }} {{ sensor_yaw }}</pose>
     <topic>{{ lidar_topic_name }}</topic>
     <update_rate>{{ update_rate }}</update_rate>
-    <gz_frame_id>{{ lidar_frame_name }}</gz_frame_id>
+    <gz_frame_id>{{ lidar_gz_frame_id }}</gz_frame_id>
     <ray>
         <scan>
             <horizontal>

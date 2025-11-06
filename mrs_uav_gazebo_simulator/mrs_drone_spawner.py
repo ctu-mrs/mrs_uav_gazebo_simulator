@@ -226,6 +226,7 @@ class MrsDroneSpawner(Node):
 
         # SdfToTf Publisher
         self.sdf_to_tf_publisher = SdfTfPublisherSingleton(self, self.tf_base_frame, self.tf_ignored_sensor_frames)
+        self.sdf_files = []
 
         self.is_initialized = True
         self.get_logger().info('Initialized')
@@ -330,8 +331,8 @@ class MrsDroneSpawner(Node):
             self.get_logger().error('Template did not render, spawn failed.')
             return
 
-        self.sdf_to_tf_publisher.generate_tf_publishers(sdf_content)
-
+        self.sdf_to_tf_publisher.generate_sensor_tfs(sdf_content)
+        
         filename = f'mrs_drone_spawner_{name}.sdf'
         filepath = os.path.join(self.tempfile_folder, filename)
 
@@ -507,6 +508,7 @@ class MrsDroneSpawner(Node):
             for i, ID in enumerate(params_dict['ids']):
                 robot_params = self.get_jinja_params_for_one_robot(params_dict, i, ID)
                 self.vehicle_queue.append(robot_params)
+                self.sdf_files.append(robot_params)
 
         response.success = True
         response.message = f'Launch sequence queued for {len(params_dict["ids"])} robots'
@@ -530,6 +532,8 @@ class MrsDroneSpawner(Node):
             robot_params = self.vehicle_queue.pop(0)
 
         self.spawn_gazebo_model(robot_params)
+        if len(self.vehicle_queue) == 0:
+            self.sdf_to_tf_publisher.publish_sensor_tfs()
 
     # #}
 

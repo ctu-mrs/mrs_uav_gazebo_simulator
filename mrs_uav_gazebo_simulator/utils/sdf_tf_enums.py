@@ -10,3 +10,8 @@ class SensorLinkData(StrEnum):
 class LinkToSensorData(StrEnum):
     LINK_POSE_STR = "link_pose_str"
     SENSORS = "sensors"
+
+class TfData(StrEnum):
+    CHILD_FRAME = "child_frame"
+    PARENT_FRAME = "parent_frame"
+    TF_MATRIX = "tf_matrix"
