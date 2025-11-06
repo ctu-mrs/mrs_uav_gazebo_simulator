@@ -35,14 +35,14 @@ The resulting camera-related topics will look like as follows:
 
 ### 2D lidars
 The resulting 2D lidar-related topics will look like as follows:
-- /namespace/sensor_name/scan
+- `/namespace/sensor_name/scan`
 
 There is one more related topic on the Gazebo server that converts `/scan` into a point cloud representation, but it is not being bridged to ROS:
-- /namespace/sensor_name/scan/points
+- `/namespace/sensor_name/scan/points`
 
 ### 3D lidars
 The resulting 2D lidar-related topics will look like as follows:
-- /namespace/sensor_name/points
+- `/namespace/sensor_name/points`
 
 There is one more related topic on the Gazebo server that converts `/points` into a 2D lidar scan representation, but it is not being bridged to ROS:
-- /namespace/sensor_name
+- `/namespace/sensor_name`
