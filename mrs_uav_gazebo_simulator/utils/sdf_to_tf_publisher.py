@@ -26,6 +26,7 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
         self._ros_node = ros_node
         self._camera_types = ["camera", "rgbd_camera", "depth_camera"]
         self._transformations = []
+        self._broadcaster = StaticTransformBroadcaster(self._ros_node)
     
     def generate_sensor_tfs(self, sdf_xml):
         root_xml = ET.fromstring(sdf_xml)
@@ -188,7 +189,6 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
         self._generate_static_tf_broadcasters(self._transformations)
   
     def _generate_static_tf_broadcasters(self, transformations):
-        broadcaster = StaticTransformBroadcaster(self._ros_node)
         time_now = self._ros_node.get_clock().now().to_msg()
 
         tf_transforms = []
@@ -204,7 +204,7 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
             t.transform = self._matrix_to_tf_pose(T_matrix)
             tf_transforms.append(t)
 
-        broadcaster.sendTransform(tf_transforms)
+        self._broadcaster.sendTransform(tf_transforms)
         self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Published {len(tf_transforms)} static transforms.")
 
     def _matrix_to_tf_pose(self, T_W_Sensor: np.ndarray) -> Transform:
