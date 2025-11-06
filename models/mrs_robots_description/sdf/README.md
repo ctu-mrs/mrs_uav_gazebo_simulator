@@ -5,7 +5,7 @@ Due to different frame conventions, an additional optical frame is required. You
 {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/color_optical' -%}
 ```
 
-The resulting camera-related topics will look like as follows:
+The resulting camera-related ROS topics will look like as follows:
 - `/namespace/camera_name/image`
 - `/namespace/camera_name/camera_info`
 
@@ -15,7 +15,7 @@ Due to different frame conventions, an additional optical frame is required. You
 {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/depth_optical' -%}
 ```
 
-The resulting camera-related topics will look like as follows:
+The resulting camera-related ROS topics will look like as follows:
 - `/namespace/camera_name/camera_info`
 - `/namespace/camera_name/depth_image`
 - `/namespace/camera_name/depth_image/points`
@@ -27,21 +27,21 @@ Due to different frame conventions, an additional optical frame is required. How
 {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/camera_optical' -%}
 ```
 
-The resulting camera-related topics will look like as follows:
+The resulting camera-related ROS topics will look like as follows:
 - `/namespace/camera_name/camera_info`
 - `/namespace/camera_name/image`
 - `/namespace/camera_name/depth_image`
 - `/namespace/camera_name/points`
 
 ### 2D lidars
-The resulting 2D lidar-related topics will look like as follows:
+The resulting 2D lidar-related ROS topics will look like as follows:
 - `/namespace/sensor_name/scan`
 
 There is one more related topic on the Gazebo server that converts `/scan` into a point cloud representation, but it is not being bridged to ROS:
 - `/namespace/sensor_name/scan/points`
 
 ### 3D lidars
-The resulting 2D lidar-related topics will look like as follows:
+The resulting 2D lidar-related ROS topics will look like as follows:
 - `/namespace/sensor_name/points`
 
 There is one more related topic on the Gazebo server that converts `/points` into a 2D lidar scan representation, but it is not being bridged to ROS:
