@@ -1,17 +1,27 @@
 # Frame and Topic Naming Conventions
+
+## Table of Contents  
+- [Optical Frame for Cameras](#optical-frame-for-cameras)  
+- [Naming Rules](#naming-rules)  
+  - [RGB Camera](#rgb-camera)
+  - [Depth Camera](#depth-camera)
+  - [RGB-D Camera](#rgbd-camera)
+  - [2D Lidar](#2d-lidar)
+  - [3D Lidar](#3d-lidar)
+  - [Debugging](#debugging)
+
 ## Optical Frame for Cameras
-Due to different frame conventions, an additional optical frame is required. The camera <sensor> plugin uses the optical frame specified in the message header, even though the plugin is defined under a different link. You may change its name, since the TF publisher will read it from the SDF file. For example, I recommend checking the [bluefox_camera_macro](./components/camera/bluefox.sdf.jinja).
+Due to different frame conventions, an additional optical frame is required. The camera <sensor> plugin uses the optical frame specified in the message header, even though the plugin is defined under a different link. You may change its name, since the TF publisher will read it from the SDF file.
 ```
-{%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/color_optical' -%}
+{%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '_optical' -%}
 ```
 
-## Rules regarding Names
+## Naming Rules
 To reduce the Sim2Real gap, we provide topic arguments that are passed into a dynamically generated SDF file. These arguments are inserted as custom SDF tags, which are ignored by Gazebo but read by `mrs_drone_spawner` to generate the ros_gz_bridge config file. While this allows us to customize topic names so that they match those used by real-world sensors, there are certain constraints.
 
-For bridging images from Gazebo to ROS, we use `ros_gz_image`. This bridge imposes a constraint that the image topic names in Gazebo and ROS must be the same.
 
 ### RGB Camera
-For RGB cameras the sensor plugin topic is passed as `camera_sdf_topic`:
+For bridging images from Gazebo to ROS, we use `ros_gz_image`. This bridge imposes a constraint that the image topic names in Gazebo and ROS must be the same. For RGB cameras the sensor plugin topic is passed as `camera_sdf_topic`:
 ```
 {%- set root_sdf_topic = spawner_args['name'] + '/' + camera_name -%}     {# -- Can be modified -- #}
 {%- set camera_sdf_topic = root_sdf_topic + '/image_raw' -%}              {# -- Can be modified -- #}
@@ -26,8 +36,7 @@ This topic name cannot be changed, as it is fixed by the plugin. However, the co
 ```
 {%- set ros_camera_info_topic = spawner_args['name'] + '/' + camera_name + '/camera_info' -%}
 ```
-
-With the `spawner_args['name']='/uav'` and `camera_name='bluefox'`, the bridge looks as follows:
+For a working example, we recommend checking the [bluefox_camera_macro](./components/camera/bluefox.sdf.jinja). With the `spawner_args['name']='/uav'` and `camera_name='bluefox'`, the topics look as follows:
 <table>
   <thead>
     <tr>
@@ -57,6 +66,62 @@ With the `spawner_args['name']='/uav'` and `camera_name='bluefox'`, the bridge l
   </tbody>
 </table>
 
+
+### Depth Camera
+For bridging images from Gazebo to ROS, we use `ros_gz_image`. This bridge imposes the constraint that the image topic names in Gazebo and ROS must be identical. For RGB cameras, the sensor plugin topic is passed as `camera_sdf_topic`:
+```
+{%- set root_sdf_topic = spawner_args['name'] + '/' + camera_name -%}           {# -- Can be modified -- #}
+{%- set camera_sdf_topic = root_sdf_topic + '/image_raw' -%}                    {# -- Can be modified -- #}
+{%- set gz_depth_image_topic = camera_sdf_topic -%}                             {# -- Do not modify -- #}
+{%- set ros_depth_image_topic = camera_sdf_topic -%}                            {# -- Do not modify -- #}
+```
+The depth camera plugin also publishes a point cloud message based on the depth image, but it always uses a fixed topic name:
+```
+{%- set gz_pointcloud_topic = camera_sdf_topic + '/points' -%}          {# -- Do not modify -- #}
+```
+However, since the point cloud and camera info are bridged using the standard `ros_gz_bridge`, the corresponding ROS topic names can be chosen freely:
+```
+{%- set ros_camera_info_topic = spawner_args['name'] + '/' + camera_name + '/camera_info' -%}                 
+{%- set ros_pointcloud_topic = spawner_args['name'] + '/' + camera_name + '/points' -%}    
+```
+For a working example, we recommend checking the [realsense_depth_macro](./components/camera/realsense.sdf.jinja). The table below shows the Gazebo and ROS topics for Realsense depth-only camera:
+<table>
+  <thead>
+    <tr>
+      <th colspan="2" style="border: 1px solid; text-align:center;">Gazebo topics</th>
+      <th colspan="2" style="border: 1px solid; text-align:center;">ROS topics</th>
+    </tr>
+    <tr>
+      <th style="border: 1px solid; text-align:center;">Topic name</th>
+      <th style="border: 1px solid; text-align:center;">Msg type</th>
+      <th style="border: 1px solid; text-align:center;">Topic name</th>
+      <th style="border: 1px solid; text-align:center;">Msg type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid;">/uav1/realsense/camera_info</td>
+      <td style="border: 1px solid;">gz.msgs.CameraInfo</td>
+      <td style="border: 1px solid;">/uav1/realsense/camera_info</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/CameraInfo</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid;">/uav1/realsense/image_raw</td>
+      <td style="border: 1px solid;">gz.msgs.Image</td>
+      <td style="border: 1px solid;">/uav1/realsense/image_raw</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/Image</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid;">/uav1/realsense/image_raw/points</td>
+      <td style="border: 1px solid;">gz.msgs.PointCloudPacked</td>
+      <td style="border: 1px solid;">/uav1/realsense/image_raw/points</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/PointCloud2</td>
+    </tr>
+  </tbody>
+</table>
+
+
+
 ### Debugging
 The most common issue is that `ros_gz_bridge` connects to the wrong topics. The quickest way to diagnose this is to inspect the Gazebo topic information:
 ```bash
@@ -65,6 +130,18 @@ gz topic -i -t topic_name
 - if there is `no publisher` the topic is not being published from Gazebo
 - if there is `no subscriber` the topic is not being subscribed by `ros_gz_bridge`
 Both issues are most likely caused by incorrect topic names. Verify that the topic names in your sensor’s SDF file do not violate the rules described above, and check the autogenerated `ros_gz_bridge` config file located in the `/tmp` directory.
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
