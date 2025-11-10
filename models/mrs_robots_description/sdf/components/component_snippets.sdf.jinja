@@ -233,3 +233,6 @@ limitations under the License.
   {{ realsense_camera.realsense_top_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
+{%- macro realsense_depth_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ realsense_camera.realsense_depth_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}

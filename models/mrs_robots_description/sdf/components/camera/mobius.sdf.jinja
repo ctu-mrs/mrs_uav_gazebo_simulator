@@ -43,7 +43,9 @@
       {{ generic.gazebo_rgb_camera_macro(
         camera_name = camera_name,
         camera_gz_frame_id = camera_gz_frame_id,
-        camera_topic_name = spawner_args['name'] + '/' + camera_name,
+        camera_topic_name = spawner_args['name'] + '/' + camera_name + '/color/image_raw',
+        ros_camera_info_topic = spawner_args['name'] + '/' + camera_name + '/color/camera_info',
+        ros_color_image_topic = spawner_args['name'] + '/' + camera_name + '/color/image_raw',
         frame_rate = spawner_args[spawner_keyword]['update_rate'],
         horizontal_fov = 2.28638,
         image_width = 1280,

@@ -1,6 +1,6 @@
-{%- for topic in camera_info_topic_list -%}
-- ros_topic_name: "{{ topic }}"
-  gz_topic_name: "{{ topic }}"
+{%- for topics in camera_info_topic_list -%}
+- ros_topic_name: "{{ topics["ros"] }}"
+  gz_topic_name: "{{ topics["gazebo"] }}"
   ros_type_name: "sensor_msgs/msg/CameraInfo"
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
@@ -15,8 +15,8 @@
 {% endfor %}
 
 {%- for topic in point_cloud_topic_list -%}
-- ros_topic_name: "{{ topic }}"
-  gz_topic_name: "{{ topic }}"
+- ros_topic_name: "{{ topic["ros"] }}"
+  gz_topic_name: "{{ topic["gazebo"] }}"
   ros_type_name: "sensor_msgs/msg/PointCloud2"
   gz_type_name: "gz.msgs.PointCloudPacked"
   direction: GZ_TO_ROS
