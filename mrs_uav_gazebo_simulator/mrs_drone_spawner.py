@@ -104,9 +104,7 @@ def exit_handler():
     print('[INFO] [MrsDroneSpawner]: Exit requested')
 
     if len(glob_running_processes) > 0:
-        print(
-            f'[INFO] [MrsDroneSpawner]: Shutting down {len(glob_running_processes)} subprocesses'
-        )
+        print(f'[INFO] [MrsDroneSpawner]: Shutting down {len(glob_running_processes)} subprocesses')
 
         num_zombies = 0
         for p in glob_running_processes:
@@ -114,13 +112,9 @@ def exit_handler():
                 if p.is_alive():
                     p.terminate()
                     p.join()
-                    print(
-                        f'[INFO] [MrsDroneSpawner]: Process {p.pid} terminated'
-                    )
+                    print(f'[INFO] [MrsDroneSpawner]: Process {p.pid} terminated')
                 else:
-                    print(
-                        f'[INFO] [MrsDroneSpawner]: Process {p.pid} finished cleanly'
-                    )
+                    print(f'[INFO] [MrsDroneSpawner]: Process {p.pid} finished cleanly')
             except:
                 num_zombies += 1
 
@@ -159,31 +153,23 @@ class MrsDroneSpawner(Node):
         self.declare_parameter('extra_resource_paths', [""])
 
         self.declare_parameter('tf_static_publisher.base_frame', "fcu")
-        self.declare_parameter('tf_static_publisher.ignored_sensor_frames', [
-            "air_pressure_sensor", "magnetometer_sensor", "navsat_sensor",
-            "imu_sensor"
-        ])
+        self.declare_parameter(
+            'tf_static_publisher.ignored_sensor_frames',
+            ["air_pressure_sensor", "magnetometer_sensor", "navsat_sensor", "imu_sensor"])
 
         # Get all parameters
         try:
-            self.vehicle_base_port = self.get_parameter(
-                'mavlink_config.vehicle_base_port').value
-            self.stream_for_qgc = int(
-                self.get_parameter('mavlink_config.stream_for_qgc').value)
+            self.vehicle_base_port = self.get_parameter('mavlink_config.vehicle_base_port').value
+            self.stream_for_qgc = int(self.get_parameter('mavlink_config.stream_for_qgc').value)
 
-            self.default_robot_name = self.get_parameter(
-                'gazebo_models.default_robot_name').value
-            self.model_spacing = self.get_parameter(
-                'gazebo_models.spacing').value
+            self.default_robot_name = self.get_parameter('gazebo_models.default_robot_name').value
+            self.model_spacing = self.get_parameter('gazebo_models.spacing').value
 
-            self.template_suffix = self.get_parameter(
-                'jinja_templates.suffix').value
+            self.template_suffix = self.get_parameter('jinja_templates.suffix').value
 
-            self.firmware_launch_delay = float(
-                self.get_parameter('firmware_launch_delay').value)
+            self.firmware_launch_delay = float(self.get_parameter('firmware_launch_delay').value)
 
-            self.tf_base_frame = self.get_parameter(
-                'tf_static_publisher.base_frame').value
+            self.tf_base_frame = self.get_parameter('tf_static_publisher.base_frame').value
             self.tf_ignored_sensor_frames = self.get_parameter(
                 'tf_static_publisher.ignored_sensor_frames').value
 
@@ -193,14 +179,11 @@ class MrsDroneSpawner(Node):
 
         # Configure resources and Jinja environment
         resource_paths = [
-            os.path.join(
-                get_package_share_directory('mrs_uav_gazebo_simulator'),
-                'models')
+            os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')
         ]
 
         try:
-            extra_resource_paths = self.get_parameter(
-                'extra_resource_paths').value
+            extra_resource_paths = self.get_parameter('extra_resource_paths').value
         except:
             # no extra resources
             extra_resource_paths = []
@@ -208,8 +191,7 @@ class MrsDroneSpawner(Node):
 
         if extra_resource_paths is not None:
             for elem in extra_resource_paths:
-                rpath = get_package_share_directory(
-                    elem) if not os.path.exists(elem) else elem
+                rpath = get_package_share_directory(elem) if not os.path.exists(elem) else elem
                 self.get_logger().info(f'Adding extra resources from {rpath}')
                 resource_paths.append(rpath)
 
@@ -217,33 +199,26 @@ class MrsDroneSpawner(Node):
 
         time_str = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         tempfile_folder = f'mrs_gazebo_simulator_{time_str}'
-        self.tempfile_folder = os.path.join(tempfile.gettempdir(),
-                                            tempfile_folder)
+        self.tempfile_folder = os.path.join(tempfile.gettempdir(), tempfile_folder)
 
         try:
             os.makedirs(self.tempfile_folder, exist_ok=False)
         except Exception as e:
-            raise RuntimeError(
-                f"Error creating directory {self.tempfile_folder}: {e}")
+            raise RuntimeError(f"Error creating directory {self.tempfile_folder}: {e}")
 
         # Find launch files
-        gazebo_simulator_path = get_package_share_directory(
-            'mrs_uav_gazebo_simulator')
-        self.uav_ros_gz_bridge_launch_path = os.path.join(
-            gazebo_simulator_path, 'launch', 'uav_ros_gz_bridge.launch.py')
-        self.uav_ros_gz_bridge_config_path = os.path.join(
-            gazebo_simulator_path, 'config')
+        gazebo_simulator_path = get_package_share_directory('mrs_uav_gazebo_simulator')
+        self.uav_ros_gz_bridge_launch_path = os.path.join(gazebo_simulator_path, 'launch',
+                                                          'uav_ros_gz_bridge.launch.py')
+        self.uav_ros_gz_bridge_config_path = os.path.join(gazebo_simulator_path, 'config')
         self.uav_ros_gz_bridge_config_template_name = 'uav_ros_gz_bridge_config.yaml.jinja'
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
-        self.mavros_launch_path = os.path.join(px4_api_path, 'launch',
-                                               'mavros.launch')
+        self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
         self.mavros_px4_config_path = os.path.join(px4_api_path, 'config')
         self.mavros_px4_config_template_name = 'mavros_px4_config.jinja.yaml'
-        self.px4_fimrware_launch_path = os.path.join(
-            gazebo_simulator_path, 'launch',
-            'run_simulation_firmware.launch.py')
-        self.mavros_plugin_list = os.path.join(self.mavros_px4_config_path,
-                                               'mavros_plugins.yaml')
+        self.px4_fimrware_launch_path = os.path.join(gazebo_simulator_path, 'launch',
+                                                     'run_simulation_firmware.launch.py')
+        self.mavros_plugin_list = os.path.join(self.mavros_px4_config_path, 'mavros_plugins.yaml')
 
         try:
             self.jinja_templates = self.build_template_database()
@@ -254,18 +229,13 @@ class MrsDroneSpawner(Node):
         self.get_logger().info('Jinja templates loaded.')
 
         # Setup ROS 2 communications
-        self.spawn_server = self.create_service(StringSrv, 'spawn',
-                                                self.callback_spawn)
-        self.diagnostics_pub = self.create_publisher(GazeboSpawnerDiagnostics,
-                                                     'diagnostics', 1)
-        self.diagnostics_timer = self.create_timer(
-            0.1, self.callback_diagnostics_timer)
+        self.spawn_server = self.create_service(StringSrv, 'spawn', self.callback_spawn)
+        self.diagnostics_pub = self.create_publisher(GazeboSpawnerDiagnostics, 'diagnostics', 1)
+        self.diagnostics_timer = self.create_timer(0.1, self.callback_diagnostics_timer)
         self.action_timer = self.create_timer(0.1, self.callback_action_timer)
 
-        self.gazebo_spawn_proxy = self.create_client(SpawnEntity,
-                                                     'create_entity')
-        self.gazebo_delete_proxy = self.create_client(DeleteEntity,
-                                                      'delete_entity')
+        self.gazebo_spawn_proxy = self.create_client(SpawnEntity, 'create_entity')
+        self.gazebo_delete_proxy = self.create_client(DeleteEntity, 'delete_entity')
 
         # Setup system variables
         self.spawn_called = False
@@ -279,8 +249,8 @@ class MrsDroneSpawner(Node):
         self.gazebo_spawn_request_start_time = None
 
         # SdfToTf Publisher
-        self.sdf_to_tf_publisher = SdfTfPublisherSingleton(
-            self, self.tf_base_frame, self.tf_ignored_sensor_frames)
+        self.sdf_to_tf_publisher = SdfTfPublisherSingleton(self, self.tf_base_frame,
+                                                           self.tf_ignored_sensor_frames)
         self.sdf_files = []
 
         self.is_initialized = True
@@ -290,8 +260,7 @@ class MrsDroneSpawner(Node):
     def launch_px4_firmware(self, robot_params):
         if self.firmware_launch_delay > 0:
             self.get_logger().info(
-                f'Waiting for {self.firmware_launch_delay} s before launching firmware'
-            )
+                f'Waiting for {self.firmware_launch_delay} s before launching firmware')
             time.sleep(self.firmware_launch_delay)
 
         name = robot_params['name']
@@ -304,8 +273,7 @@ class MrsDroneSpawner(Node):
 
         if not os.path.exists(romfs_path) or not os.path.isdir(romfs_path):
             self.get_logger().error(
-                f'Could not start PX4 firmware for {name}. ROMFS folder not found'
-            )
+                f'Could not start PX4 firmware for {name}. ROMFS folder not found')
             raise CouldNotLaunch('ROMFS folder not found')
 
         launch_arguments = {
@@ -316,8 +284,7 @@ class MrsDroneSpawner(Node):
         }
 
         ld = LaunchDescription([
-            IncludeLaunchDescription(PythonLaunchDescriptionSource(
-                self.px4_fimrware_launch_path),
+            IncludeLaunchDescription(PythonLaunchDescriptionSource(self.px4_fimrware_launch_path),
                                      launch_arguments=launch_arguments.items())
         ])
 
@@ -329,16 +296,14 @@ class MrsDroneSpawner(Node):
             firmware_process.start()
         except Exception as e:
             self.get_logger().error(
-                f'Could not start PX4 firmware for {name}. Node failed to launch: {e}'
-            )
+                f'Could not start PX4 firmware for {name}. Node failed to launch: {e}')
             raise CouldNotLaunch('PX4 failed to launch')
 
         self.get_logger().info(f'PX4 firmware for {name} launched')
         if self.stream_for_qgc:
             qgc_port = robot_params['mavlink_config']['udp_qgc_port_remote']
             self.get_logger().info(
-                f'QGC connection for {name} created at localhost UDP port {qgc_port}'
-            )
+                f'QGC connection for {name} created at localhost UDP port {qgc_port}')
         return firmware_process
 
     # #}
@@ -379,8 +344,7 @@ class MrsDroneSpawner(Node):
             mavros_process.start()
         except Exception as e:
             self.get_logger().error(
-                f'Could not start mavros for {name}. Node failed to launch: {e}'
-            )
+                f'Could not start mavros for {name}. Node failed to launch: {e}')
             raise CouldNotLaunch('Mavros failed to launch')
 
         self.get_logger().info(f'Mavros for {name} launched')
@@ -410,12 +374,9 @@ class MrsDroneSpawner(Node):
         request = SpawnEntity.Request()
         request.entity_factory.name = name
         request.entity_factory.sdf = sdf_content
-        request.entity_factory.pose.position.x = robot_params['spawn_pose'][
-            'x']
-        request.entity_factory.pose.position.y = robot_params['spawn_pose'][
-            'y']
-        request.entity_factory.pose.position.z = robot_params['spawn_pose'][
-            'z']
+        request.entity_factory.pose.position.x = robot_params['spawn_pose']['x']
+        request.entity_factory.pose.position.y = robot_params['spawn_pose']['y']
+        request.entity_factory.pose.position.z = robot_params['spawn_pose']['z']
 
         q_w = math.cos(robot_params['spawn_pose']['heading'] / 2.0)
         q_z = math.sin(robot_params['spawn_pose']['heading'] / 2.0)
@@ -426,31 +387,24 @@ class MrsDroneSpawner(Node):
         self.gazebo_spawn_future = self.gazebo_spawn_proxy.call_async(request)
 
         self.gazebo_spawn_future.add_done_callback(
-            lambda future: self.service_response_callback_spawn_gazebo_model(
-                future, robot_params))
+            lambda future: self.service_response_callback_spawn_gazebo_model(future, robot_params))
 
     # #}
 
     # #{ launch_uav_ros_gz_bridge(self, robot_params)
-    def launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config,
-                                 sensor_topics):
+    def launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics):
         self.get_logger().info(f'Launching ros_gz_bridge for {uav_name}')
 
         launch_arguments = {
-            'namespace':
-            uav_name,
-            'ros_gz_bridge_config':
-            str(ros_gz_bridge_config),
-            'ros_gz_image_topics':
-            ' '.join(sensor_topics[SensorTopicsGzBridge.IMAGE]),
-            'bridge_debug':
-            'false',
+            'namespace': uav_name,
+            'ros_gz_bridge_config': str(ros_gz_bridge_config),
+            'ros_gz_image_topics': ' '.join(sensor_topics[RosGzBridgeCategory.IMAGE]),
+            'bridge_debug': 'false',
         }
 
         ld = LaunchDescription([
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    self.uav_ros_gz_bridge_launch_path),
+                PythonLaunchDescriptionSource(self.uav_ros_gz_bridge_launch_path),
                 launch_arguments=launch_arguments.items(),
             )
         ])
@@ -458,15 +412,13 @@ class MrsDroneSpawner(Node):
         self.get_logger().info(f'launch_arguments: {launch_arguments}')
         launch_service = LaunchService(debug=False)
         launch_service.include_launch_description(ld)
-        ros_gz_bridge_process = multiprocessing.Process(
-            target=launch_service.run)
+        ros_gz_bridge_process = multiprocessing.Process(target=launch_service.run)
 
         try:
             ros_gz_bridge_process.start()
         except Exception as e:
             self.get_logger().error(
-                f'Could not start ros_gz_bridge for {uav_name}. Node failed to launch: {e}'
-            )
+                f'Could not start ros_gz_bridge for {uav_name}. Node failed to launch: {e}')
             raise CouldNotLaunch('ros_gz_bridge failed to launch')
 
         self.get_logger().info(f'ros_gz_bridge for {uav_name} launched')
@@ -475,8 +427,7 @@ class MrsDroneSpawner(Node):
     # #}
 
     # #{ service_response_callback_spawn_gazebo_model(self, future, robot_params)
-    def service_response_callback_spawn_gazebo_model(self, future,
-                                                     robot_params):
+    def service_response_callback_spawn_gazebo_model(self, future, robot_params):
         # This function is called automatically when the service response arrives.
         try:
             response = future.result()
@@ -487,21 +438,18 @@ class MrsDroneSpawner(Node):
             firmware_process = None
             mavros_process = None
 
-            ros_gz_bridge_config, sensor_topics = self.generate_uav_ros_gz_config(
-                robot_params)
+            ros_gz_bridge_config, sensor_topics = self.generate_uav_ros_gz_config(robot_params)
 
             try:
                 if ros_gz_bridge_config != "":
                     ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(
-                        robot_params['name'], ros_gz_bridge_config,
-                        sensor_topics)
+                        robot_params['name'], ros_gz_bridge_config, sensor_topics)
                 mavros_process = self.launch_mavros(robot_params)
                 firmware_process = self.launch_px4_firmware(robot_params)
 
             except Exception as e:
                 self.get_logger().error(
-                    f'Failed during spawn sequence for {robot_params["name"]}: {e}'
-                )
+                    f'Failed during spawn sequence for {robot_params["name"]}: {e}')
                 self.delete_gazebo_model(robot_params['name'])
                 if firmware_process and firmware_process.is_alive():
                     firmware_process.terminate()
@@ -518,8 +466,7 @@ class MrsDroneSpawner(Node):
             if ros_gz_bridge_process is not None:
                 glob_running_processes.append(ros_gz_bridge_process)
 
-            self.get_logger().info(
-                f'Vehicle {robot_params["name"]} successfully spawned')
+            self.get_logger().info(f'Vehicle {robot_params["name"]} successfully spawned')
             self.active_vehicles.append(robot_params['name'])
             self.gazebo_spawn_future = None
 
@@ -539,11 +486,9 @@ class MrsDroneSpawner(Node):
         request = DeleteEntity.Request()
         request.entity.name = name
 
-        self.gazebo_delete_future = self.gazebo_delete_proxy.call_async(
-            request)
+        self.gazebo_delete_future = self.gazebo_delete_proxy.call_async(request)
         self.gazebo_delete_future.add_done_callback(
-            lambda future: self.service_response_callback_delete_gazebo_model(
-                future, name))
+            lambda future: self.service_response_callback_delete_gazebo_model(future, name))
 
     # #}
 
@@ -556,14 +501,12 @@ class MrsDroneSpawner(Node):
                 self.get_logger().info(f'Model {name} deleted successfully.')
             else:
                 self.get_logger().error(
-                    f'Failed to delete model {name}. Error: {future.exception()}'
-                )
+                    f'Failed to delete model {name}. Error: {future.exception()}')
 
             self.gazebo_delete_future = None
 
         except Exception as e:
-            self.get_logger().error(
-                f'Failed to delete model {name}. Error: {e}')
+            self.get_logger().error(f'Failed to delete model {name}. Error: {e}')
             self.gazebo_spawn_future = None
 
     # #}
@@ -572,8 +515,7 @@ class MrsDroneSpawner(Node):
     def callback_spawn(self, request, response):
         if not self.gazebo_spawn_proxy.wait_for_service(timeout_sec=5.0):
             service_name = self.gazebo_spawn_proxy.service_name
-            self.get_logger().error(
-                f'Gazebo spawn service "{service_name}" not available.')
+            self.get_logger().error(f'Gazebo spawn service "{service_name}" not available.')
             response.success = False
             response.message = f'Gazebo spawn service "{service_name}" not available.'
             return response
@@ -605,8 +547,7 @@ class MrsDroneSpawner(Node):
         self.processing = True
         with self.queue_mutex:
             for i, ID in enumerate(params_dict['ids']):
-                robot_params = self.get_jinja_params_for_one_robot(
-                    params_dict, i, ID)
+                robot_params = self.get_jinja_params_for_one_robot(params_dict, i, ID)
                 self.vehicle_queue.append(robot_params)
                 self.sdf_files.append(robot_params)
 
@@ -626,8 +567,7 @@ class MrsDroneSpawner(Node):
                 self.gazebo_spawn_future = None  # Reset state to allow a new request
             else:
                 self.get_logger().warn(
-                    'Previous gazebo_spawn service call is pending. Skipping this cycle.'
-                )
+                    'Previous gazebo_spawn service call is pending. Skipping this cycle.')
             return
         with self.queue_mutex:
             if not self.vehicle_queue:
@@ -649,9 +589,7 @@ class MrsDroneSpawner(Node):
         diagnostics.processing = self.processing
         diagnostics.active_vehicles = self.active_vehicles
         self.queue_mutex.acquire()
-        diagnostics.queued_vehicles = [
-            params['name'] for params in self.vehicle_queue
-        ]
+        diagnostics.queued_vehicles = [params['name'] for params in self.vehicle_queue]
         diagnostics.queued_processes = len(self.vehicle_queue)
         self.queue_mutex.release()
         self.diagnostics_pub.publish(diagnostics)
@@ -683,8 +621,7 @@ class MrsDroneSpawner(Node):
 
         if package_share_path is None or package_name is None:
             self.get_logger().error(
-                f'Package name or share path could not be determined from filepath "{filepath}"'
-            )
+                f'Package name or share path could not be determined from filepath "{filepath}"')
             return None
 
         share_path_from_ament_index = get_package_share_directory(package_name)
@@ -707,16 +644,12 @@ class MrsDroneSpawner(Node):
         :returns a list of tuples, consisting of (str_name, jinja2.Template)
         '''
         template_names = self.jinja_env.list_templates(
-            filter_func=lambda template_name: filter_templates(
-                template_name, self.template_suffix))
+            filter_func=lambda template_name: filter_templates(template_name, self.template_suffix))
         templates = []
         for i, full_name in enumerate(template_names):
-            self.get_logger().info(
-                f'\t({i+1}/{len(template_names)}): {full_name}')
-            template_name = full_name.split(
-                os.path.sep)[-1][:-(len(self.template_suffix))]
-            templates.append(
-                (template_name, self.jinja_env.get_template(full_name)))
+            self.get_logger().info(f'\t({i+1}/{len(template_names)}): {full_name}')
+            template_name = full_name.split(os.path.sep)[-1][:-(len(self.template_suffix))]
+            templates.append((template_name, self.jinja_env.get_template(full_name)))
         return templates
 
     # #}
@@ -729,8 +662,7 @@ class MrsDroneSpawner(Node):
             preprocessed_template = template_source.replace('\n', '')
             parsed_template = self.jinja_env.parse(preprocessed_template)
             import_names = [
-                node.template.value
-                for node in parsed_template.find_all(jinja2.nodes.Import)
+                node.template.value for node in parsed_template.find_all(jinja2.nodes.Import)
             ]
             imported_templates = []
             for i in import_names:
@@ -751,9 +683,7 @@ class MrsDroneSpawner(Node):
             template_source = f.read()
             preprocessed_template = template_source.replace('\n', '')
             parsed_template = self.jinja_env.parse(preprocessed_template)
-            macro_nodes = [
-                node for node in parsed_template.find_all(jinja2.nodes.Macro)
-            ]
+            macro_nodes = [node for node in parsed_template.find_all(jinja2.nodes.Macro)]
             spawner_components = {}
             for node in macro_nodes:
                 spawner_keyword = None
@@ -761,12 +691,12 @@ class MrsDroneSpawner(Node):
                 spawner_default_args = None
                 for elem in node.body:
                     if isinstance(
-                            elem, jinja2.nodes.Assign
-                    ) and elem.target.name == 'spawner_description':
+                            elem,
+                            jinja2.nodes.Assign) and elem.target.name == 'spawner_description':
                         spawner_description = elem.node.value
                     if isinstance(
-                            elem, jinja2.nodes.Assign
-                    ) and elem.target.name == 'spawner_default_args':
+                            elem,
+                            jinja2.nodes.Assign) and elem.target.name == 'spawner_default_args':
                         if isinstance(elem.node, jinja2.nodes.Const):
                             spawner_default_args = elem.node.value
                         elif isinstance(elem.node, jinja2.nodes.List):
@@ -776,19 +706,18 @@ class MrsDroneSpawner(Node):
                         elif isinstance(elem.node, jinja2.nodes.Dict):
                             spawner_default_args = {}
                             for pair in elem.node.items:
-                                spawner_default_args[
-                                    pair.key.value] = pair.value.value
+                                spawner_default_args[pair.key.value] = pair.value.value
                         else:
                             self.get_logger().warn(
                                 f'Unsupported param type "{type(elem.node)}" in template {template.filename}'
                             )
-                    if isinstance(elem, jinja2.nodes.Assign
-                                  ) and elem.target.name == 'spawner_keyword':
+                    if isinstance(elem,
+                                  jinja2.nodes.Assign) and elem.target.name == 'spawner_keyword':
                         spawner_keyword = elem.node.value
                 if spawner_keyword is not None:
-                    spawner_components[node.name] = ComponentWrapper(
-                        spawner_keyword, spawner_description,
-                        spawner_default_args)
+                    spawner_components[node.name] = ComponentWrapper(spawner_keyword,
+                                                                     spawner_description,
+                                                                     spawner_default_args)
             return spawner_components
 
     # #}
@@ -805,8 +734,7 @@ class MrsDroneSpawner(Node):
         all_components.update(template_wrapper.components)
         for i in template_wrapper.imported_templates:
             try:
-                all_components.update(
-                    self.get_accessible_components(i, all_components))
+                all_components.update(self.get_accessible_components(i, all_components))
             except RecursionError as err:
                 raise RecursionError(
                     f'Cyclic import detected in file {template_wrapper.jinja_template.filename}. Fix your templates'
@@ -829,24 +757,16 @@ class MrsDroneSpawner(Node):
             template_source = f.read()
             preprocessed_template = template_source.replace('\n', '')
             parsed_template = self.jinja_env.parse(preprocessed_template)
-            call_nodes = [
-                node for node in parsed_template.find_all(jinja2.nodes.Call)
-            ]
+            call_nodes = [node for node in parsed_template.find_all(jinja2.nodes.Call)]
             callable_components = {}
             for node in call_nodes:
                 if isinstance(node.node, jinja2.nodes.Getattr):
                     if node.node.attr in accessible_components.keys():
-                        callable_components[
-                            node.node.attr] = accessible_components[
-                                node.node.attr]
+                        callable_components[node.node.attr] = accessible_components[node.node.attr]
                 elif isinstance(node.node, jinja2.nodes.Name):
                     if node.node.name in accessible_components.keys():
-                        callable_components[
-                            node.node.name] = accessible_components[
-                                node.node.name]
-        return dict(
-            sorted(callable_components.items(),
-                   key=lambda item: item[1].keyword))
+                        callable_components[node.node.name] = accessible_components[node.node.name]
+        return dict(sorted(callable_components.items(), key=lambda item: item[1].keyword))
 
     # #}
 
@@ -867,8 +787,7 @@ class MrsDroneSpawner(Node):
             imports = self.get_template_imports(template)
             components = self.get_spawner_components_from_template(template)
             package_name = self.get_ros_package_name(template.filename)
-            wrapper = TemplateWrapper(template, imports, components,
-                                      package_name)
+            wrapper = TemplateWrapper(template, imports, components, package_name)
             template_wrappers[name] = wrapper
 
         self.get_logger().info('Reindexing imported templates')
@@ -904,8 +823,7 @@ class MrsDroneSpawner(Node):
     # #{ configure_jinja2_environment(self, resource_paths)
     def configure_jinja2_environment(self, resource_paths):
         '''Create a jinja2 environment and setup its variables'''
-        env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(resource_paths), autoescape=False)
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader(resource_paths), autoescape=False)
         # Allows use of math module directly in the templates
         env.globals['math'] = math
 
@@ -927,15 +845,13 @@ class MrsDroneSpawner(Node):
         try:
             model_name = spawner_args['model']
         except KeyError:
-            self.get_logger().error(
-                f'Cannot render template, model not specified')
+            self.get_logger().error(f'Cannot render template, model not specified')
             return
 
         try:
             template_wrapper = self.jinja_templates[model_name]
         except KeyError:
-            self.get_logger().error(
-                f'Cannot render model "{model_name}". Template not found!')
+            self.get_logger().error(f'Cannot render model "{model_name}". Template not found!')
             return
 
         self.get_logger().info(
@@ -948,22 +864,18 @@ class MrsDroneSpawner(Node):
             root = xml.dom.minidom.parseString(rendered_template)
         except Exception as e:
             self.get_logger().error(f'XML error: "{e}"')
-            fd, filepath = tempfile.mkstemp(
-                prefix='mrs_drone_spawner_' +
-                datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_'),
-                suffix='_DUMP_' + str(model_name) + '.sdf')
+            fd, filepath = tempfile.mkstemp(prefix='mrs_drone_spawner_' +
+                                            datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_'),
+                                            suffix='_DUMP_' + str(model_name) + '.sdf')
             with os.fdopen(fd, 'w') as output_file:
                 output_file.write(rendered_template)
-                self.get_logger().info(
-                    f'Malformed XML for model {model_name} dumped to {filepath}'
-                )
+                self.get_logger().info(f'Malformed XML for model {model_name} dumped to {filepath}')
             return
 
         ugly_xml = root.toprettyxml(indent='  ')
 
         # Remove empty lines
-        pretty_xml = '\n'.join(line for line in ugly_xml.split('\n')
-                               if line.strip())
+        pretty_xml = '\n'.join(line for line in ugly_xml.split('\n') if line.strip())
 
         return pretty_xml
 
@@ -989,20 +901,11 @@ class MrsDroneSpawner(Node):
         AssertionError in case of unexpected data in mandatory values under keys "model", "ids", "names", "spawn_poses"
         '''
 
-        input_dict = {
-            'help': False,
-            'model': None,
-            'ids': [],
-            'names': [],
-            'spawn_poses': {}
-        }
+        input_dict = {'help': False, 'model': None, 'ids': [], 'names': [], 'spawn_poses': {}}
 
         # parse out the keywords starting with '--'
         pattern = re.compile(r'(--\S*)')
-        substrings = [
-            m.strip() for m in re.split(pattern, input_str)
-            if len(m.strip()) > 0
-        ]
+        substrings = [m.strip() for m in re.split(pattern, input_str) if len(m.strip()) > 0]
 
         if len(substrings) < 1:
             input_dict['help'] = True
@@ -1025,8 +928,7 @@ class MrsDroneSpawner(Node):
             else:
                 input_keys = [*input_dict.keys()]
                 if len(input_keys) > 1:
-                    input_dict[input_keys[-1]] = self.parse_string_to_objects(
-                        substrings[i])
+                    input_dict[input_keys[-1]] = self.parse_string_to_objects(substrings[i])
 
         # attempt to match model to available templates
         for k in input_dict.keys():
@@ -1039,16 +941,14 @@ class MrsDroneSpawner(Node):
 
         for ID in input_dict['ids']:
             if not isinstance(ID, int):
-                if ID in self.jinja_templates.keys(
-                ) and input_dict['model'] is None:
+                if ID in self.jinja_templates.keys() and input_dict['model'] is None:
                     self.get_logger().info(f'Using {ID} as model template')
                     input_dict['model'] = ID
                 else:
                     self.get_logger().warn(f'Ignored ID {ID}: Not an integer')
                 continue
             if ID < 0 or ID > 255:
-                self.get_logger().warn(
-                    f'Ignored ID {ID}: Must be in range(0, 256)')
+                self.get_logger().warn(f'Ignored ID {ID}: Must be in range(0, 256)')
                 continue
             if ID in self.assigned_ids:
                 self.get_logger().warn(f'Ignored ID {ID}: Already assigned')
@@ -1073,11 +973,9 @@ class MrsDroneSpawner(Node):
                 input_dict['spawn_poses'] = self.get_spawn_poses_from_args(
                     input_dict['pos'], input_dict['ids'])
             except (WrongNumberOfArguments, ValueError) as err:
-                self.get_logger().error(
-                    f'While parsing args for "--pos": {err}')
+                self.get_logger().error(f'While parsing args for "--pos": {err}')
                 self.get_logger().warn(f'Assigning random spawn poses instead')
-                input_dict['spawn_poses'] = self.get_randomized_spawn_poses(
-                    input_dict['ids'])
+                input_dict['spawn_poses'] = self.get_randomized_spawn_poses(input_dict['ids'])
             finally:
                 del input_dict['pos']
 
@@ -1085,41 +983,33 @@ class MrsDroneSpawner(Node):
             try:
                 input_dict['spawn_poses'] = self.get_spawn_poses_from_file(
                     input_dict['pos-file'][0], input_dict['ids'])
-            except (FileNotFoundError, SuffixError, FormattingError,
-                    WrongNumberOfArguments, ValueError) as err:
-                self.get_logger().error(
-                    f'While parsing args for "--pos-file": {err}')
+            except (FileNotFoundError, SuffixError, FormattingError, WrongNumberOfArguments,
+                    ValueError) as err:
+                self.get_logger().error(f'While parsing args for "--pos-file": {err}')
                 self.get_logger().warn(f'Assigning random spawn poses instead')
-                input_dict['spawn_poses'] = self.get_randomized_spawn_poses(
-                    input_dict['ids'])
+                input_dict['spawn_poses'] = self.get_randomized_spawn_poses(input_dict['ids'])
             finally:
                 del input_dict['pos-file']
 
         else:
-            input_dict['spawn_poses'] = self.get_randomized_spawn_poses(
-                input_dict['ids'])
+            input_dict['spawn_poses'] = self.get_randomized_spawn_poses(input_dict['ids'])
 
         if 'name' in input_dict.keys():
             for ID in input_dict['ids']:
-                input_dict['names'].append(
-                    str(input_dict['name'][0]) + str(ID))
+                input_dict['names'].append(str(input_dict['name'][0]) + str(ID))
             del input_dict['name']
         else:
             for ID in input_dict['ids']:
-                input_dict['names'].append(
-                    str(self.default_robot_name) + str(ID))
+                input_dict['names'].append(str(self.default_robot_name) + str(ID))
 
         assert isinstance(input_dict['ids'], list) and len(
             input_dict['ids']) > 0, 'No vehicle ID assigned'
         assert input_dict['model'] is not None, 'Model not specified'
-        assert isinstance(input_dict['names'], list) and len(
-            input_dict['names']) == len(
-                input_dict['ids']
-            ), f'Invalid vehicle names {input_dict["names"]}'
+        assert isinstance(input_dict['names'], list) and len(input_dict['names']) == len(
+            input_dict['ids']), f'Invalid vehicle names {input_dict["names"]}'
         assert isinstance(input_dict['spawn_poses'], dict) and len(
             input_dict['spawn_poses'].keys()) == len(
-                input_dict['ids']
-            ), f'Invalid spawn poses {input_dict["spawn_poses"]}'
+                input_dict['ids']), f'Invalid spawn poses {input_dict["spawn_poses"]}'
 
         return input_dict
 
@@ -1160,8 +1050,7 @@ class MrsDroneSpawner(Node):
                 except TypeError:
                     pass
 
-        if len(params_dict.keys()) > 0 and len(
-                params_dict.keys()) == len(params):
+        if len(params_dict.keys()) > 0 and len(params_dict.keys()) == len(params):
             # whole input converted to a dict
             return params_dict
         else:
@@ -1325,12 +1214,9 @@ class MrsDroneSpawner(Node):
         # #}
 
         else:
-            raise SuffixError(
-                f'Incorrect file type! Suffix must be either ".csv" or ".yaml"'
-            )
+            raise SuffixError(f'Incorrect file type! Suffix must be either ".csv" or ".yaml"')
 
-        if len(spawn_poses.keys()) != len(ids) or set(
-                spawn_poses.keys()) != set(ids):
+        if len(spawn_poses.keys()) != len(ids) or set(spawn_poses.keys()) != set(ids):
             raise WrongNumberOfArguments(
                 f'File "{filename}" does not specify poses for all robots!')
 
@@ -1357,8 +1243,7 @@ class MrsDroneSpawner(Node):
         spawn_poses = {}
         if len(pos_args) != 4:
             raise WrongNumberOfArguments(
-                f'Expected exactly 4 args after keyword "--pos", got {len(pos_args)}'
-            )
+                f'Expected exactly 4 args after keyword "--pos", got {len(pos_args)}')
 
         x = float(pos_args[0])
         y = float(pos_args[1])
@@ -1373,12 +1258,7 @@ class MrsDroneSpawner(Node):
             )
             for i in range(len(ids)):
                 x += self.model_spacing
-                spawn_poses[ids[i]] = {
-                    'x': x,
-                    'y': y,
-                    'z': z,
-                    'heading': heading
-                }
+                spawn_poses[ids[i]] = {'x': x, 'y': y, 'z': z, 'heading': heading}
 
         self.get_logger().info(f'Spawn poses returned: {spawn_poses}')
         return spawn_poses
@@ -1403,33 +1283,25 @@ class MrsDroneSpawner(Node):
         remaining_positions_in_current_circle = 1
         circle_perimeter = math.pi * circle_diameter
         random_angle_offset = 0
-        random_x_offset = round(
-            random.uniform(-self.model_spacing, self.model_spacing), 2)
-        random_y_offset = round(
-            random.uniform(-self.model_spacing, self.model_spacing), 2)
+        random_x_offset = round(random.uniform(-self.model_spacing, self.model_spacing), 2)
+        random_y_offset = round(random.uniform(-self.model_spacing, self.model_spacing), 2)
 
         for ID in ids:
             if remaining_positions_in_current_circle == 0:
                 circle_diameter = circle_diameter + self.model_spacing
                 circle_perimeter = math.pi * circle_diameter
-                total_positions_in_current_circle = math.floor(
-                    circle_perimeter / self.model_spacing)
+                total_positions_in_current_circle = math.floor(circle_perimeter /
+                                                               self.model_spacing)
                 remaining_positions_in_current_circle = total_positions_in_current_circle
-                angle_increment = (math.pi *
-                                   2) / total_positions_in_current_circle
-                random_angle_offset = round(random.uniform(-math.pi, math.pi),
-                                            2)
+                angle_increment = (math.pi * 2) / total_positions_in_current_circle
+                random_angle_offset = round(random.uniform(-math.pi, math.pi), 2)
 
             x = round(
-                math.sin(angle_increment *
-                         remaining_positions_in_current_circle +
-                         random_angle_offset) * circle_diameter,
-                2) + random_x_offset
+                math.sin(angle_increment * remaining_positions_in_current_circle +
+                         random_angle_offset) * circle_diameter, 2) + random_x_offset
             y = round(
-                math.cos(angle_increment *
-                         remaining_positions_in_current_circle +
-                         random_angle_offset) * circle_diameter,
-                2) + random_y_offset
+                math.cos(angle_increment * remaining_positions_in_current_circle +
+                         random_angle_offset) * circle_diameter, 2) + random_y_offset
             z = 0.3
             heading = round(random.uniform(-math.pi, math.pi), 2)
             remaining_positions_in_current_circle = remaining_positions_in_current_circle - 1
@@ -1459,8 +1331,7 @@ class MrsDroneSpawner(Node):
         del robot_params['spawn_poses']
 
         robot_params['mavlink_config'] = self.get_mavlink_config_for_robot(ID)
-        robot_params['mavros_px4_config'] = self.generate_mavros_px4_config(
-            robot_params['name'])
+        robot_params['mavros_px4_config'] = self.generate_mavros_px4_config(robot_params['name'])
 
         return robot_params
 
@@ -1494,8 +1365,7 @@ class MrsDroneSpawner(Node):
     # #{ generate_mavros_px4_config(self, uav_name)
     def generate_mavros_px4_config(self, uav_name):
 
-        jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-            self.mavros_px4_config_path),
+        jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(self.mavros_px4_config_path),
                                        autoescape=False)
 
         template = jinja_env.get_template(self.mavros_px4_config_template_name)
@@ -1507,8 +1377,7 @@ class MrsDroneSpawner(Node):
 
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(rendered_template)
-            self.get_logger().info(
-                f'Mavros PX4 config for {uav_name} written to {filepath}')
+            self.get_logger().info(f'Mavros PX4 config for {uav_name} written to {filepath}')
 
         return filepath
 
@@ -1545,21 +1414,18 @@ class MrsDroneSpawner(Node):
 
     # #{ get_attached_camera(self, attached_sensors, camera_sensor)
     def get_attached_camera(self, attached_sensors, camera_sensor) -> None:
-        gz_camera_info_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.GZ_CAMERA_INFO)
-        ros_camera_info_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.ROS_CAMERA_INFO)
-        ros_color_image_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.ROS_COLOR_IMAGE)
+        gz_camera_info_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                   SdfTopicTags.GZ_CAMERA_INFO)
+        ros_camera_info_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                    SdfTopicTags.ROS_CAMERA_INFO)
+        ros_color_image_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                    SdfTopicTags.ROS_COLOR_IMAGE)
 
-        required_topics = [
-            gz_camera_info_topic, ros_camera_info_topic, ros_color_image_topic
-        ]
+        required_topics = [gz_camera_info_topic, ros_camera_info_topic, ros_color_image_topic]
 
         if not all(required_topics):
             self.get_logger().warn(
-                "Skipping RGB camera because one or more required topics are missing."
-            )
+                "Skipping RGB camera because one or more required topics are missing.")
             return
 
         camera = CameraRosGzBridge(image_topic=ros_color_image_topic,
@@ -1571,20 +1437,19 @@ class MrsDroneSpawner(Node):
     # #}
 
     # #{ get_attached_rgbd_camera(self, attached_sensors, camera_sensor)
-    def get_attached_rgbd_camera(self, attached_sensors,
-                                 camera_sensor) -> None:
-        gz_camera_info_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.GZ_CAMERA_INFO)
-        gz_pointcloud_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.GZ_POINTCLOUD)
-        ros_camera_info_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.ROS_CAMERA_INFO)
-        ros_color_image_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.ROS_COLOR_IMAGE)
-        ros_depth_image_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.ROS_DEPTH_IMAGE)
-        ros_pointcloud_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.ROS_POINTCLOUD)
+    def get_attached_rgbd_camera(self, attached_sensors, camera_sensor) -> None:
+        gz_camera_info_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                   SdfTopicTags.GZ_CAMERA_INFO)
+        gz_pointcloud_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                  SdfTopicTags.GZ_POINTCLOUD)
+        ros_camera_info_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                    SdfTopicTags.ROS_CAMERA_INFO)
+        ros_color_image_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                    SdfTopicTags.ROS_COLOR_IMAGE)
+        ros_depth_image_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                    SdfTopicTags.ROS_DEPTH_IMAGE)
+        ros_pointcloud_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                   SdfTopicTags.ROS_POINTCLOUD)
 
         required_topics = [
             gz_camera_info_topic,
@@ -1595,17 +1460,9 @@ class MrsDroneSpawner(Node):
             ros_pointcloud_topic,
         ]
 
-        print(f"\n\n gz_camera_info_topic: {gz_camera_info_topic}")
-        print(f"gz_pointcloud_topic: {gz_pointcloud_topic}")
-        print(f"ros_camera_info_topic: {ros_camera_info_topic}")
-        print(f"ros_color_image_topic: {ros_color_image_topic}")
-        print(f"ros_depth_image_topic: {ros_depth_image_topic}")
-        print(f"ros_pointcloud_topic: {ros_pointcloud_topic}\n\n")
-
         if not all(required_topics):
             self.get_logger().warn(
-                "Skipping RGB-D camera because one or more required topics are missing."
-            )
+                "Skipping RGB-D camera because one or more required topics are missing.")
             return
 
         camera = RgbdCameraRosGzBridge(rgb_image_topic=ros_color_image_topic,
@@ -1620,36 +1477,33 @@ class MrsDroneSpawner(Node):
     # #}
 
     # #{ get_attached_depth_camera(self, attached_sensors, camera_sensor)
-    def get_attached_depth_camera(self, attached_sensors,
-                                  camera_sensor) -> None:
-        gz_camera_info_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.GZ_CAMERA_INFO)
-        gz_pointcloud_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.GZ_POINTCLOUD)
-        ros_camera_info_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.ROS_CAMERA_INFO)
-        ros_depth_image_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.ROS_DEPTH_IMAGE)
-        ros_pointcloud_topic = self.get_sensor_topic_from_tag_name(
-            camera_sensor, SdfTopicTags.ROS_POINTCLOUD)
+    def get_attached_depth_camera(self, attached_sensors, camera_sensor) -> None:
+        gz_camera_info_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                   SdfTopicTags.GZ_CAMERA_INFO)
+        gz_pointcloud_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                  SdfTopicTags.GZ_POINTCLOUD)
+        ros_camera_info_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                    SdfTopicTags.ROS_CAMERA_INFO)
+        ros_depth_image_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                    SdfTopicTags.ROS_DEPTH_IMAGE)
+        ros_pointcloud_topic = self.get_sensor_topic_from_tag_name(camera_sensor,
+                                                                   SdfTopicTags.ROS_POINTCLOUD)
 
         required_topics = [
-            gz_camera_info_topic, gz_pointcloud_topic, ros_camera_info_topic,
-            ros_depth_image_topic, ros_pointcloud_topic
+            gz_camera_info_topic, gz_pointcloud_topic, ros_camera_info_topic, ros_depth_image_topic,
+            ros_pointcloud_topic
         ]
 
         if not all(required_topics):
             self.get_logger().warn(
-                "Skipping Depth camera because one or more required topics are missing."
-            )
+                "Skipping Depth camera because one or more required topics are missing.")
             return
 
-        depth_camera = DepthCameraRosGzBridge(
-            image_topic=ros_depth_image_topic,
-            ros_info_topic=ros_camera_info_topic,
-            gz_info_topic=gz_camera_info_topic,
-            ros_points_topic=ros_pointcloud_topic,
-            gz_points_topic=gz_pointcloud_topic)
+        depth_camera = DepthCameraRosGzBridge(image_topic=ros_depth_image_topic,
+                                              ros_info_topic=ros_camera_info_topic,
+                                              gz_info_topic=gz_camera_info_topic,
+                                              ros_points_topic=ros_pointcloud_topic,
+                                              gz_points_topic=gz_pointcloud_topic)
 
         attached_sensors[AttachedSensors.DEPTH_CAMERAS].append(depth_camera)
 
@@ -1661,28 +1515,32 @@ class MrsDroneSpawner(Node):
         # NOTE: PX4 requires its own bridge with the Garmin rangefinder, so we do not set it up.
         # The Garmin rangefinder link is named 'lidar_sensor_link' in the garmin.sdf.jinja template.
         # Do not rename the Garmin link or the rangefinder plugin, as PX4 may fail to detect it otherwise.
-        if lidar_sensor.getAttribute(
-                'name') == "lidar_sensor_link":  # Garmin rangefinder
+        if lidar_sensor.getAttribute('name') == "lidar_sensor_link":  # Garmin rangefinder
             return
 
-        lidar = {}
-        topic = lidar_sensor.getElementsByTagName('topic')
-        if topic:
-            # Differentiate between 1D/2D and 3D LiDARs, since they use different msg type.
-            # This can be determined by checking the number of vertical samples.
-            vertical_samples = self.get_number_of_vertical_samples(
-                lidar_sensor)
-            if vertical_samples == 1:  # 2D lidar
-                lidar[SensorTopics.POINTS] = '/' + topic[0].firstChild.data
-                attached_sensors[AttachedSensors.TWO_D_LIDAR].append(lidar)
-            elif vertical_samples > 1:  # 3D lidar
-                lidar[SensorTopics.
-                      POINTS] = '/' + topic[0].firstChild.data + '/points'
-                attached_sensors[AttachedSensors.THREE_D_LIDAR].append(lidar)
-            else:  # Incorrect lidar
-                self.get_logger().error(
-                    f"The lidar {lidar_sensor.getAttribute('name')} cannot be loaded. Check if the number of vertical samples is correct."
-                )
+        gz_pointcloud_topic = self.get_sensor_topic_from_tag_name(lidar_sensor,
+                                                                  SdfTopicTags.GZ_POINTCLOUD)
+        ros_pointcloud_topic = self.get_sensor_topic_from_tag_name(lidar_sensor,
+                                                                   SdfTopicTags.ROS_POINTCLOUD)
+
+        required_topics = [gz_pointcloud_topic, ros_pointcloud_topic]
+
+        if not all(required_topics):
+            self.get_logger().warn(
+                "Skipping Lidar because one or more required topics are missing.")
+            return
+
+        vertical_samples = self.get_number_of_vertical_samples(lidar_sensor)
+        lidar = LidarRosGzBridge(ros_points_topic=ros_pointcloud_topic,
+                                 gz_points_topic=gz_pointcloud_topic)
+        if vertical_samples == 1:  # 2D lidar
+            attached_sensors[AttachedSensors.TWO_D_LIDAR].append(lidar)
+        elif vertical_samples > 1:  # 3D lidar
+            attached_sensors[AttachedSensors.THREE_D_LIDAR].append(lidar)
+        else:  # Incorrect lidar
+            self.get_logger().error(
+                f"The lidar {lidar_sensor.getAttribute('name')} cannot be loaded. Check if the number of vertical samples is correct."
+            )
 
         return
 
@@ -1692,8 +1550,7 @@ class MrsDroneSpawner(Node):
     def get_number_of_vertical_samples(self, lidar_sensor):
         vertical_elements = lidar_sensor.getElementsByTagName('vertical')
         samples_elements = vertical_elements[0].getElementsByTagName('samples')
-        vertical_samples = int(
-            samples_elements[0].firstChild.nodeValue.strip())
+        vertical_samples = int(samples_elements[0].firstChild.nodeValue.strip())
 
         return vertical_samples
 
@@ -1711,50 +1568,43 @@ class MrsDroneSpawner(Node):
     # #{ get_sensor_topics(self, attached_sensors: dict) -> dict:
     def get_sensor_topics(self, attached_sensors: dict) -> dict:
         sensor_topics = {
-            SensorTopicsGzBridge.IMAGE: [],
-            SensorTopicsGzBridge.CAMERA_INFO: [],
-            SensorTopicsGzBridge.DEPTH_IMAGE: [],
-            SensorTopicsGzBridge.LASER_SCAN: [],
-            SensorTopicsGzBridge.POINTCLOUDS: [],
+            RosGzBridgeCategory.IMAGE: [],
+            RosGzBridgeCategory.CAMERA_INFO: [],
+            RosGzBridgeCategory.DEPTH_IMAGE: [],
+            RosGzBridgeCategory.LASER_SCAN: [],
+            RosGzBridgeCategory.POINTCLOUD: [],
         }
 
         for camera in attached_sensors[AttachedSensors.CAMERAS]:
-            sensor_topics[SensorTopicsGzBridge.IMAGE].append(
-                camera.image_topic)
-            sensor_topics[SensorTopicsGzBridge.CAMERA_INFO].append(
-                RosGzBridgeTopics(gazebo=camera.gz_info_topic,
-                                  ros=camera.ros_info_topic))
+            sensor_topics[RosGzBridgeCategory.IMAGE].append(camera.image_topic)
+            sensor_topics[RosGzBridgeCategory.CAMERA_INFO].append(
+                RosGzBridgeTopics(gazebo=camera.gz_info_topic, ros=camera.ros_info_topic))
 
         for two_d_lidar in attached_sensors[AttachedSensors.TWO_D_LIDAR]:
-            sensor_topics[SensorTopicsGzBridge.LASER_SCAN].append(
-                two_d_lidar[SensorTopics.POINTS])
+            sensor_topics[RosGzBridgeCategory.LASER_SCAN].append(
+                RosGzBridgeTopics(gazebo=two_d_lidar.gz_points_topic,
+                                  ros=two_d_lidar.ros_points_topic))
 
         for three_d_lidar in attached_sensors[AttachedSensors.THREE_D_LIDAR]:
-            sensor_topics[SensorTopicsGzBridge.POINTCLOUDS].append(
-                three_d_lidar[SensorTopics.POINTS])
+            sensor_topics[RosGzBridgeCategory.POINTCLOUD].append(
+                RosGzBridgeTopics(gazebo=three_d_lidar.gz_points_topic,
+                                  ros=three_d_lidar.ros_points_topic))
 
         for rgbd_camera in attached_sensors[AttachedSensors.RGBD_CAMERAS]:
-            sensor_topics[SensorTopicsGzBridge.IMAGE].append(
-                rgbd_camera.rgb_image_topic)
-            sensor_topics[SensorTopicsGzBridge.IMAGE].append(
-                rgbd_camera.depth_image_topic)
-            sensor_topics[SensorTopicsGzBridge.CAMERA_INFO].append(
-                RosGzBridgeTopics(gazebo=rgbd_camera.gz_info_topic,
-                                  ros=rgbd_camera.ros_info_topic))
-            sensor_topics[SensorTopicsGzBridge.POINTCLOUDS].append(
+            sensor_topics[RosGzBridgeCategory.IMAGE].append(rgbd_camera.rgb_image_topic)
+            sensor_topics[RosGzBridgeCategory.IMAGE].append(rgbd_camera.depth_image_topic)
+            sensor_topics[RosGzBridgeCategory.CAMERA_INFO].append(
+                RosGzBridgeTopics(gazebo=rgbd_camera.gz_info_topic, ros=rgbd_camera.ros_info_topic))
+            sensor_topics[RosGzBridgeCategory.POINTCLOUD].append(
                 RosGzBridgeTopics(gazebo=rgbd_camera.gz_points_topic,
                                   ros=rgbd_camera.ros_points_topic))
 
         for depth_camera in attached_sensors[AttachedSensors.DEPTH_CAMERAS]:
-            print(
-                f"\n\ndepth_camera.image_topic: {depth_camera.image_topic}\n\n"
-            )
-            sensor_topics[SensorTopicsGzBridge.IMAGE].append(
-                depth_camera.image_topic)
-            sensor_topics[SensorTopicsGzBridge.POINTCLOUDS].append(
+            sensor_topics[RosGzBridgeCategory.IMAGE].append(depth_camera.image_topic)
+            sensor_topics[RosGzBridgeCategory.POINTCLOUD].append(
                 RosGzBridgeTopics(gazebo=depth_camera.gz_points_topic,
                                   ros=depth_camera.ros_points_topic))
-            sensor_topics[SensorTopicsGzBridge.CAMERA_INFO].append(
+            sensor_topics[RosGzBridgeCategory.CAMERA_INFO].append(
                 RosGzBridgeTopics(gazebo=depth_camera.gz_info_topic,
                                   ros=depth_camera.ros_info_topic))
 
@@ -1784,25 +1634,20 @@ class MrsDroneSpawner(Node):
             self.uav_ros_gz_bridge_config_path),
                                        autoescape=False)
 
-        template = jinja_env.get_template(
-            self.uav_ros_gz_bridge_config_template_name)
+        template = jinja_env.get_template(self.uav_ros_gz_bridge_config_template_name)
 
         attached_sensors = self.get_attached_sensors(robot_params)
         if not self.has_attached_sensors(attached_sensors):
             self.get_logger().info(
-                f"There are no additional sensors. Skipping launching ros_gz_bridge for {uav_name}"
-            )
+                f"There are no additional sensors. Skipping launching ros_gz_bridge for {uav_name}")
             return "", []
 
         sensor_topics = self.get_sensor_topics(attached_sensors)
 
         rendered_template = template.render(
-            camera_info_topic_list=sensor_topics[
-                SensorTopicsGzBridge.CAMERA_INFO],
-            laser_scan_topic_list=sensor_topics[
-                SensorTopicsGzBridge.LASER_SCAN],
-            point_cloud_topic_list=sensor_topics[
-                SensorTopicsGzBridge.POINTCLOUDS],
+            camera_info_topic_list=sensor_topics[RosGzBridgeCategory.CAMERA_INFO],
+            laser_scan_topic_list=sensor_topics[RosGzBridgeCategory.LASER_SCAN],
+            point_cloud_topic_list=sensor_topics[RosGzBridgeCategory.POINTCLOUD],
         )
 
         filename = f'ros_gz_bridge_config_{uav_name}.yaml'
@@ -1810,8 +1655,7 @@ class MrsDroneSpawner(Node):
 
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(rendered_template)
-            self.get_logger().info(
-                f'ros_gz_bridge config for {uav_name} written to {filepath}')
+            self.get_logger().info(f'ros_gz_bridge config for {uav_name} written to {filepath}')
 
         return filepath, sensor_topics
 

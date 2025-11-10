@@ -7,8 +7,8 @@
 {% endfor %}
 
 {%- for topic in laser_scan_topic_list -%}
-- ros_topic_name: "{{ topic }}"
-  gz_topic_name: "{{ topic }}"
+- ros_topic_name: "{{ topic["ros"] }}"
+  gz_topic_name: "{{ topic["gazebo"] }}"
   ros_type_name: "sensor_msgs/msg/LaserScan"
   gz_type_name: "gz.msgs.LaserScan"
   direction: GZ_TO_ROS

@@ -159,29 +159,32 @@ limitations under the License.
 
 {# ======================= rangefinder sensors ====================== #}
 {# ==== Garmin ==== #}
-{%- import "mrs_robots_description/sdf/components/rangefinder/garmin.sdf.jinja" as garmin_rangefinder -%}
-
+{%- import "mrs_robots_description/sdf/components/rangefinder/garmin/garmin_down_pixhawk.sdf.jinja" as garmin_rangefinder_pixhawk -%}
 {%- macro garmin_down_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ garmin_rangefinder.garmin_down_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+  {{ garmin_rangefinder_pixhawk.garmin_down_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
+
+{%- import "mrs_robots_description/sdf/components/rangefinder/garmin/garmin_down_external.sdf.jinja" as garmin_rangefinder_down_external -%}
 {%- macro garmin_down_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ garmin_rangefinder.garmin_down_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args)}}
+  {{ garmin_rangefinder_down_external.garmin_down_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args)}}
 {%- endmacro -%}
+
+{%- import "mrs_robots_description/sdf/components/rangefinder/garmin/garmin_up_external.sdf.jinja" as garmin_rangefinder_up_external -%}
 {%- macro garmin_up_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ garmin_rangefinder.garmin_up_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+  {{ garmin_rangefinder_up_external.garmin_up_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 
 {# ========================== 2D LIDAR sensors ========================= #}
 {# ==== RP lidar ==== #}
-{%- import "mrs_robots_description/sdf/components/lidar/rplidar.sdf.jinja" as rplidar_lidar -%}
+{%- import "mrs_robots_description/sdf/components/lidar/rplidar/rplidar.sdf.jinja" as rplidar_lidar -%}
 {%- macro rplidar_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
   {{ rplidar_lidar.rplidar_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 
 {# ==== Scance Sweep lidar ==== #}
-{%- import "mrs_robots_description/sdf/components/lidar/scanse_sweep.sdf.jinja" as scanse_sweep_lidar -%}
+{%- import "mrs_robots_description/sdf/components/lidar/scanse_sweep/scanse_sweep.sdf.jinja" as scanse_sweep_lidar -%}
 {%- macro scanse_sweep_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
   {{ scanse_sweep_lidar.scanse_sweep_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
@@ -189,13 +192,13 @@ limitations under the License.
 
 {# ========================== 3D LIDAR sensors ========================= #}
 {# ==== Ouster lidar ==== #}
-{%- import "mrs_robots_description/sdf/components/lidar/ouster.sdf.jinja" as ouster_lidar -%}
+{%- import "mrs_robots_description/sdf/components/lidar/ouster/ouster.sdf.jinja" as ouster_lidar -%}
 {%- macro ouster_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
   {{ ouster_lidar.ouster_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 {# ==== Velodyne lidar ==== #}
-{%- import "mrs_robots_description/sdf/components/lidar/velodyne.sdf.jinja" as velodyne_lidar -%}
+{%- import "mrs_robots_description/sdf/components/lidar/velodyne/velodyne.sdf.jinja" as velodyne_lidar -%}
 {%- macro velodyne_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
   {{ velodyne_lidar.velodyne_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
@@ -220,7 +223,6 @@ limitations under the License.
 
 {# ==== Mobius camera ==== #}
 {%- import "mrs_robots_description/sdf/components/camera/mobius/mobius.sdf.jinja" as mobius_camera -%}
-
 {%- macro mobius_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
   {{ mobius_camera.mobius_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}

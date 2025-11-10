@@ -63,7 +63,9 @@
       {{ generic.gazebo_twod_lidar_plugin_macro(
           lidar_name = sensor_name,
           lidar_gz_frame_id = sensor_gz_frame_id,
-          lidar_topic_name = spawner_args['name'] + '/' + sensor_name,
+          lidar_sdf_topic_name = spawner_args['name'] + '/' + sensor_name + '/scan',
+          lidar_gz_topic_name = spawner_args['name'] + '/' + sensor_name + '/scan',
+          lidar_ros_topic_name = spawner_args['name'] + '/' + sensor_name + '/scan',
           sensor_x = lidar_x, sensor_y = lidar_y, sensor_z = lidar_z, sensor_roll = lidar_roll, sensor_pitch = lidar_pitch, sensor_yaw = lidar_yaw,
           update_rate = spawner_args[spawner_keyword]['update_rate'],
           horiz_num_samples = spawner_args[spawner_keyword]['horizontal_samples'],

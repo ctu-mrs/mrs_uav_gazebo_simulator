@@ -6,8 +6,7 @@
   - [RGB Camera](#rgb-camera)
   - [Depth Camera](#depth-camera)
   - [RGB-D Camera](#rgb-d-camera)
-  - [2D Lidar](#2d-lidar)
-  - [3D Lidar](#3d-lidar)
+  - [Lidar](#lidar)
   - [Debugging](#debugging)
 
 ## Optical Frame for Cameras
@@ -278,18 +277,67 @@ For more details, please check the [realsense_rgb_plus_depth.sdf.jinja](./compon
 
 
 
-### 2D Lidar
-The resulting 2D lidar-related ROS topics will look like as follows:
-- `/namespace/sensor_name/scan`
+### Lidar
+To keep consistency with the previous sensors, we define three topics for each lidar:
+1. `lidar_sdf_topic_name` - the topic used by the plugin, serving as the root topic from which other topics are derived.
+2. `lidar_gz_topic_name` - the Gazebo topic that will be bridged to ROS by mrs_drone_spawner
+3. `lidar_ros_topic_name` - the resulting ROS topic created by the bridge
 
-There is one more related topic on the Gazebo server that converts `/scan` into a point cloud representation, but it is not being bridged to ROS:
+#### 2D lidar
+Example topics of 2D RPLidar. For more details, please check the [rplidar_macro.sdf.jinja](./components/lidar/rplidar/rplidar.sdf.jinja) example.
+<table>
+  <thead>
+    <tr>
+      <th colspan="2" style="border: 1px solid; text-align:center;">Gazebo topics</th>
+      <th colspan="2" style="border: 1px solid; text-align:center;">ROS topics</th>
+    </tr>
+    <tr>
+      <th style="border: 1px solid; text-align:center;">Topic name</th>
+      <th style="border: 1px solid; text-align:center;">Msg type</th>
+      <th style="border: 1px solid; text-align:center;">Topic name</th>
+      <th style="border: 1px solid; text-align:center;">Msg type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid;">/uav1/rplidar/scan</td>
+      <td style="border: 1px solid;">gz.msgs.LaserScan</td>
+      <td style="border: 1px solid;">/uav1/rplidar/scan</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/LaserScan</td>
+    </tr>
+  </tbody>
+</table>
+
+There is one more related topic on the Gazebo server that converts `/scan` into a point cloud representation, but it is not being to ROS:
 - `/namespace/sensor_name/scan/points`
 
-### 3D Lidar
-The resulting 2D lidar-related ROS topics will look like as follows:
-- `/namespace/sensor_name/points`
+#### 3D Lidar
+Example topics of 3D Ouster. For more details, please check the [realsense_rgb_plus_depth.sdf.jinja](./components/lidar/ouster/ouster.sdf.jinja) example.
+<table>
+  <thead>
+    <tr>
+      <th colspan="2" style="border: 1px solid; text-align:center;">Gazebo topics</th>
+      <th colspan="2" style="border: 1px solid; text-align:center;">ROS topics</th>
+    </tr>
+    <tr>
+      <th style="border: 1px solid; text-align:center;">Topic name</th>
+      <th style="border: 1px solid; text-align:center;">Msg type</th>
+      <th style="border: 1px solid; text-align:center;">Topic name</th>
+      <th style="border: 1px solid; text-align:center;">Msg type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid;">/uav1/ouster/points</td>
+      <td style="border: 1px solid;">gz.msgs.PointCloudPacked</td>
+      <td style="border: 1px solid;">/uav1/ouster/points</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/PointCloud2</td>
+    </tr>
+  </tbody>
+</table>
 
-There is one more related topic on the Gazebo server that converts `/points` into a 2D lidar scan representation, but it is not being bridged to ROS:
+
+There is one more related topic on the Gazebo server that converts `/points` into a 2D lidar scan representation, but it is not bridged to ROS:
 - `/namespace/sensor_name`
 
 
