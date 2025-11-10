@@ -862,6 +862,47 @@ limitations under the License.
 {%- endmacro -%}
 {# <!--}--> #}
 
+{# gazebo_depth_camera_macro {--> #}
+{%- macro gazebo_depth_camera_macro(camera_name, camera_gz_frame_id, camera_topic_name, 
+                                   ros_camera_info_topic, ros_depth_image_topic, ros_pointcloud_topic, 
+                                   gz_camera_info_topic, gz_pointcloud_topic,
+                                   frame_rate, horizontal_fov, image_width, image_height, 
+                                   min_distance, max_distance, noise_mean, noise_stddev,  
+                                   x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
+  <sensor name="{{ camera_name }}/depth" type="depth_camera">
+    <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
+    <always_on>true</always_on>
+    <visualize>true</visualize>
+    <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
+    <update_rate>{{ frame_rate }}</update_rate>
+
+    <topic>{{ camera_topic_name }}</topic>
+    <ros_camera_info_topic>{{ ros_camera_info_topic }}</ros_camera_info_topic>
+    <ros_depth_image_topic>{{ ros_depth_image_topic }}</ros_depth_image_topic>
+    <ros_pointcloud_topic>{{ ros_pointcloud_topic }}</ros_pointcloud_topic>
+    <gz_camera_info_topic>{{ gz_camera_info_topic }}</gz_camera_info_topic>
+    <gz_pointcloud_topic>{{ gz_pointcloud_topic }}</gz_pointcloud_topic>
+
+    <camera name="{{ camera_name }}">
+      <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
+      <image>
+        <width> {{ image_width }} </width>
+        <height>{{ image_height }}</height>
+        <format>R_FLOAT32</format>
+      </image>
+      <clip>
+        <near>{{ min_distance }}</near>
+        <far>{{ max_distance }}</far>
+      </clip>
+      <noise>
+        <type>gaussian</type>
+        <mean>{{ noise_mean }}</mean>
+        <stddev>{{ noise_stddev }}</stddev>
+      </noise>
+    </camera>
+  </sensor>
+{%- endmacro -%}
+{# <!--}--> #}
 
 {# gazebo_rgbd_camera_macro {--> #}
 {%- macro gazebo_rgbd_camera_macro(camera_name, camera_gz_frame_id, camera_topic_name, 
@@ -906,47 +947,5 @@ limitations under the License.
 {%- endmacro -%}
 {# <!--}--> #}
 
-
-{# gazebo_depth_camera_macro {--> #}
-{%- macro gazebo_depth_camera_macro(camera_name, camera_gz_frame_id, camera_topic_name, 
-                                   ros_camera_info_topic, ros_depth_image_topic, ros_pointcloud_topic, 
-                                   gz_camera_info_topic, gz_pointcloud_topic,
-                                   frame_rate, horizontal_fov, image_width, image_height, 
-                                   min_distance, max_distance, noise_mean, noise_stddev,  
-                                   x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
-  <sensor name="{{ camera_name }}/depth" type="depth_camera">
-    <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
-    <always_on>true</always_on>
-    <visualize>true</visualize>
-    <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
-    <update_rate>{{ frame_rate }}</update_rate>
-
-    <topic>{{ camera_topic_name }}</topic>
-    <ros_camera_info_topic>{{ ros_camera_info_topic }}</ros_camera_info_topic>
-    <ros_depth_image_topic>{{ ros_depth_image_topic }}</ros_depth_image_topic>
-    <ros_pointcloud_topic>{{ ros_pointcloud_topic }}</ros_pointcloud_topic>
-    <gz_camera_info_topic>{{ gz_camera_info_topic }}</gz_camera_info_topic>
-    <gz_pointcloud_topic>{{ gz_pointcloud_topic }}</gz_pointcloud_topic>
-
-    <camera name="{{ camera_name }}">
-      <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
-      <image>
-        <width> {{ image_width }} </width>
-        <height>{{ image_height }}</height>
-        <format>R_FLOAT32</format>
-      </image>
-      <clip>
-        <near>{{ min_distance }}</near>
-        <far>{{ max_distance }}</far>
-      </clip>
-      <noise>
-        <type>gaussian</type>
-        <mean>{{ noise_mean }}</mean>
-        <stddev>{{ noise_stddev }}</stddev>
-      </noise>
-    </camera>
-  </sensor>
-{%- endmacro -%}
-{# <!--}--> #}
 
 </sdf>

@@ -5,7 +5,7 @@
 - [Naming Rules](#naming-rules)  
   - [RGB Camera](#rgb-camera)
   - [Depth Camera](#depth-camera)
-  - [RGB-D Camera](#rgbd-camera)
+  - [RGB-D Camera](#rgb-d-camera)
   - [2D Lidar](#2d-lidar)
   - [3D Lidar](#3d-lidar)
   - [Debugging](#debugging)
@@ -66,6 +66,12 @@ For a working example, we recommend checking the [bluefox_camera_macro](./compon
   </tbody>
 </table>
 
+The `ros_gz_image` node also provides the following ROS topics:
+- `/namespace/camera_name/image_raw/compressed`
+- `/namespace/camera_name/image_raw/compressedDepth`
+- `/namespace/camera_name/image_raw/theora`
+- `/namespace/camera_name/image_raw/zstd`
+
 
 ### Depth Camera
 For bridging images from Gazebo to ROS, we use `ros_gz_image`. This bridge imposes the constraint that the image topic names in Gazebo and ROS must be identical. For RGB cameras, the sensor plugin topic is passed as `camera_sdf_topic`:
@@ -114,12 +120,177 @@ For a working example, we recommend checking the [realsense_depth_macro](./compo
     <tr>
       <td style="border: 1px solid;">/uav1/realsense/image_raw/points</td>
       <td style="border: 1px solid;">gz.msgs.PointCloudPacked</td>
-      <td style="border: 1px solid;">/uav1/realsense/image_raw/points</td>
+      <td style="border: 1px solid;">/uav1/realsense/points</td>
       <td style="border: 1px solid;">sensor_msgs/msg/PointCloud2</td>
     </tr>
   </tbody>
 </table>
 
+The `ros_gz_image` node also provides the following ROS topics:
+- `/namespace/camera_name/image_raw/compressed`
+- `/namespace/camera_name/image_raw/compressedDepth`
+- `/namespace/camera_name/image_raw/theora`
+- `/namespace/camera_name/image_raw/zstd`
+
+### RGB-D Camera
+There are technically two ways to create a macro for RGB-D cameras:
+- [Gazebo RGB-D Camera Plugin](#gazebo-rgbd-camera-plugin)
+- [Combination of RGB and Depth Camera Plugins](#combination-of-rgb-and-depth-camera-plugins)
+
+#### Gazebo RGBD Camera Plugin
+The gazebo provides a plugin for RGB-D cameras, however it has restrictions regarding names as well.
+```
+{%- set root_sdf_topic = spawner_args['name'] + '/' + camera_name -%}
+{%- set camera_sdf_topic = root_sdf_topic -%}
+```
+The topics for publishing color and depth image will have their names based on the `camera_sdf_topic` as follows
+```
+{%- set gz_image_topic = camera_sdf_topic + '/image' -%}                  {# -- Do not modify -- #}
+{%- set gz_depth_image_topic = camera_sdf_topic + '/depth_image' -%}      {# -- Do not modify -- #}
+```
+Since these image topics are transported through `ros_gz_image` bridge, the ROS topic names will have the same name and cannot be modified.
+
+The Gazebo camera info and point cloud topics are named by the plugin, but we can modify their ROS version:
+```
+{%- set gz_pointcloud_topic = camera_sdf_topic + '/points' -%}          {# -- Do not modify -- #}
+{%- set gz_camera_info_topic = root_sdf_topic + '/camera_info' -%}      {# -- Do not modify -- #}
+{%- set ros_camera_info_topic = root_sdf_topic + '/camera_info' -%}     {# -- Can be modified -- #}          
+{%- set ros_pointcloud_topic = root_sdf_topic + '/points' -%}           {# -- Can be modified -- #} 
+```
+
+For a working example, we recommend checking the [realsense_top_macro](./components/camera/realsense.sdf.jinja). The table below shows the Gazebo and ROS topics for Realsense RGB-D camera:
+<table>
+  <thead>
+    <tr>
+      <th colspan="2" style="border: 1px solid; text-align:center;">Gazebo topics</th>
+      <th colspan="2" style="border: 1px solid; text-align:center;">ROS topics</th>
+    </tr>
+    <tr>
+      <th style="border: 1px solid; text-align:center;">Topic name</th>
+      <th style="border: 1px solid; text-align:center;">Msg type</th>
+      <th style="border: 1px solid; text-align:center;">Topic name</th>
+      <th style="border: 1px solid; text-align:center;">Msg type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid;">/uav1/realsense/camera_info</td>
+      <td style="border: 1px solid;">gz.msgs.CameraInfo</td>
+      <td style="border: 1px solid;">/uav1/realsense/camera_info</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/CameraInfo</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid;">/uav1/realsense/depth_image</td>
+      <td style="border: 1px solid;">gz.msgs.Image</td>
+      <td style="border: 1px solid;">/uav1/realsense/depth_image</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/Image</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid;">/uav1/realsense/image</td>
+      <td style="border: 1px solid;">gz.msgs.Image</td>
+      <td style="border: 1px solid;">/uav1/realsense/image</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/Image</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid;">/uav1/realsense/points</td>
+      <td style="border: 1px solid;">gz.msgs.PointCloudPacked</td>
+      <td style="border: 1px solid;">/uav1/realsense/points</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/PointCloud2</td>
+    </tr>
+  </tbody>
+</table>
+
+#### Combination of RGB and Depth Camera Plugins
+The RGB-D camera can be created by combining the RGB camera and Depth camera plugins. The advantage of this approach is that it allows us to modify the topic names more flexibly and assign separate properties to each camera. Since we are still using `ros_gz_image`, the image topics must have the same name between Gazebo and ROS. However, because we technically have two separate cameras, we can organize the RGB and Depth topics into two groups:
+
+1. RGB Camera
+```
+{%- set color_root_sdf_topic = spawner_args['name'] + '/' + camera_name + '/color' -%}
+{%- set camera_color_sdf_topic = color_root_sdf_topic + '/image_raw' -%}
+{%- set gz_color_camera_info_topic = color_root_sdf_topic + '/camera_info' -%}      {# -- Do not modify -- #}          
+{%- set gz_color_image_topic = camera_color_sdf_topic -%}                           {# -- Do not modify -- #}
+{%- set ros_color_image_topic = camera_color_sdf_topic -%}                          {# -- Do not modify -- #}
+{%- set ros_color_camera_info_topic = color_root_sdf_topic + '/camera_info' -%}          
+```
+2. Depth Camera
+```
+{%- set depth_root_sdf_topic = spawner_args['name'] + '/' + camera_name + '/depth' -%}
+{%- set camera_depth_sdf_topic = depth_root_sdf_topic + '/image_raw' -%}
+{%- set gz_depth_camera_info_topic = depth_root_sdf_topic + '/camera_info' -%}      {# -- Do not modify -- #}          
+{%- set gz_depth_image_topic = camera_depth_sdf_topic -%}                           {# -- Do not modify -- #}
+{%- set gz_pointcloud_topic = camera_depth_sdf_topic + '/points' -%}                {# -- Do not modify -- #}
+{%- set ros_depth_image_topic = camera_depth_sdf_topic -%}                          {# -- Do not modify -- #}
+{%- set ros_depth_camera_info_topic = depth_root_sdf_topic + '/camera_info' -%}        
+{%- set ros_pointcloud_topic = depth_root_sdf_topic + '/points' -%}                     
+```
+This results in the following topics:
+<table>
+  <thead>
+    <tr>
+      <th colspan="2" style="border: 1px solid; text-align:center;">Gazebo topics</th>
+      <th colspan="2" style="border: 1px solid; text-align:center;">ROS topics</th>
+    </tr>
+    <tr>
+      <th style="border: 1px solid; text-align:center;">Topic name</th>
+      <th style="border: 1px solid; text-align:center;">Msg type</th>
+      <th style="border: 1px solid; text-align:center;">Topic name</th>
+      <th style="border: 1px solid; text-align:center;">Msg type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid;">/uav1/realsense/color/camera_info</td>
+      <td style="border: 1px solid;">gz.msgs.CameraInfo</td>
+      <td style="border: 1px solid;">/uav1/realsense/color/camera_info</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/CameraInfo</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid;">/uav1/realsense/color/image_raw</td>
+      <td style="border: 1px solid;">gz.msgs.Image</td>
+      <td style="border: 1px solid;">/uav1/realsense/color/image_raw</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/Image</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid;">/uav1/realsense/depth/camera_info</td>
+      <td style="border: 1px solid;">gz.msgs.CameraInfo</td>
+      <td style="border: 1px solid;">/uav1/realsense/depth/camera_info</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/CameraInfo</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid;">/uav1/realsense/depth/image_raw</td>
+      <td style="border: 1px solid;">gz.msgs.Image</td>
+      <td style="border: 1px solid;">/uav1/realsense/depth/image_raw</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/Image</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid;">/uav1/realsense/depth/image_raw/points</td>
+      <td style="border: 1px solid;">gz.msgs.PointCloudPacked</td>
+      <td style="border: 1px solid;">/uav1/realsense/depth/points</td>
+      <td style="border: 1px solid;">sensor_msgs/msg/PointCloud2</td>
+    </tr>
+  </tbody>
+</table>
+
+
+For more details, please check the [realsense_rgb_plus_depth.sdf.jinja](./components/camera/realsense/realsense_rgb_plus_depth.sdf.jinja) example.
+
+
+
+
+
+### 2D Lidar
+The resulting 2D lidar-related ROS topics will look like as follows:
+- `/namespace/sensor_name/scan`
+
+There is one more related topic on the Gazebo server that converts `/scan` into a point cloud representation, but it is not being bridged to ROS:
+- `/namespace/sensor_name/scan/points`
+
+### 3D Lidar
+The resulting 2D lidar-related ROS topics will look like as follows:
+- `/namespace/sensor_name/points`
+
+There is one more related topic on the Gazebo server that converts `/points` into a 2D lidar scan representation, but it is not being bridged to ROS:
+- `/namespace/sensor_name`
 
 
 ### Debugging
@@ -141,105 +312,3 @@ Both issues are most likely caused by incorrect topic names. Verify that the top
 
 
 
-
-
-
-
-## Examples of supported sensors
-### RGB Camera
-Due to different frame conventions, an additional optical frame is required. You may change its name, since the TF publisher will read it from the SDF file. For example, I recommend checking the [bluefox_camera_macro](./components/camera/bluefox.sdf.jinja).
-
-
-The resulting camera-related ROS topics will look like as follows:
-- `/namespace/camera_name/image`
-- `/namespace/camera_name/camera_info`
-
-## Depth Camera
-### Naming convention regarding topics
-- 
-
-The resulting camera-related Gazebo topics will look like as follows:
-- `/namespace/camera_name/camera_info`
-- `/namespace/camera_name/image_raw`
-- `/namespace/camera_name/image_raw/points`
-
-The resulting camera-related ROS topics will look like as follows:
-- `/namespace/camera_name/camera_info`
-- `/namespace/camera_name/image_raw`
-- `/namespace/camera_name/image_raw/compressed`
-- `/namespace/camera_name/image_raw/compressedDepth`
-- `/namespace/camera_name/image_raw/theora`
-- `/namespace/camera_name/image_raw/zstd`
-- `/namespace/camera_name/points`
-
-
-
-
-### RGB-D Camera
-Currently, there is a bug that causes the point cloud to be misaligned with the camera's optical frame. As a result, the point cloud data must be manually transformed, which is not implemented on our side. Nevertheless, we still provide the optical frame for the RGB data.
-```
-{%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/camera_optical' -%}
-```
-
-
-The table below shows the Gazebo and ROS topics for a Realsense RGB-D camera, assuming the camera topic is defined in the SDF file as shown.
-```
-camera_topic_name = spawner_args['name'] + '/' + realsense + '/camera',
-```
-
-<table>
-  <thead>
-    <tr>
-      <th colspan="2" style="border: 1px solid; text-align:center;">Gazebo topics</th>
-      <th colspan="2" style="border: 1px solid; text-align:center;">ROS topics</th>
-    </tr>
-    <tr>
-      <th style="border: 1px solid; text-align:center;">Topic name</th>
-      <th style="border: 1px solid; text-align:center;">Msg type</th>
-      <th style="border: 1px solid; text-align:center;">Topic name</th>
-      <th style="border: 1px solid; text-align:center;">Msg type</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="border: 1px solid;">/uav1/realsense/camera_info</td>
-      <td style="border: 1px solid;">gz.msgs.CameraInfo</td>
-      <td style="border: 1px solid;">/uav1/realsense/camera/camera_info</td>
-      <td style="border: 1px solid;">sensor_msgs/msg/CameraInfo</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid;">/uav1/realsense/depth_image</td>
-      <td style="border: 1px solid;">gz.msgs.Image</td>
-      <td style="border: 1px solid;">/uav1/realsense/camera/depth/image_rect_raw</td>
-      <td style="border: 1px solid;">sensor_msgs/msg/Image</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid;">/uav1/realsense/image</td>
-      <td style="border: 1px solid;">gz.msgs.Image</td>
-      <td style="border: 1px solid;">/uav1/realsense/camera/color/image_raw</td>
-      <td style="border: 1px solid;">sensor_msgs/msg/Image</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid;">/namespace/camera_name/points</td>
-      <td style="border: 1px solid;">gz.msgs.PointCloudPacked</td>
-      <td style="border: 1px solid;">/uav1/realsense/camera/depth/color/points</td>
-      <td style="border: 1px solid;">sensor_msgs/msg/PointCloud2</td>
-    </tr>
-  </tbody>
-</table>
-
-
-
-### 2D lidars
-The resulting 2D lidar-related ROS topics will look like as follows:
-- `/namespace/sensor_name/scan`
-
-There is one more related topic on the Gazebo server that converts `/scan` into a point cloud representation, but it is not being bridged to ROS:
-- `/namespace/sensor_name/scan/points`
-
-### 3D lidars
-The resulting 2D lidar-related ROS topics will look like as follows:
-- `/namespace/sensor_name/points`
-
-There is one more related topic on the Gazebo server that converts `/points` into a 2D lidar scan representation, but it is not being bridged to ROS:
-- `/namespace/sensor_name`

@@ -12,7 +12,15 @@
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
     {%- set camera_link_name = camera_name -%}
-    {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/color_optical' -%}
+    {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '_optical' -%}
+
+    {# -- ROS and Gazebo Topics -- #}
+    {%- set root_sdf_topic = spawner_args['name'] + '/' + camera_name -%}
+    {%- set camera_sdf_topic = root_sdf_topic + '/image_raw' -%}
+    {%- set gz_color_image_topic = camera_sdf_topic -%}                           {# -- Do not modify -- #}
+    {%- set gz_camera_info_topic = root_sdf_topic + '/camera_info' -%}            {# -- Do not modify -- #}
+    {%- set ros_color_image_topic = camera_sdf_topic -%}                          {# -- Do not modify -- #}
+    {%- set ros_camera_info_topic = root_sdf_topic + '/camera_info' -%}           
 
     {# -- tf from link to sensor -- #}
     {%- set x_offset = 0.0 -%}
@@ -43,9 +51,10 @@
       {{ generic.gazebo_rgb_camera_macro(
         camera_name = camera_name,
         camera_gz_frame_id = camera_gz_frame_id,
-        camera_topic_name = spawner_args['name'] + '/' + camera_name + '/color/image_raw',
-        ros_camera_info_topic = spawner_args['name'] + '/' + camera_name + '/color/camera_info',
-        ros_color_image_topic = spawner_args['name'] + '/' + camera_name + '/color/image_raw',
+        camera_topic_name = camera_sdf_topic,
+        gz_camera_info_topic = gz_camera_info_topic,
+        ros_camera_info_topic = ros_camera_info_topic,
+        ros_color_image_topic = ros_color_image_topic,
         frame_rate = spawner_args[spawner_keyword]['update_rate'],
         horizontal_fov = 2.28638,
         image_width = 1280,
