@@ -4,16 +4,16 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from utils.jinja_loader import JinjaLoader
 
-LIDARS = "mrs_robots_description/sdf/components/rangefinder/"
+RANGEFINDERS = "mrs_robots_description/sdf/components/rangefinder/"
 
 
-def test_all_camera_macros():
+def test_all_rangefinder_macros():
     resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]
     loader = JinjaLoader(resource_paths)
 
     failures = []
 
-    temp_to_macros = loader.get_template_to_macros(LIDARS)
+    temp_to_macros = loader.get_template_to_macros(RANGEFINDERS)
     for template, macros in temp_to_macros.items():
         macro_name = macros[0]
         try:

@@ -20,7 +20,7 @@ def test_all_camera_macros():
             out = loader.render_macro_file(
                 template,
                 macro_name,
-                camera_name="realsense_top",
+                camera_name="camera_dummy",
                 parent_link="base_link",
                 x=0,
                 y=0,

@@ -7,7 +7,7 @@ from utils.jinja_loader import JinjaLoader
 LIDARS = "mrs_robots_description/sdf/components/lidar/"
 
 
-def test_all_camera_macros():
+def test_all_lidar_macros():
     resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]
     loader = JinjaLoader(resource_paths)
 
