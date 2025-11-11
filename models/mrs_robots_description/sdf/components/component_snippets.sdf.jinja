@@ -251,3 +251,8 @@ limitations under the License.
 {%- macro realsense_rgb_plus_depth_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
   {{ realsense_camera_rgb_plus_d.realsense_rgb_plus_depth_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
+
+{%- import "mrs_robots_description/sdf/components/camera/oak/oak_d.sdf.jinja" as oak_d -%}
+{%- macro oak_d_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ oak_d.oak_d_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}

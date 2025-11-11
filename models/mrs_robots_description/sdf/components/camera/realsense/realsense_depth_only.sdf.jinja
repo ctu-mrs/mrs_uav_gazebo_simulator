@@ -8,7 +8,7 @@
 
   {%- set spawner_keyword = 'enable-realsense-depth' -%}
   {%- set spawner_description = 'Add Intel Realsense D435 depth camera to the vehicle [1280x720 @ 30hz], pointed forward, placed on an aluminum frame above the body' -%}
-  {%- set spawner_default_args = {'realistic': False, 'update_rate': 30, 'noise': 0.0} -%}
+  {%- set spawner_default_args = {'update_rate': 30, 'noise': 0.0} -%}
 
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
