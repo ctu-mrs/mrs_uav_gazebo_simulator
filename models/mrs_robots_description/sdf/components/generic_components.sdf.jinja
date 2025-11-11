@@ -876,7 +876,7 @@ limitations under the License.
   <sensor name="{{ camera_name }}/depth" type="depth_camera">
     <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
     <always_on>true</always_on>
-    <visualize>true</visualize>
+    <visualize>false</visualize>
     <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
 
@@ -893,6 +893,7 @@ limitations under the License.
         <width> {{ image_width }} </width>
         <height>{{ image_height }}</height>
         <format>R_FLOAT32</format>
+        <anti_aliasing>0</anti_aliasing>
       </image>
       <clip>
         <near>{{ min_distance }}</near>

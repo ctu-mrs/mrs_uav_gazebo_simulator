@@ -799,6 +799,26 @@
 
     {# <!--}--> #}
 
+    {# Realsense placements {--> #}
+
+    {# realsense front {--> #}
+    {%- set realsense_front = components.realsense_rgb_plus_depth_macro(
+      camera_name = 'front_rgbd',
+      parent_link = root,
+      x = 0.118,
+      y = 0.0,
+      z = 0.016,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = realsense_mount,
+      spawner_args = spawner_args)
+    -%}
+    {{ realsense_front }}
+    {# <!--}--> #}
+
+    {# <!--}--> #}
+
     {# ====================== conditional components ==================== #}
 
     {# lidar mount / gps antenna visuals {--> #}
