@@ -36,16 +36,13 @@
 
       {{ generic.rangefinder_sensor_macro(
         name = sensor_name,
-        parent_frame_name = spawner_args['name'] + '/fcu',
-        sensor_frame_name = spawner_args['name'] + '/' + sensor_name,
-        topic = sensor_name + '/range',
         update_rate = spawner_args[spawner_keyword]['update_rate'],
+        sensor_link_name = sensor_name ~ "_sensor_link",
+        parent_link_name = parent_link,
         samples = 3,
-        fov = 0.03,
         min_distance = spawner_args[spawner_keyword]['min_range'],
         max_distance = spawner_args[spawner_keyword]['max_range'],
         resolution = 0.005,
-        noise = spawner_args[spawner_keyword]['noise'],
         x = x,
         y = y,
         z = z,
