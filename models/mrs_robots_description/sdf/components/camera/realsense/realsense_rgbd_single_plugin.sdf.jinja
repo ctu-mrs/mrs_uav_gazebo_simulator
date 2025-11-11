@@ -2,10 +2,10 @@
 {%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
 
 {# ============================= Realsense Camera Macro ============================ #}
-{# realsense_top_macro {--> #}
-{%- macro realsense_top_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+{# realsense_rgbd_single_plugin_macro {--> #}
+{%- macro realsense_rgbd_single_plugin_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
 
-  {%- set spawner_keyword = 'enable-realsense-top' -%}
+  {%- set spawner_keyword = 'enable-realsense-rgbd-single-plugin' -%}
   {%- set spawner_description = 'Add Intel Realsense D435 depth camera to the vehicle [1280x720 @ 30hz], pointed forward, placed on an aluminum frame above the body' -%}
   {%- set spawner_default_args = {'update_rate': 30, 'noise': 0.0} -%}
 
@@ -35,13 +35,13 @@
     {%- set pitch_offset = 0.0 -%}
     {%- set yaw_offset = 0.0 -%}
 
-    <!-- Realsense front {-->
+    <!-- Realsense {{ camera_name }} {-->
     <link name="{{ camera_link_name }}">
       <pose relative_to="{{ parent_link }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
       {{ generic.zero_inertial_macro() }}
       <!-- visuals {-->
       <visual name="body_visual">
-        <pose>0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+        <pose>-0.026 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
         <geometry>
           <mesh>
             <uri>model://mrs_robots_description/meshes/sensors/realsense_body.stl</uri>
@@ -56,7 +56,7 @@
         </material>
       </visual>
       <visual name="glass_visual">
-        <pose>0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+        <pose>-0.026 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
         <geometry>
           <mesh>
             <uri>model://mrs_robots_description/meshes/sensors/realsense_glass.stl</uri>
@@ -88,7 +88,7 @@
         image_width = 752,
         image_height = 480,
         min_distance = 0.1,
-        max_distance = 80,
+        max_distance = 12,
         noise_mean = 0.0,
         noise_stddev = spawner_args[spawner_keyword]['noise'],
         x_offset = x_offset,
@@ -107,6 +107,7 @@
     </joint>
 
     <link name="{{ camera_gz_frame_id }}">
+      {{ generic.zero_inertial_macro() }}
       <pose relative_to="{{ camera_link_name }}">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
     </link>
     <joint name="{{ camera_gz_frame_id }}_joint" type="fixed">

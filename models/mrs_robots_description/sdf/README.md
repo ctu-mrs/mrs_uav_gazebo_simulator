@@ -157,7 +157,7 @@ The Gazebo camera info and point cloud topics are named by the plugin, but we ca
 {%- set ros_pointcloud_topic = root_sdf_topic + '/points' -%}           {# -- Can be modified -- #} 
 ```
 
-For a working example, we recommend checking the [realsense_top_macro](./components/camera/realsense.sdf.jinja). The table below shows the Gazebo and ROS topics for Realsense RGB-D camera:
+For a working example, we recommend checking the [realsense_rgbd_single_plugin](./components/camera/realsense_rgbd_single_plugin.sdf.jinja). The table below shows the Gazebo and ROS topics for Realsense RGB-D camera:
 <table>
   <thead>
     <tr>
