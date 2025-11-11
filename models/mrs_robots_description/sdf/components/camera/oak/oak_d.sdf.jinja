@@ -119,6 +119,7 @@
     </joint>
 
     <link name="{{ camera_color_gz_frame_id }}">
+      {{ generic.zero_inertial_macro() }}
       <pose relative_to="{{ camera_link_name }}">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
     </link>
     <joint name="{{ camera_color_gz_frame_id }}_joint" type="fixed">
@@ -127,6 +128,7 @@
     </joint>
 
     <link name="{{ camera_depth_gz_frame_id }}">
+      {{ generic.zero_inertial_macro() }}
       <pose relative_to="{{ camera_link_name }}">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
     </link>
     <joint name="{{ camera_depth_gz_frame_id }}_joint" type="fixed">

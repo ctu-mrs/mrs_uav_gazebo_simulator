@@ -74,6 +74,7 @@
     </link>
 
     <link name="{{ camera_gz_frame_id }}">
+      {{ generic.zero_inertial_macro() }}
       <pose relative_to="{{ camera_link_name }}">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
     </link>
 

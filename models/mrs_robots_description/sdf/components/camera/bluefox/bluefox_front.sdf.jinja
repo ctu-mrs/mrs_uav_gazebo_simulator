@@ -3,7 +3,7 @@
 
 {# ============================= Bluefox Camera Front Macro ============================ #}
 {# bluefox_camera_front_macro {--> #}
-{%- macro bluefox_camera_front_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
+{%- macro bluefox_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
 
   {%- set spawner_keyword = 'enable-bluefox-camera-front' -%}
   {%- set spawner_description = 'Add bluefox camera to the vehicle [752x480 @ 50hz], pointing forward' -%}
@@ -30,10 +30,6 @@
     {%- set roll_offset = 0.0 -%}
     {%- set pitch_offset = 0.0 -%}
     {%- set yaw_offset = 0.0 -%}
-
-    {%- set roll = 0.0 -%}
-    {%- set pitch = 0.0 -%}
-    {%- set yaw = 0.0-%}
 
     <!-- bluefox camera {-->
     <link name="{{ camera_link_name }}">
@@ -79,6 +75,7 @@
     </link>
 
     <link name="{{ camera_gz_frame_id }}">
+      {{ generic.zero_inertial_macro() }}
       <pose relative_to="{{ camera_link_name }}">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
     </link>
 
