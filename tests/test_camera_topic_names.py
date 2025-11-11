@@ -67,7 +67,7 @@ def check_rgb_naming_convention(sdf_tag_topic: str, custom_topics: CameraRosGzBr
     assert sdf_tag_topic == custom_topics.image_topic, "Gazebo image topic is not equal to ROS image topic."
 
     gz_camera_info = replace_last_topic_segment(sdf_tag_topic, "camera_info")
-    assert gz_camera_info == custom_topics.gz_info_topic, "ROS_GZ_BRIDGE: CameraInfo Gazebo is not set up correctly."
+    assert gz_camera_info == custom_topics.gz_info_topic, "ROS_GZ_BRIDGE: CameraInfo Gazebo is incorrect."
 
 
 def get_depth_camera_topics_from_xml(camera_sensor) -> None:
@@ -102,7 +102,7 @@ def check_depth_naming_convention(sdf_tag_topic: str, custom_topics: DepthCamera
     assert sdf_tag_topic == custom_topics.image_topic, "Gazebo image topic is not equal to ROS image topic."
 
     gz_camera_info = replace_last_topic_segment(sdf_tag_topic, "camera_info")
-    assert gz_camera_info == custom_topics.gz_info_topic, "ROS_GZ_BRIDGE: CameraInfo Gazebo is not set up correctly."
+    assert gz_camera_info == custom_topics.gz_info_topic, "ROS_GZ_BRIDGE: Gazebo CameraInfo topic is incorrect."
 
 
 def get_rgbd_camera_topics_from_xml(camera_sensor) -> None:
@@ -143,10 +143,10 @@ def check_rgbd_naming_convention(sdf_tag_topic: str, custom_topics: RgbdCameraRo
     gz_image = sdf_tag_topic + "/image"
     gz_points = sdf_tag_topic + "/points"
 
-    assert gz_camera_info == custom_topics.gz_info_topic, "ROS_GZ_BRIDGE: Gazebo CameraInfo topic is not correct."
-    assert gz_image == custom_topics.rgb_image_topic, "ROS_GZ_BRIDGE: Gazebo RGB Image topic is not correct."
-    assert gz_depth_image == custom_topics.depth_image_topic, "ROS_GZ_BRIDGE: Gazebo Depth Image topic is not correct."
-    assert gz_points == custom_topics.gz_points_topic, "ROS_GZ_BRIDGE: Gazebo Points topic is not correct."
+    assert gz_camera_info == custom_topics.gz_info_topic, "ROS_GZ_BRIDGE: Gazebo CameraInfo topic is incorrect."
+    assert gz_image == custom_topics.rgb_image_topic, "ROS_GZ_BRIDGE: Gazebo RGB Image topic is incorrect."
+    assert gz_depth_image == custom_topics.depth_image_topic, "ROS_GZ_BRIDGE: Gazebo Depth Image topic is incorrect."
+    assert gz_points == custom_topics.gz_points_topic, "ROS_GZ_BRIDGE: Gazebo Points topic is incorrect."
 
 
 # def test_all_camera_topics():
