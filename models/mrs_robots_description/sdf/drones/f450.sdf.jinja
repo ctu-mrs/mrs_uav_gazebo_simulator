@@ -763,9 +763,9 @@
 
     {# Bluefox camera placements {--> #}
 
-    {# Bluefox (classic) {--> #}
-    {%- set bluefox_camera = components.bluefox_camera_macro(
-      camera_name = 'bluefox_optflow',
+    {# Bluefox down {--> #}
+    {%- set bluefox_camera_down = components.bluefox_camera_down_macro(
+      camera_name = 'bluefox_down',
       parent_link = root,
       x = 0.05,
       y = 0,
@@ -776,12 +776,12 @@
       mount = none,
       spawner_args = spawner_args)
     -%}
-    {{ bluefox_camera }}
+    {{ bluefox_camera_down }}
     {# <!--}--> #}
 
     {# Bluefox reverse {--> #}
     {%- set bluefox_camera_reverse = components.bluefox_camera_reverse_macro(
-      camera_name = 'bluefox_optflow',
+      camera_name = 'bluefox_reverse',
       parent_link = root,
       x = 0.05,
       y = 0,
@@ -864,7 +864,7 @@
     {# ====================== conditional components ==================== #}
 
     {# Bluefox mount {--> #}
-    {%- if bluefox_camera | replace('\s', '') | length != 0 or bluefox_camera_reverse | replace('\s', '') | length != 0 -%}
+    {%- if bluefox_camera_down | replace('\s', '') | length != 0 or bluefox_camera_reverse | replace('\s', '') | length != 0 -%}
       <!-- Bluefox mount {-->
       {{ bluefox_mount }}
       <!--}-->

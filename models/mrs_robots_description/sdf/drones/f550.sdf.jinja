@@ -792,9 +792,9 @@
 
     {# Bluefox camera placements {--> #}
 
-    {# Bluefox (classic) {--> #}
-    {{ components.bluefox_camera_macro(
-      camera_name = 'bluefox_optflow',
+    {# Bluefox down {--> #}
+    {{ components.bluefox_camera_down_macro(
+      camera_name = 'bluefox_down',
       parent_link = root,
       x = 0.87 * board_radius,
       y = 0,
@@ -809,7 +809,7 @@
 
     {# Bluefox reverse {--> #}
     {{ components.bluefox_camera_reverse_macro(
-      camera_name = 'bluefox_optflow',
+      camera_name = 'bluefox_reverse',
       parent_link = root,
       x = 0.87 * board_radius,
       y = 0,
