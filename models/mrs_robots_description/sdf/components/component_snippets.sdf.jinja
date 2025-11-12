@@ -206,19 +206,17 @@ limitations under the License.
 
 {# ============================= Cameras ============================ #}
 {# ==== Bluefox camera ==== #}
-{%- import "mrs_robots_description/sdf/components/camera/bluefox/bluefox.sdf.jinja" as bluefox_camera -%}
-{%- macro bluefox_camera_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ bluefox_camera.bluefox_camera_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- import "mrs_robots_description/sdf/components/camera/bluefox/bluefox.sdf.jinja" as bluefox_macros -%}
+{%- macro bluefox_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ bluefox_macros.bluefox_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
-{%- import "mrs_robots_description/sdf/components/camera/bluefox/bluefox_reverse.sdf.jinja" as bluefox_camera_reverse -%}
-{%- macro bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ bluefox_camera_reverse.bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
-{%- endmacro -%}
-
-{%- import "mrs_robots_description/sdf/components/camera/bluefox/bluefox_front.sdf.jinja" as bluefox_camera_front -%}
 {%- macro bluefox_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ bluefox_camera_front.bluefox_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+  {{ bluefox_macros.bluefox_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
+
+{%- macro bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ bluefox_macros.bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 {# ==== Mobius camera ==== #}
