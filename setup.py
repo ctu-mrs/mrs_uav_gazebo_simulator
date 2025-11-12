@@ -2,7 +2,7 @@ import os
 from setuptools import find_packages, setup
 
 package_name = 'mrs_uav_gazebo_simulator'
-data_directories = ['launch', 'config', 'models', 'ROMFS', 'tmux']
+data_directories = ['launch', 'config', 'models', 'ROMFS', 'tmux', 'tests']
 
 data_files_list = []
 
@@ -16,12 +16,8 @@ setup(
     name='mrs-uav-gazebo-simulator',
     version='2.0.0',
     packages=find_packages(exclude=['test']),
-    data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml']),
-        *data_files_list
-    ],
+    data_files=[('share/ament_index/resource_index/packages', ['resource/' + package_name]),
+                ('share/' + package_name, ['package.xml']), *data_files_list],
     install_requires=[
         'setuptools',
         'jinja2',
