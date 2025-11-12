@@ -1350,6 +1350,7 @@ class MrsDroneSpawner(Node):
             AttachedSensors.TWO_D_LIDAR: [],
             AttachedSensors.THREE_D_LIDAR: [],
             AttachedSensors.DEPTH_CAMERAS: [],
+            AttachedSensors.IMU: [],
         }
 
         # not using try-catch, it's already done during the sdf's generation
@@ -1366,7 +1367,8 @@ class MrsDroneSpawner(Node):
                 self.get_attached_rgbd_camera(attached_sensors, sensor)
             elif sensor_type == GazeboSensors.DEPTH_CAMERA:
                 self.get_attached_depth_camera(attached_sensors, sensor)
-
+            elif sensor_type == GazeboSensors.IMU:
+                self.get_attached_imu(attached_sensors, sensor)
         return attached_sensors
 
     # #}
@@ -1484,6 +1486,23 @@ class MrsDroneSpawner(Node):
 
     # #}
 
+    # #{ get_attached_imu(self, attached_sensors, imu_sensor)
+    def get_attached_imu(self, attached_sensors, imu_sensor):
+        gz_imu_topic = self.get_sensor_topic_from_tag_name(imu_sensor, SdfTopicTags.GZ_IMU)
+        ros_imu_topic = self.get_sensor_topic_from_tag_name(imu_sensor, SdfTopicTags.ROS_IMU)
+
+        required_topics = [gz_imu_topic, ros_imu_topic]
+
+        if not all(required_topics):
+            self.get_logger().warn("Skipping IMU because one or more required topics are missing.")
+            return
+
+        imu = ImuRosGzBridge(ros_imu_topic=ros_imu_topic, gz_imu_topic=gz_imu_topic)
+
+        attached_sensors[AttachedSensors.IMU].append(imu)
+
+    # #}
+
     # #{ get_number_of_vertical_samples(self, lidar_sensor)
     def get_number_of_vertical_samples(self, lidar_sensor):
         vertical_elements = lidar_sensor.getElementsByTagName('vertical')
@@ -1511,6 +1530,7 @@ class MrsDroneSpawner(Node):
             RosGzBridgeCategory.DEPTH_IMAGE: [],
             RosGzBridgeCategory.LASER_SCAN: [],
             RosGzBridgeCategory.POINTCLOUD: [],
+            RosGzBridgeCategory.IMU: [],
         }
 
         for camera in attached_sensors[AttachedSensors.CAMERAS]:
@@ -1544,6 +1564,10 @@ class MrsDroneSpawner(Node):
             # sensor_topics[RosGzBridgeCategory.POINTCLOUD].append(
             #     RosGzBridgeTopics(gazebo=depth_camera.gz_points_topic, ros=depth_camera.ros_points_topic))
 
+        for imu in attached_sensors[AttachedSensors.IMU]:
+            sensor_topics[RosGzBridgeCategory.IMU].append(
+                RosGzBridgeTopics(gazebo=imu.gz_imu_topic, ros=imu.ros_imu_topic))
+
         return sensor_topics
 
     # #}
@@ -1556,6 +1580,7 @@ class MrsDroneSpawner(Node):
             AttachedSensors.THREE_D_LIDAR,
             AttachedSensors.RGBD_CAMERAS,
             AttachedSensors.DEPTH_CAMERAS,
+            AttachedSensors.IMU,
         ))
 
         return flag
@@ -1578,11 +1603,10 @@ class MrsDroneSpawner(Node):
 
         sensor_topics = self.get_sensor_topics(attached_sensors)
 
-        rendered_template = template.render(
-            camera_info_topic_list=sensor_topics[RosGzBridgeCategory.CAMERA_INFO],
-            laser_scan_topic_list=sensor_topics[RosGzBridgeCategory.LASER_SCAN],
-            point_cloud_topic_list=sensor_topics[RosGzBridgeCategory.POINTCLOUD],
-        )
+        rendered_template = template.render(camera_info_topic_list=sensor_topics[RosGzBridgeCategory.CAMERA_INFO],
+                                            laser_scan_topic_list=sensor_topics[RosGzBridgeCategory.LASER_SCAN],
+                                            point_cloud_topic_list=sensor_topics[RosGzBridgeCategory.POINTCLOUD],
+                                            imu_topic_list=sensor_topics[RosGzBridgeCategory.IMU])
 
         filename = f'ros_gz_bridge_config_{uav_name}.yaml'
         filepath = os.path.join(self.tempfile_folder, filename)
