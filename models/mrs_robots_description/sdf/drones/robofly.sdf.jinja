@@ -147,13 +147,9 @@
 
       <!-- IMU {-->
       <!-- Noise modeled after IIM42653 -->
-      {{ generic.imu_sensor_macro(
+      {{ generic.imu_pixhawk_sensor_macro(
         name = "imu",
         update_rate = 250,
-        imu_sdf_topic_name = spawner_args['name'] + '/imu',
-        imu_gz_topic_name = spawner_args['name'] + '/imu',
-        imu_ros_topic_name = spawner_args['name'] + '/imu',
-        sensor_x = 0.0, sensor_y = 0.0, sensor_z = 0.0, sensor_roll = 0.0, sensor_pitch = 0.0, sensor_yaw = 0.0,
         angular_velocity_noise_mean_x = 0.0,
         angular_velocity_noise_std_x = 0.0008726646,
         angular_velocity_noise_mean_y = 0.0,

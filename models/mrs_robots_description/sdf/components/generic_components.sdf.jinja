@@ -695,7 +695,69 @@ limitations under the License.
       </z>
     </linear_acceleration>
   </imu>
-</sensor>{%- endmacro -%}
+</sensor>
+{%- endmacro -%}
+{# <!--}--> #}
+
+
+{# imu_pixhawk_sensor_macro {--> #}
+{%- macro imu_pixhawk_sensor_macro(name, update_rate, 
+                          angular_velocity_noise_mean_x, angular_velocity_noise_std_x, 
+                          angular_velocity_noise_mean_y, angular_velocity_noise_std_y, 
+                          angular_velocity_noise_mean_z, angular_velocity_noise_std_z, 
+                          linear_acceleration_noise_mean_x, linear_acceleration_noise_std_x, 
+                          linear_acceleration_noise_mean_y, linear_acceleration_noise_std_y, 
+                          linear_acceleration_noise_mean_z, linear_acceleration_noise_std_z) -%}
+<sensor name="{{ name }}_sensor" type="imu">
+  <always_on>1</always_on>
+  <update_rate>{{ update_rate }}</update_rate>
+  <imu>
+    <angular_velocity>
+      <!-- 0.05 deg/s converted to rad/s -->
+      <x>
+        <noise type="gaussian">
+          <mean>{{ angular_velocity_noise_mean_x }}</mean>
+          <stddev>{{ angular_velocity_noise_std_x }}</stddev>
+        </noise>
+      </x>
+      <y>
+        <noise type="gaussian">
+          <mean>{{ angular_velocity_noise_mean_y }}</mean>
+          <stddev>{{ angular_velocity_noise_std_y }}</stddev>
+        </noise>
+      </y>
+      <z>
+        <noise type="gaussian">
+          <mean>{{ angular_velocity_noise_mean_z }}</mean>
+          <stddev>{{ angular_velocity_noise_std_z }}</stddev>
+        </noise>
+      </z>
+    </angular_velocity>
+    <linear_acceleration>
+      <!-- X & Y axis: 0.65 mg-rms converted to m/ss -->
+      <x>
+        <noise type="gaussian">
+          <mean>{{ linear_acceleration_noise_mean_x }}</mean>
+          <stddev>{{ linear_acceleration_noise_std_x }}</stddev>
+        </noise>
+      </x>
+      <y>
+        <noise type="gaussian">
+          <mean>{{ linear_acceleration_noise_mean_y }}</mean>
+          <stddev>{{ linear_acceleration_noise_std_y }}</stddev>
+        </noise>
+      </y>
+      <!-- Z axis: 0.70 mg-rms converted to m/ss-->
+      <z>
+        <noise type="gaussian">
+          <mean>{{ linear_acceleration_noise_mean_z }}</mean>
+          <stddev>{{ linear_acceleration_noise_std_z }}</stddev>
+        </noise>
+      </z>
+    </linear_acceleration>
+  </imu>
+</sensor>
+{%- endmacro -%}
 {# <!--}--> #}
 
 {# gazebo_twod_lidar_plugin_macro {--> #}
