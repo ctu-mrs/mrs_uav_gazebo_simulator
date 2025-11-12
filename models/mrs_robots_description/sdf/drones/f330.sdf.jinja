@@ -554,5 +554,26 @@
     }}
     {# <!--}--> #}
 
+    {# ========================== camera sensors ======================== #}
+
+    {# Realsense placements {--> #}
+
+    {# Realsense front {--> #}
+    {{ components.realsense_front_macro(
+      camera_name = 'rgbd_front',
+      parent_link = root,
+      x = 0.096,
+      y = 0,
+      z = -0.025,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# <!--}--> #}
+
   </model>
 </sdf>

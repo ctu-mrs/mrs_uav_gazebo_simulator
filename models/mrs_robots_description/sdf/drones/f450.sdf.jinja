@@ -797,6 +797,70 @@
 
     {# <!--}--> #}
 
+    {# Realsense placements {--> #}
+
+    {# Realsense down {--> #}
+    {{ components.realsense_down_macro(
+      camera_name = 'rgbd_down',
+      parent_link = root,
+      x = 0.153,
+      y = 0,
+      z = -0.129,
+      roll = 0,
+      pitch = math.radians(90),
+      yaw = 0,
+      mount = realsense_down_mount,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# Realsense front pitched {--> #}
+    {{ components.realsense_front_pitched_macro(
+      camera_name = 'rgbd_front_pitched',
+      parent_link = root,
+      x = 0.1784,
+      y = 0,
+      z = -0.1074,
+      roll = 0,
+      pitch = math.radians(45),
+      yaw = 0,
+      mount = realsense_front_pitched_mount,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# Realsense front {--> #}
+    {{ components.realsense_front_macro(
+      camera_name = 'rgbd_front',
+      parent_link = root,
+      x = 0.181,
+      y = 0,
+      z = -0.089,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = realsense_front_mount,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# Realsense up {--> #}
+    {{ components.realsense_up_macro(
+      camera_name = 'rgbd_up',
+      parent_link = root,
+      x = 0.07,
+      y = 0,
+      z = 0.051,
+      roll = 0,
+      pitch = -math.radians(90),
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
+    {# <!--}--> #}
+
     {# ====================== conditional components ==================== #}
 
     {# Bluefox mount {--> #}

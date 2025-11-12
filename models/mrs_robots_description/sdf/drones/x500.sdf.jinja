@@ -811,8 +811,8 @@
     {# Realsense placements {--> #}
 
     {# realsense front {--> #}
-    {%- set realsense_front = components.realsense_rgb_plus_depth_macro(
-      camera_name = 'front_rgbd',
+    {%- set realsense_front = components.realsense_front_macro(
+      camera_name = 'rgbd_front',
       parent_link = root,
       x = 0.118,
       y = 0.0,
@@ -820,11 +820,47 @@
       roll = 0,
       pitch = 0,
       yaw = 0,
-      mount = realsense_mount,
+      mount = none,
       spawner_args = spawner_args)
     -%}
     {{ realsense_front }}
     {# <!--}--> #}
+
+    {# realsense up {--> #}
+    {%- set realsense_up = components.realsense_up_macro(
+      camera_name = 'rgbd_up',
+      parent_link = root,
+      x = 0.086,
+      y = 0,
+      z = 0.056,
+      roll = 0,
+      pitch = -math.radians(90),
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ realsense_up }}
+    {# <!--}--> #}
+
+    {# realsense down {--> #}
+    {%- set realsense_down = components.realsense_down_macro(
+      camera_name = 'rgbd_down',
+      parent_link = root,
+      x = 0.086,
+      y = 0,
+      z = -0.024,
+      roll = 0,
+      pitch = math.radians(90),
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ realsense_down }}
+    {# <!--}--> #}
+
+    {%- if realsense_front | replace('\s', '') | length != 0 or realsense_up | replace('\s', '') | length != 0 or realsense_down | replace('\s', '') | length != 0 -%}
+      {{ realsense_mount }}
+    {%- endif -%}
 
     {# <!--}--> #}
 
