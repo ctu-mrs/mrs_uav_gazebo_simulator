@@ -12,7 +12,7 @@
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
     {%- set camera_link_name = camera_name -%}
-    {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '_optical' -%}
+    {%- set camera_gz_frame_id = spawner_args['name'] + '/' + camera_name + '/color_optical' -%}
 
     {# -- ROS and Gazebo Topics -- #}
     {%- set root_sdf_topic = spawner_args['name'] + '/' + camera_name -%}
