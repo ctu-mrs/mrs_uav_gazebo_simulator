@@ -19,19 +19,19 @@
     {# -- ROS and Gazebo Topics -- #}
     {%- set color_root_sdf_topic = spawner_args['name'] + '/' + camera_name + '/color' -%}
     {%- set camera_color_sdf_topic = color_root_sdf_topic + '/image_raw' -%}
-    {%- set gz_color_camera_info_topic = color_root_sdf_topic + '/camera_info' -%}      {# -- Do not modify -- #}          
+    {%- set gz_color_camera_info_topic = color_root_sdf_topic + '/camera_info' -%}      {# -- Do not modify -- #}
     {%- set gz_color_image_topic = camera_color_sdf_topic -%}                           {# -- Do not modify -- #}
     {%- set ros_color_image_topic = camera_color_sdf_topic -%}                          {# -- Do not modify -- #}
-    {%- set ros_color_camera_info_topic = color_root_sdf_topic + '/camera_info' -%}          
-  
+    {%- set ros_color_camera_info_topic = color_root_sdf_topic + '/camera_info' -%}
+
     {%- set depth_root_sdf_topic = spawner_args['name'] + '/' + camera_name + '/depth' -%}
     {%- set camera_depth_sdf_topic = depth_root_sdf_topic + '/image_raw' -%}
-    {%- set gz_depth_camera_info_topic = depth_root_sdf_topic + '/camera_info' -%}      {# -- Do not modify -- #}          
+    {%- set gz_depth_camera_info_topic = depth_root_sdf_topic + '/camera_info' -%}      {# -- Do not modify -- #}
     {%- set gz_depth_image_topic = camera_depth_sdf_topic -%}                           {# -- Do not modify -- #}
     {%- set gz_pointcloud_topic = camera_depth_sdf_topic + '/points' -%}                {# -- Do not modify -- #}
     {%- set ros_depth_image_topic = camera_depth_sdf_topic -%}                          {# -- Do not modify -- #}
-    {%- set ros_depth_camera_info_topic = depth_root_sdf_topic + '/camera_info' -%}        
-    {%- set ros_pointcloud_topic = depth_root_sdf_topic + '/points' -%}                     
+    {%- set ros_depth_camera_info_topic = depth_root_sdf_topic + '/camera_info' -%}
+    {%- set ros_pointcloud_topic = depth_root_sdf_topic + '/points' -%}
 
     {# -- tf from link to sensor -- #}
     {%- set x_offset = 0.0 -%}
@@ -112,7 +112,7 @@
       }}
       <!--}-->
     </link>
-    
+
     <joint name="{{ camera_name }}_joint" type="fixed">
       <parent>{{ parent_link }}</parent>
       <child>{{ camera_link_name }}</child>
