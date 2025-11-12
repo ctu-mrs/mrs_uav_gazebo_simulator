@@ -149,7 +149,6 @@ def check_rgbd_naming_convention(sdf_tag_topic: str, custom_topics: RgbdCameraRo
     assert gz_points == custom_topics.gz_points_topic, "ROS_GZ_BRIDGE: Gazebo Points topic is incorrect."
 
 
-# def test_all_camera_topics():
 def test_camera_topics_names():
     resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]
     loader = JinjaLoader(resource_paths)

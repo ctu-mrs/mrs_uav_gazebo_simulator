@@ -98,7 +98,6 @@
         mass = mass,
         body_radius = body_radius,
         body_height = body_height,
-        rotor_velocity_slowdown_sim = rotor_velocity_slowdown_sim,
         ixx = body_ixx,
         ixy = body_ixy,
         ixz = body_ixz,
@@ -285,18 +284,6 @@
 
     </link>
 
-  {# Air drag {--> #}
-  {{ generic.gazebo_fluid_resistance_plugin_macro(
-    model_mass = mass,
-    verbose = true,
-    parent_link = root,
-    uav_body_resistance_x = 0.1,
-    uav_body_resistance_y = 0.1,
-    uav_body_resistance_z = 0.2,
-    )
-  }}
-  {# <!--}--> #}
-
     {# Propellers {--> #}
     {%- set prop_list = [
     {
@@ -415,84 +402,52 @@
     {%- set baro_topic = '/baro' -%}
     {%- set lidar_topic = '/lidar' -%}
 
-    <!-- Gazebo ground truth {-->
-    {{ generic.gazebo_groundtruth_macro(
-      home_latitude = 0,
-      home_longitude = 0,
-      home_altitude = 0)
-    }}
-    <!--}-->
-
     <!-- GPS {-->
-    {{ generic.gazebo_gps_macro(
-      gps_name = 'gps0',
-      parent_link = root,
-      update_rate = 10,
-      gps_noise = true,
-      gps_xy_random_walk = 2.0,
-      gps_z_random_walk = 4.0,
-      gps_xy_noise_density = '2.0e-4',
-      gps_z_noise_density = '4.0e-4',
-      gps_vxy_noise_density = 0.2,
-      gps_vz_noise_density = 0.4,
-      x = 0,
-      y = 0,
-      z = 0,
-      roll = 0,
-      pitch = 0,
-      yaw = 0)
-    }}
+    {{ generic.gps_sensor_macro(
+        name = "navsat",
+        update_rate = 10)
+      }}
     <!--}-->
 
     <!-- Magnetometer {-->
-    {{ generic.gazebo_magnetometer_macro(
-      pub_rate = 100,
-      noise_density = 0.0004,
-      random_walk = 0.0000064,
-      bias_correlation_time = 600,
-      mag_topic = mag_topic)
-    }}
+    <!-- Noise modeled after IIS2MDC -->
+      {{ generic.magnetometer_sensor_macro(
+        name = "magnetometer",
+        update_rate = 100,
+        noise_std_x = 0.0001,
+        noise_std_y = 0.0001,
+        noise_std_z = 0.0001)
+      }}
     <!--}-->
 
     <!-- Barometer {-->
-    {{ generic.gazebo_barometer_macro(
-      baro_topic = baro_topic,
-      pub_rate = 50,
-      baro_drift_pa_per_sec = 0)
-    }}
-    <!--}-->
-
-    <!-- Mavlink interface {-->
-    {{ generic.gazebo_mavlink_interface_macro(
-      imu_topic = imu_topic,
-      mag_topic = mag_topic,
-      baro_topic = baro_topic,
-      lidar_topic = lidar_topic,
-      mavlink_config = spawner_args['mavlink_config'])
-    }}
+    <!-- Noise modeled after BMP390 -->
+      {{ generic.barometer_sensor_macro(
+        name = "air_pressure",
+        update_rate = 50,
+        noise_mean = 0,
+        noise_std = 3)
+      }}
     <!--}-->
 
     <!-- IMU {-->
-    <!-- NOTE: IMU has to be last, otherwise the simulation is extremely slow! -->
-    {{ generic.gazebo_imu_macro(
-      imu_name = 'imu',
-      parent_link = root,
-      imu_topic = '/imu',
-      gyroscope_noise_density = 0.00018665,
-      gyroscope_random_walk = 0.000038785,
-      gyroscope_bias_correlation_time = 1000.0,
-      gyroscope_turn_on_bias_sigma = 0.0087,
-      accelerometer_noise_density = 0.00186,
-      accelerometer_random_walk = 0.006,
-      accelerometer_bias_correlation_time = 300.0,
-      accelerometer_turn_on_bias_sigma = 0.1960,
-      x = 0,
-      y = 0,
-      z = 0,
-      roll = 0,
-      pitch = 0,
-      yaw = 0)
-    }}
+    <!-- Noise modeled after IIM42653 -->
+      {{ generic.imu_sensor_macro(
+        name = "imu",
+        update_rate = 250,
+        angular_velocity_noise_mean_x = 0.0,
+        angular_velocity_noise_std_x = 0.0008726646,
+        angular_velocity_noise_mean_y = 0.0,
+        angular_velocity_noise_std_y = 0.0008726646,
+        angular_velocity_noise_mean_z = 0.0,
+        angular_velocity_noise_std_z = 0.0008726646,
+        linear_acceleration_noise_mean_x = 0.0,
+        linear_acceleration_noise_std_x = 0.00637,
+        linear_acceleration_noise_mean_y = 0.0,
+        linear_acceleration_noise_std_y = 0.00637,
+        linear_acceleration_noise_mean_z = 0.0,
+        linear_acceleration_noise_std_z = 0.00686)
+      }}
     <!--}-->
 
     <!--}-->
@@ -602,11 +557,7 @@
     },
     ]
     -%}
-    {{ components.omni_ultrasounds_macro(
-      sensors_list = ultrasonic_sensors_list,
-      parent_link = root,
-      spawner_args = spawner_args)
-    }}
+
     {# <!--}--> #}
 
     {# ========================== LIDAR sensors ========================= #}
@@ -628,7 +579,6 @@
     {# Ouster {--> #}
     {%- set ouster = components.ouster_macro(
       parent_link = root,
-      sensor_name = 'os',
       x = 0.0,
       y = 0.0,
       z = 0.0611,
@@ -646,90 +596,26 @@
     {# Realsense placements {--> #}
 
     {# Realsense front {--> #}
-    {{ components.realsense_front_macro(
-      camera_name = 'rgbd',
-      camera_suffix='',
+    {{ components.realsense_rgb_plus_depth_macro(
+      camera_name = 'front_rgbd',
       parent_link = root,
-      x = 0.2255,
-      y = 0,
-      z = -0.0155,
+      x = 0.118,
+      y = 0.0,
+      z = 0.016,
       roll = 0,
       pitch = 0,
       yaw = 0,
-      mount = none,
+      mount = realsense_mount,
       spawner_args = spawner_args)
     }}
     {# <!--}--> #}
 
     {# <!--}--> #}
 
-    {# Servo camera {--> #}
-    {{ components.servo_camera_macro(
-      parent = root,
-      parent_frame_name = spawner_args['name'] + '/fcu',
-      camera_frame_name = spawner_args['name'] + '/servo_camera_optical',
-      sensor_base_frame_name = spawner_args['name'] + '/servo_camera',
-      offset_pitch_link_x = 0.12928,
-      offset_pitch_link_y = '7.605e-5',
-      offset_pitch_link_z = -0.006051,
-      offset_pitch_link_roll = 0.0,
-      offset_pitch_link_yaw = 0.0,
-      offset_pitch_link_pitch = 0.0,
-      offset_roll_link_x = 0.0966901,
-      offset_roll_link_y = 0.00200395,
-      offset_roll_link_z = -0.130549,
-      offset_roll_link_roll = 0.0,
-      offset_roll_link_yaw = 0.0,
-      offset_roll_link_pitch = 0.0,
-      tilt_update_rate = 30.0,
-      min_pitch = -1.046,
-      max_pitch = 1.57,
-      min_roll = -0.6,
-      max_roll = 0.6,
-      max_pitch_rate = 0.2,
-      max_roll_rate = 0.2,
-      camera_update_rate = 30,
-      horizontal_fov = 1.92,
-      img_width = 1920,
-      img_height = 1080,
-      compensate_tilt_roll = true,
-      compensate_tilt_pitch = true,
-      pitch_link_mesh_file = sony_camera_mesh_file,
-      roll_link_mesh_file = gimbal_mesh_file,
-      mesh_scale = '',
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
 
     {# ========================== other sensors ========================= #}
 
-    {# Light {--> #}
-    {{ components.light_macro(
-      parent_link = root,
-      max_pitch_rate = 0.1,
-      x = 0.2,
-      y = 0.0,
-      z = -0.1,
-      roll = 0,
-      pitch = 0,
-      yaw = 0,
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
-
-    {# Safety LED {--> #}
-    {{ components.safety_led_macro(
-      parent_link = root,
-      failure_duration_threshold = 0.2,
-      x = -0.202,
-      y = 0.0,
-      z = -0.0195,
-      roll = 0,
-      pitch = 0,
-      yaw = math.radians(180),
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
+  
 
   </model>
 </sdf>
