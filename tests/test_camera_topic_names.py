@@ -5,6 +5,7 @@ from ament_index_python.packages import get_package_share_directory
 from utils.jinja_loader import JinjaLoader
 from mrs_uav_gazebo_simulator.utils.spawner_enums import *
 from xml.dom import minidom
+import traceback
 
 CAMERAS = "mrs_robots_description/sdf/components/camera/"
 
@@ -157,26 +158,30 @@ def test_camera_topics_names():
 
     temp_to_macros = loader.get_template_to_macros(CAMERAS)
     for template, macros in temp_to_macros.items():
-        macro_name = macros[0]
-        try:
-            camera_sdf = get_camera_sdf(loader, template, macro_name)
-            camera_xml = minidom.parseString(camera_sdf)
-            sensor_blocks = camera_xml.getElementsByTagName('sensor')
-            for sensor in sensor_blocks:
-                sensor_type = sensor.getAttribute('type')
-                if sensor_type == GazeboSensors.CAMERA:
-                    sdf_tag_topic, custom_topics = get_rgb_camera_topics_from_xml(sensor)
-                    check_rgb_naming_convention(sdf_tag_topic, custom_topics)
-                if sensor_type == GazeboSensors.DEPTH_CAMERA:
-                    sdf_tag_topic, custom_topics = get_depth_camera_topics_from_xml(sensor)
-                    check_depth_naming_convention(sdf_tag_topic, custom_topics)
-                if sensor_type == GazeboSensors.RGBD_CAMERA:
-                    sdf_tag_topic, custom_topics = get_rgbd_camera_topics_from_xml(sensor)
-                    check_rgbd_naming_convention(sdf_tag_topic, custom_topics)
+        for macro_name in macros:
+            if "template" in macro_name:
+                continue
+            try:
+                camera_sdf = get_camera_sdf(loader, template, macro_name)
+                camera_xml = minidom.parseString(camera_sdf)
+                sensor_blocks = camera_xml.getElementsByTagName('sensor')
+                for sensor in sensor_blocks:
+                    sensor_type = sensor.getAttribute('type')
+                    if sensor_type == GazeboSensors.CAMERA:
+                        sdf_tag_topic, custom_topics = get_rgb_camera_topics_from_xml(sensor)
+                        check_rgb_naming_convention(sdf_tag_topic, custom_topics)
+                    if sensor_type == GazeboSensors.DEPTH_CAMERA:
+                        sdf_tag_topic, custom_topics = get_depth_camera_topics_from_xml(sensor)
+                        check_depth_naming_convention(sdf_tag_topic, custom_topics)
+                    if sensor_type == GazeboSensors.RGBD_CAMERA:
+                        sdf_tag_topic, custom_topics = get_rgbd_camera_topics_from_xml(sensor)
+                        check_rgbd_naming_convention(sdf_tag_topic, custom_topics)
 
-        except Exception as e:
-            failures.append((template, macro_name, str(e)))
+            except Exception as e:
+                print(f"Error while rendering {template}::{macro_name}")
+                traceback.print_exc()
+                failures.append((f"{template}::{macro_name}", f"{type(e).__name__}: {e}"))
 
     if failures:
-        lines = [f"{t} :: {m} -> {err}" for (t, m, err) in failures]
-        pytest.fail("Some macros failed:\n" + "\n".join(lines), pytrace=False)
+        lines = [f"{t} -> {err}" for (t, err) in failures]
+        pytest.fail("Some macros failed:\n" + "\n".join(lines), pytrace=True)

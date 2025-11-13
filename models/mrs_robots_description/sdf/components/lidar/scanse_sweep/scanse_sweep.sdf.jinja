@@ -10,7 +10,7 @@
 
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
-    
+
     <!-- scanse sweep {-->
     {%- set sensor_name = 'scanse_sweep' -%}
     {%- set sensor_link_name = sensor_name -%}

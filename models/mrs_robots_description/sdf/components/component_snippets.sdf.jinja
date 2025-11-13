@@ -206,25 +206,27 @@ limitations under the License.
 
 {# ============================= Cameras ============================ #}
 {# ==== Bluefox camera ==== #}
-{%- import "mrs_robots_description/sdf/components/camera/bluefox/bluefox.sdf.jinja" as bluefox_camera -%}
-{%- macro bluefox_camera_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ bluefox_camera.bluefox_camera_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- import "mrs_robots_description/sdf/components/camera/bluefox/bluefox.sdf.jinja" as bluefox_macros -%}
+{%- macro bluefox_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ bluefox_macros.bluefox_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
-{%- import "mrs_robots_description/sdf/components/camera/bluefox/bluefox_reverse.sdf.jinja" as bluefox_camera_reverse -%}
-{%- macro bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ bluefox_camera_reverse.bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
-{%- endmacro -%}
-
-{%- import "mrs_robots_description/sdf/components/camera/bluefox/bluefox_front.sdf.jinja" as bluefox_camera_front -%}
 {%- macro bluefox_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ bluefox_camera_front.bluefox_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+  {{ bluefox_macros.bluefox_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
+
+{%- macro bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ bluefox_macros.bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 {# ==== Mobius camera ==== #}
-{%- import "mrs_robots_description/sdf/components/camera/mobius/mobius.sdf.jinja" as mobius_camera -%}
-{%- macro mobius_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ mobius_camera.mobius_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- import "mrs_robots_description/sdf/components/camera/mobius/mobius.sdf.jinja" as mobius_macros -%}
+{%- macro mobius_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ mobius_macros.mobius_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
+
+{%- macro mobius_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ mobius_macros.mobius_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 
@@ -232,9 +234,9 @@ limitations under the License.
 {# Note: All of these cameras have misaligned point clouds. We are waiting for a fix. #}
 
 {# ==== Realsense camera example ==== #}
-{%- import "mrs_robots_description/sdf/components/camera/realsense/realsense_depth_only.sdf.jinja" as realsense_camera_depth -%}
+{%- import "mrs_robots_description/sdf/components/camera/realsense/realsense_depth_only.sdf.jinja" as realsense_depth_macros -%}
 {%- macro realsense_depth_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ realsense_camera_depth.realsense_depth_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+  {{ realsense_depth_macros.realsense_depth_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 
@@ -242,14 +244,29 @@ limitations under the License.
 {# Note: All of these cameras have misaligned point clouds. We are waiting for a fix. #}
 
 {# ==== Realsense camera ==== #}
+
+{# NOTE: unused - single plugin does not permit different settings for RGB and for Depth
 {%- import "mrs_robots_description/sdf/components/camera/realsense/realsense_rgbd_single_plugin.sdf.jinja" as realsense_camera_top -%}
-{%- macro realsense_rgbd_single_plugin_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ realsense_camera_top.realsense_rgbd_single_plugin_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- macro realsense_rgbd_single_plugin_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ realsense_camera_top.realsense_rgbd_single_plugin_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
+#}
+
+{%- import "mrs_robots_description/sdf/components/camera/realsense/realsense_rgb_plus_depth.sdf.jinja" as realsense_macros -%}
+{%- macro realsense_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ realsense_macros.realsense_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
-{%- import "mrs_robots_description/sdf/components/camera/realsense/realsense_rgb_plus_depth.sdf.jinja" as realsense_camera_rgb_plus_d -%}
-{%- macro realsense_rgb_plus_depth_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ realsense_camera_rgb_plus_d.realsense_rgb_plus_depth_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- macro realsense_up_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ realsense_macros.realsense_up_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
+
+{%- macro realsense_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ realsense_macros.realsense_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
+
+{%- macro realsense_front_pitched_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ realsense_macros.realsense_front_pitched_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 {%- import "mrs_robots_description/sdf/components/camera/oak/oak_d.sdf.jinja" as oak_d -%}

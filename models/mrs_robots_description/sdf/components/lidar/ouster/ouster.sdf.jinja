@@ -10,7 +10,7 @@
 
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
-    
+
     {# model selection {--> #}
     {%- set sensor_name = 'ouster' -%}
     {%- set ouster_model = spawner_args[spawner_keyword]['model'] -%}
