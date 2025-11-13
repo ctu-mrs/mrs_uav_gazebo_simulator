@@ -156,43 +156,35 @@ limitations under the License.
 {%- endmacro -%}
 {# <!--}--> #}
 
+
 {# ======================= rangefinder sensors ====================== #}
 {# ==== Garmin ==== #}
-{%- import "mrs_robots_description/sdf/components/rangefinder/garmin.sdf.jinja" as garmin_rangefinder -%}
-
+{%- import "mrs_robots_description/sdf/components/rangefinder/garmin/garmin_down_pixhawk.sdf.jinja" as garmin_rangefinder_pixhawk -%}
 {%- macro garmin_down_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ garmin_rangefinder.garmin_down_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+  {{ garmin_rangefinder_pixhawk.garmin_down_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
+
+{%- import "mrs_robots_description/sdf/components/rangefinder/garmin/garmin_down_external.sdf.jinja" as garmin_rangefinder_down_external -%}
 {%- macro garmin_down_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ garmin_rangefinder.garmin_down_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args)}}
+  {{ garmin_rangefinder_down_external.garmin_down_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args)}}
 {%- endmacro -%}
+
+{%- import "mrs_robots_description/sdf/components/rangefinder/garmin/garmin_up_external.sdf.jinja" as garmin_rangefinder_up_external -%}
 {%- macro garmin_up_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ garmin_rangefinder.garmin_up_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
-{%- endmacro -%}
-
-
-{# ==== Teraranger ==== #}
-{# TODO: Not tested in ROS2 #}
-{%- import "mrs_robots_description/sdf/components/rangefinder/teraranger.sdf.jinja" as teraranger_rangefinder -%}
-
-{%- macro teraranger_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ teraranger_rangefinder.teraranger_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
-{%- endmacro -%}
-{%- macro teraranger_evo_tower_macro(parent_link, visualize, frame_name, parent_frame_name, gaussian_noise, x, y, z, roll, pitch, yaw, spawner_args) -%}
-  {{ teraranger_rangefinder.teraranger_evo_tower_macro(parent_link, visualize, frame_name, parent_frame_name, gaussian_noise, x, y, z, roll, pitch, yaw, spawner_args) }}
+  {{ garmin_rangefinder_up_external.garmin_up_external_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 
 {# ========================== 2D LIDAR sensors ========================= #}
 {# ==== RP lidar ==== #}
-{%- import "mrs_robots_description/sdf/components/lidar/rplidar.sdf.jinja" as rplidar_lidar -%}
+{%- import "mrs_robots_description/sdf/components/lidar/rplidar/rplidar.sdf.jinja" as rplidar_lidar -%}
 {%- macro rplidar_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
   {{ rplidar_lidar.rplidar_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 
 {# ==== Scance Sweep lidar ==== #}
-{%- import "mrs_robots_description/sdf/components/lidar/scanse_sweep.sdf.jinja" as scanse_sweep_lidar -%}
+{%- import "mrs_robots_description/sdf/components/lidar/scanse_sweep/scanse_sweep.sdf.jinja" as scanse_sweep_lidar -%}
 {%- macro scanse_sweep_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
   {{ scanse_sweep_lidar.scanse_sweep_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
@@ -200,48 +192,84 @@ limitations under the License.
 
 {# ========================== 3D LIDAR sensors ========================= #}
 {# ==== Ouster lidar ==== #}
-{%- import "mrs_robots_description/sdf/components/lidar/ouster.sdf.jinja" as ouster_lidar -%}
+{%- import "mrs_robots_description/sdf/components/lidar/ouster/ouster.sdf.jinja" as ouster_lidar -%}
 {%- macro ouster_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
   {{ ouster_lidar.ouster_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 {# ==== Velodyne lidar ==== #}
-{%- import "mrs_robots_description/sdf/components/lidar/velodyne.sdf.jinja" as velodyne_lidar -%}
+{%- import "mrs_robots_description/sdf/components/lidar/velodyne/velodyne.sdf.jinja" as velodyne_lidar -%}
 {%- macro velodyne_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
   {{ velodyne_lidar.velodyne_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 
-
-{# ============================= cameras ============================ #}
+{# ============================= Cameras ============================ #}
 {# ==== Bluefox camera ==== #}
-{%- import "mrs_robots_description/sdf/components/camera/bluefox.sdf.jinja" as bluefox_camera -%}
+{%- import "mrs_robots_description/sdf/components/camera/bluefox/bluefox.sdf.jinja" as bluefox_macros -%}
+{%- macro bluefox_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ bluefox_macros.bluefox_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
 
-{%- macro bluefox_camera_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
-  {{ bluefox_camera.bluefox_camera_macro(camera_name, parent_link, x, y, z, mount, spawner_args) }}
+{%- macro bluefox_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ bluefox_macros.bluefox_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
-{%- macro bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
-  {{ bluefox_camera.bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, mount, spawner_args) }}
-{%- endmacro -%}
-{%- macro bluefox_camera_front_macro(camera_name, parent_link, x, y, z, mount, spawner_args) -%}
-  {{ bluefox_camera.bluefox_camera_front_macro(camera_name, parent_link, x, y, z, mount, spawner_args) }}
+
+{%- macro bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ bluefox_macros.bluefox_camera_reverse_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 {# ==== Mobius camera ==== #}
-{%- import "mrs_robots_description/sdf/components/camera/mobius.sdf.jinja" as mobius_camera -%}
+{%- import "mrs_robots_description/sdf/components/camera/mobius/mobius.sdf.jinja" as mobius_macros -%}
+{%- macro mobius_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ mobius_macros.mobius_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
 
-{%- macro mobius_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ mobius_camera.mobius_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
-{%- endmacro -%}
-{%- macro mobius_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ mobius_camera.mobius_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
-{%- endmacro -%}
-{%- macro mobius_back_left_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ mobius_camera.mobius_back_left_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
-{%- endmacro -%}
-{%- macro mobius_back_right_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
-  {{ mobius_camera.mobius_back_right_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- macro mobius_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ mobius_macros.mobius_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
 
-</sdf>
+{# ============================= Depth cameras ============================ #}
+{# Note: All of these cameras have misaligned point clouds. We are waiting for a fix. #}
+
+{# ==== Realsense camera example ==== #}
+{%- import "mrs_robots_description/sdf/components/camera/realsense/realsense_depth_only.sdf.jinja" as realsense_depth_macros -%}
+{%- macro realsense_depth_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ realsense_depth_macros.realsense_depth_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
+
+
+{# ============================= RGB-D cameras ============================ #}
+{# Note: All of these cameras have misaligned point clouds. We are waiting for a fix. #}
+
+{# ==== Realsense camera ==== #}
+
+{# NOTE: unused - single plugin does not permit different settings for RGB and for Depth
+{%- import "mrs_robots_description/sdf/components/camera/realsense/realsense_rgbd_single_plugin.sdf.jinja" as realsense_camera_top -%}
+{%- macro realsense_rgbd_single_plugin_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ realsense_camera_top.realsense_rgbd_single_plugin_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
+#}
+
+{%- import "mrs_robots_description/sdf/components/camera/realsense/realsense_rgb_plus_depth.sdf.jinja" as realsense_macros -%}
+{%- macro realsense_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ realsense_macros.realsense_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
+
+{%- macro realsense_up_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ realsense_macros.realsense_up_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
+
+{%- macro realsense_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ realsense_macros.realsense_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
+
+{%- macro realsense_front_pitched_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ realsense_macros.realsense_front_pitched_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}
+
+{%- import "mrs_robots_description/sdf/components/camera/oak/oak_d.sdf.jinja" as oak_d -%}
+{%- macro oak_d_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+  {{ oak_d.oak_d_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
+{%- endmacro -%}

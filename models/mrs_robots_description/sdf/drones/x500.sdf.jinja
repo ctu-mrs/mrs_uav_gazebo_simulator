@@ -758,26 +758,32 @@
 
     {# Bluefox camera placements {--> #}
 
-    {# bluefox (classic) {--> #}
-    {%- set bluefox_camera = components.bluefox_camera_macro(
-      camera_name = 'bluefox',
+    {# bluefox down {--> #}
+    {%- set bluefox_camera_down = components.bluefox_camera_down_macro(
+      camera_name = 'bluefox_down',
       parent_link = root,
       x = 0.0,
       y = -0.0515,
       z = -0.038,
+      roll = 0.0,
+      pitch = math.radians(90),
+      yaw = 0.0,
       mount = none,
       spawner_args = spawner_args)
     -%}
-    {{ bluefox_camera }}
+    {{ bluefox_camera_down }}
     {# <!--}--> #}
 
-    {# bluefox (front) {--> #}
+    {# bluefox front {--> #}
     {%- set bluefox_camera_front = components.bluefox_camera_front_macro(
       camera_name = 'bluefox_front',
       parent_link = root,
       x = 0.10,
       y = 0.0,
       z = 0.0,
+      roll = 0.0,
+      pitch = 0.0,
+      yaw = 0.0,
       mount = none,
       spawner_args = spawner_args)
     -%}
@@ -791,11 +797,70 @@
       x = 0.0,
       y = -0.0515,
       z = -0.038,
+      roll = 0.0,
+      pitch = math.radians(90),
+      yaw = math.radians(180),
       mount = none,
       spawner_args = spawner_args)
     -%}
     {{ bluefox_camera_reverse }}
     {# <!--}--> #}
+
+    {# <!--}--> #}
+
+    {# Realsense placements {--> #}
+
+    {# realsense front {--> #}
+    {%- set realsense_front = components.realsense_front_macro(
+      camera_name = 'rgbd_front',
+      parent_link = root,
+      x = 0.118,
+      y = 0.0,
+      z = 0.016,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ realsense_front }}
+    {# <!--}--> #}
+
+    {# realsense up {--> #}
+    {%- set realsense_up = components.realsense_up_macro(
+      camera_name = 'rgbd_up',
+      parent_link = root,
+      x = 0.086,
+      y = 0,
+      z = 0.056,
+      roll = 0,
+      pitch = -math.radians(90),
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ realsense_up }}
+    {# <!--}--> #}
+
+    {# realsense down {--> #}
+    {%- set realsense_down = components.realsense_down_macro(
+      camera_name = 'rgbd_down',
+      parent_link = root,
+      x = 0.086,
+      y = 0,
+      z = -0.024,
+      roll = 0,
+      pitch = math.radians(90),
+      yaw = 0,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ realsense_down }}
+    {# <!--}--> #}
+
+    {%- if realsense_front | replace('\s', '') | length != 0 or realsense_up | replace('\s', '') | length != 0 or realsense_down | replace('\s', '') | length != 0 -%}
+      {{ realsense_mount }}
+    {%- endif -%}
 
     {# <!--}--> #}
 
@@ -813,7 +878,7 @@
     {# <!--}--> #}
 
     {# Bluefox mount {--> #}
-    {%- if bluefox_camera | replace('\s', '') | length != 0 or bluefox_camera_reverse | replace('\s', '') | length != 0 -%}
+    {%- if bluefox_camera_down | replace('\s', '') | length != 0 or bluefox_camera_reverse | replace('\s', '') | length != 0 -%}
       <!-- Bluefox mount {-->
       {{ bluefox_mount }}
       <!--}-->

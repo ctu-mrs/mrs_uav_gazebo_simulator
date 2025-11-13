@@ -1,0 +1,70 @@
+<?xml version="1.0"? encoding="utf-8">
+{%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
+
+{# garmin_down_macro (connected through pixhawk) {--> #}
+{%- macro garmin_down_macro(parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-rangefinder' -%}
+  {%- set spawner_description = 'Add a laser rangefinder (Garmin LIDAR-Lite v3) pointing down. Creates a Gazebo publisher for gazebo_mavlink_interface. ROS topic must be created by mavros. Do not set range outside <0.06 - 40.0> (unrealistic)' -%}
+  {%- set spawner_default_args = {'update_rate': 100, 'min_range': 0.1, 'max_range': 36.0, 'noise': 0.01} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {%- set sensor_name = 'lidar' -%}
+
+    <!-- garmin down {-->
+
+    <!-- sensor {-->
+    <link name="{{ sensor_name }}_sensor_link">
+      <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+
+      {{ generic.zero_inertial_macro() }}
+
+      {{ generic.visual_mesh_macro(
+        name = sensor_name,
+        mesh_file = 'model://mrs_robots_description/meshes/sensors/garmin_lidar_v3.stl',
+        mesh_scale = '0.001 0.001 0.001',
+        color = 'DarkGrey',
+        x = 0.015,
+        y = 0,
+        z = 0,
+        roll = 0,
+        pitch = 0,
+        yaw = 0)
+      }}
+
+      {{ generic.rangefinder_sensor_macro(
+        name = sensor_name,
+        update_rate = spawner_args[spawner_keyword]['update_rate'],
+        sensor_link_name = sensor_name ~ "_sensor_link",
+        parent_link_name = parent_link,
+        samples = 3,
+        min_distance = spawner_args[spawner_keyword]['min_range'],
+        max_distance = spawner_args[spawner_keyword]['max_range'],
+        resolution = 0.005,
+        x = x,
+        y = y,
+        z = z,
+        roll = roll,
+        pitch = pitch,
+        yaw = yaw)
+      }}
+
+    </link>
+
+    <joint name='{{ sensor_name }}_sensor_joint' type='fixed'>
+      <child>{{ sensor_name }}_sensor_link</child>
+      <parent>{{ parent_link }}</parent>
+    </joint>
+    <!--}-->
+
+    <!-- mount {-->
+    {{ mount if mount }}
+    <!--}-->
+
+    <!--}-->
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}

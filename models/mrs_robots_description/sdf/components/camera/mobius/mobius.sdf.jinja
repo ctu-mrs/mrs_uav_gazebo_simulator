@@ -1,0 +1,157 @@
+<?xml version="1.0"? encoding="utf-8">
+{%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
+
+{# ================================================================================= #}
+{# ------------------------------- Mobius Camera Macro ----------------------------- #}
+{# ================================================================================= #}
+
+{# ----------------------------------- Template ------------------------------------ #}
+
+{# template_mobius_camera_macro {-->#}
+{%- macro template_mobius_camera_macro(uav_name, camera_name, update_rate, noise, x, y, z, roll, pitch, yaw) -%}
+
+  {%- set camera_link_name = camera_name -%}
+  {%- set camera_gz_frame_id = uav_name + '/' + camera_name + '/color_optical' -%}
+
+  {# -- ROS and Gazebo Topics -- #}
+  {%- set root_sdf_topic = uav_name + '/' + camera_name -%}
+  {%- set camera_sdf_topic = root_sdf_topic + '/image_raw' -%}
+  {%- set gz_color_image_topic = camera_sdf_topic -%}                           {# -- Do not modify -- #}
+  {%- set gz_camera_info_topic = root_sdf_topic + '/camera_info' -%}            {# -- Do not modify -- #}
+  {%- set ros_color_image_topic = camera_sdf_topic -%}                          {# -- Do not modify -- #}
+  {%- set ros_camera_info_topic = root_sdf_topic + '/camera_info' -%}
+
+  {# -- tf from link to sensor -- #}
+  {%- set x_offset = 0.0 -%}
+  {%- set y_offset = 0.0 -%}
+  {%- set z_offset = 0.0 -%}
+  {%- set roll_offset = 0.0 -%}
+  {%- set pitch_offset = 0.0 -%}
+  {%- set yaw_offset = 0.0 -%}
+
+  <!-- Mobius camera {{ camera_name }} {-->
+  <link name="{{ camera_link_name }}">
+    <pose relative_to="{{ parent_link }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+    {{ generic.zero_inertial_macro() }}
+    {{ generic.visual_mesh_macro(
+      name = camera_name + "_visual",
+      mesh_file = 'model://mrs_robots_description/meshes/sensors/mobius.dae',
+      mesh_scale = '1 1 1',
+      color = 'DarkGrey',
+      x = -0.004,
+      y = 0.0045,
+      z = 0,
+      roll = 0,
+      pitch = 0,
+      yaw = 0)
+    }}
+
+    <!-- sensor {-->
+    {{ generic.gazebo_rgb_camera_macro(
+      camera_name = camera_name,
+      camera_gz_frame_id = camera_gz_frame_id,
+      camera_topic_name = camera_sdf_topic,
+      gz_camera_info_topic = gz_camera_info_topic,
+      ros_camera_info_topic = ros_camera_info_topic,
+      ros_color_image_topic = ros_color_image_topic,
+      frame_rate = update_rate,
+      horizontal_fov = 2.28638,
+      image_width = 1280,
+      image_height = 720,
+      min_distance = 0.02,
+      max_distance = 40,
+      noise_mean = 0.0,
+      noise_stddev = noise,
+      x_offset = x_offset,
+      y_offset = y_offset,
+      z_offset = z_offset,
+      roll_offset = roll_offset,
+      pitch_offset = pitch_offset,
+      yaw_offset = yaw_offset)
+    }}
+    <!--}-->
+  </link>
+
+  <link name="{{ camera_gz_frame_id }}">
+    {{ generic.zero_inertial_macro() }}
+    <pose relative_to="{{ camera_link_name }}">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+  </link>
+
+  <joint name="{{ camera_name }}_joint" type="fixed">
+    <parent>{{ parent_link }}</parent>
+    <child>{{ camera_link_name }}</child>
+  </joint>
+
+  <joint name="{{ camera_gz_frame_id }}_joint" type="fixed">
+    <parent>{{ camera_link_name }}</parent>
+    <child>{{ camera_gz_frame_id }}</child>
+  </joint>
+
+  <!--}-->
+
+{%- endmacro -%}
+{# <!--}--> #}
+
+{# -------------------------------- Implementations -------------------------------- #}
+
+{# mobius_camera_front_macro {-->#}
+{%- macro mobius_camera_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-mobius-camera-front' -%}
+  {%- set spawner_description = 'Add mobius camera to the vehicle [1280x720 @ 30hz], pointing forward' -%}
+  {%- set spawner_default_args = {'update_rate': 30, 'noise': 0.007} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {{ template_mobius_camera_macro(
+      uav_name = spawner_args['name'],
+      camera_name = camera_name,
+      update_rate = spawner_args[spawner_keyword]['update_rate'],
+      noise = spawner_args[spawner_keyword]['noise'],
+      x = x,
+      y = y,
+      z = z,
+      roll = roll,
+      pitch = pitch,
+      yaw = yaw)
+    }}
+
+    <!-- mount {-->
+    {{ mount if mount }}
+    <!--}-->
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}
+
+{# mobius_camera_down_macro {-->#}
+{%- macro mobius_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-mobius-camera-down' -%}
+  {%- set spawner_description = 'Add mobius camera to the vehicle [1280x720 @ 30hz], pointing down' -%}
+  {%- set spawner_default_args = {'update_rate': 30, 'noise': 0.007} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {{ template_mobius_camera_macro(
+      uav_name = spawner_args['name'],
+      camera_name = camera_name,
+      update_rate = spawner_args[spawner_keyword]['update_rate'],
+      noise = spawner_args[spawner_keyword]['noise'],
+      x = x,
+      y = y,
+      z = z,
+      roll = roll,
+      pitch = pitch,
+      yaw = yaw)
+    }}
+
+    <!-- mount {-->
+    {{ mount if mount }}
+    <!--}-->
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}

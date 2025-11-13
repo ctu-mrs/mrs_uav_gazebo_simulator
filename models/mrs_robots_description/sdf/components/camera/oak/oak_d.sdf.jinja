@@ -1,0 +1,181 @@
+<?xml version="1.0"? encoding="utf-8">
+{%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
+
+{# ================================================================================= #}
+{# ------------------------------- OAK-D Camera Macro ------------------------------ #}
+{# ================================================================================= #}
+
+{# NOTE:  This RGB-D camera is using two plugins - one for RGB and one for Depth
+          This way, both cameras can run different settings #}
+
+{# ----------------------------------- Template ------------------------------------ #}
+
+{# template_oak_rgbd_macro {--> #}
+{%- macro template_oak_rgbd_macro(uav_name, camera_name, update_rate, noise, x, y, z, roll, pitch, yaw, parent_link) -%}
+{# Generic macro to avoid code repetition #}
+
+  {%- set camera_link_name = camera_name -%}
+  {%- set camera_color_gz_frame_id = uav_name + '/' + camera_name + '/color_optical' -%}
+  {%- set camera_depth_gz_frame_id = uav_name + '/' + camera_name + '/depth_optical' -%}
+
+  {# -- ROS and Gazebo Topics -- #}
+  {%- set color_root_sdf_topic = uav_name + '/' + camera_name + '/color' -%}
+  {%- set camera_color_sdf_topic = color_root_sdf_topic + '/image_raw' -%}
+  {%- set gz_color_camera_info_topic = color_root_sdf_topic + '/camera_info' -%}      {# -- Do not modify -- #}
+  {%- set gz_color_image_topic = camera_color_sdf_topic -%}                           {# -- Do not modify -- #}
+  {%- set ros_color_image_topic = camera_color_sdf_topic -%}                          {# -- Do not modify -- #}
+  {%- set ros_color_camera_info_topic = color_root_sdf_topic + '/camera_info' -%}
+
+  {%- set depth_root_sdf_topic = uav_name + '/' + camera_name + '/depth' -%}
+  {%- set camera_depth_sdf_topic = depth_root_sdf_topic + '/image_raw' -%}
+  {%- set gz_depth_camera_info_topic = depth_root_sdf_topic + '/camera_info' -%}      {# -- Do not modify -- #}
+  {%- set gz_depth_image_topic = camera_depth_sdf_topic -%}                           {# -- Do not modify -- #}
+  {%- set gz_pointcloud_topic = camera_depth_sdf_topic + '/points' -%}                {# -- Do not modify -- #}
+  {%- set ros_depth_image_topic = camera_depth_sdf_topic -%}                          {# -- Do not modify -- #}
+  {%- set ros_depth_camera_info_topic = depth_root_sdf_topic + '/camera_info' -%}
+  {%- set ros_pointcloud_topic = depth_root_sdf_topic + '/points' -%}
+
+  {# -- tf from link to sensor -- #}
+  {%- set x_offset = 0.0 -%}
+  {%- set y_offset = 0.0 -%}
+  {%- set z_offset = 0.0 -%}
+  {%- set roll_offset = 0.0 -%}
+  {%- set pitch_offset = 0.0 -%}
+  {%- set yaw_offset = 0.0 -%}
+
+  <!-- OAK-D {{ camera_name }} {-->
+  <link name="{{ camera_link_name }}">
+    <pose relative_to="{{ parent_link }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+    {{ generic.zero_inertial_macro() }}
+
+    <!-- visuals {-->
+    <visual name="body_visual">
+      <pose>0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+      <geometry>
+        <mesh>
+          <uri>model://mrs_robots_description/meshes/sensors/oakd_enclosure.stl</uri>
+          <scale>0.001 0.001 0.001</scale>
+        </mesh>
+      </geometry>
+      <material>
+        <script>
+          <name>Gazebo/White</name>
+          <uri>file://media/materials/scripts/gazebo.material</uri>
+        </script>
+      </material>
+    </visual>
+    <!--}-->
+
+    <!-- sensors {-->
+    {{ generic.gazebo_rgb_camera_macro(
+        camera_name = camera_name,
+        camera_gz_frame_id = camera_color_gz_frame_id,
+        camera_topic_name = camera_color_sdf_topic,
+        gz_camera_info_topic = gz_color_camera_info_topic,
+        ros_camera_info_topic = ros_color_camera_info_topic,
+        ros_color_image_topic = ros_color_image_topic,
+        frame_rate = update_rate,
+        horizontal_fov = 1.2,
+        image_width = 4056,
+        image_height = 3040,
+        min_distance = 0.2,
+        max_distance = 12,
+        noise_mean = 0.0,
+        noise_stddev = noise,
+        x_offset = x_offset,
+        y_offset = y_offset,
+        z_offset = z_offset,
+        roll_offset = roll_offset,
+        pitch_offset = pitch_offset,
+        yaw_offset = yaw_offset)
+      }}
+      {{ generic.gazebo_depth_camera_macro(
+        camera_name = camera_name,
+        camera_gz_frame_id = camera_depth_gz_frame_id,
+        camera_topic_name = camera_depth_sdf_topic,
+        gz_camera_info_topic = gz_depth_camera_info_topic,
+        gz_pointcloud_topic = gz_pointcloud_topic,
+        ros_depth_image_topic = ros_depth_image_topic,
+        ros_camera_info_topic = ros_depth_camera_info_topic,
+        ros_pointcloud_topic = ros_pointcloud_topic,
+        frame_rate = update_rate,
+        horizontal_fov = 1.25,
+        image_width = 1280,
+        image_height = 800,
+        min_distance = 0.35,
+        max_distance = 12,
+        noise_mean = 0.0,
+        noise_stddev = noise,
+        x_offset = x_offset,
+        y_offset = y_offset,
+        z_offset = z_offset,
+        roll_offset = roll_offset,
+        pitch_offset = pitch_offset,
+        yaw_offset = yaw_offset)
+      }}
+      <!--}-->
+    </link>
+
+    <joint name="{{ camera_name }}_joint" type="fixed">
+      <parent>{{ parent_link }}</parent>
+      <child>{{ camera_link_name }}</child>
+    </joint>
+
+    <link name="{{ camera_color_gz_frame_id }}">
+      {{ generic.zero_inertial_macro() }}
+      <pose relative_to="{{ camera_link_name }}">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+    </link>
+    <joint name="{{ camera_color_gz_frame_id }}_joint" type="fixed">
+      <parent>{{ camera_link_name }}</parent>
+      <child>{{ camera_color_gz_frame_id }}</child>
+    </joint>
+
+    <link name="{{ camera_depth_gz_frame_id }}">
+      {{ generic.zero_inertial_macro() }}
+      <pose relative_to="{{ camera_link_name }}">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+    </link>
+    <joint name="{{ camera_depth_gz_frame_id }}_joint" type="fixed">
+      <parent>{{ camera_link_name }}</parent>
+      <child>{{ camera_depth_gz_frame_id }}</child>
+    </joint>
+
+  <!--}-->
+
+{%- endmacro -%}
+{# <!--}--> #}
+
+{# -------------------------------- Implementations -------------------------------- #}
+
+{# oak_d_macro {--> #}
+{%- macro oak_d_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-oakd' -%}
+  {%- set spawner_description = 'Add OAK-D camera, pointed forward, placed on an aluminum frame above the body' -%}
+  {%- set spawner_default_args = {'update_rate': 30, 'noise': 0.0} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {{ template_oak_rgbd_macro(
+      uav_name = spawner_args['name'],
+      camera_name = camera_name,
+      update_rate = spawner_args[spawner_keyword]['update_rate'],
+      noise = spawner_args[spawner_keyword]['noise'],
+      x = x,
+      y = y,
+      z = z,
+      roll = roll,
+      pitch = pitch,
+      yaw = yaw,
+      parent_link = parent_link)
+    }}
+
+    <!-- mount {-->
+      {{ mount if mount }}
+    <!--}-->
+
+    <!--}-->
+  {%- endif -%}
+
+{%- endmacro -%}
+{# <!--}--> #}

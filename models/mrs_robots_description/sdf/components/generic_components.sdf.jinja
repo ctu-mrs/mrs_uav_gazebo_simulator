@@ -686,11 +686,61 @@ limitations under the License.
 </sensor>{%- endmacro -%}
 {# <!--}--> #}
 
-
-{# gazebo_lidar_plugin_macro {--> #}
+{# gazebo_twod_lidar_plugin_macro {--> #}
 {# --- sensor is always defined with respect to the sensor_link frame #}
-{%- macro gazebo_lidar_plugin_macro( 
-                      lidar_name, lidar_frame_name, lidar_topic_name,
+{%- macro gazebo_twod_lidar_plugin_macro( 
+                      lidar_name, lidar_gz_frame_id, lidar_sdf_topic_name, lidar_gz_topic_name, lidar_ros_topic_name,
+                      sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
+                      update_rate, 
+                      horiz_num_samples, horiz_resolution, horiz_min_angle, horiz_max_angle, 
+                      range_min, range_max, range_resolution,
+                      noise_mean, noise_std
+                      ) -%}
+
+  <sensor name="{{ lidar_name }}/sensor" type='gpu_lidar'>
+    <pose>{{ sensor_x }} {{ sensor_y }} {{ sensor_z }} {{ sensor_roll }} {{ sensor_pitch }} {{ sensor_yaw }}</pose>
+    <topic>{{ lidar_sdf_topic_name }}</topic>
+    <update_rate>{{ update_rate }}</update_rate>
+    <gz_frame_id>{{ lidar_gz_frame_id }}</gz_frame_id>
+    <gz_pointcloud_topic>{{ lidar_gz_topic_name }}</gz_pointcloud_topic>
+    <ros_pointcloud_topic>{{ lidar_ros_topic_name }}</ros_pointcloud_topic>
+    <ray>
+        <scan>
+            <horizontal>
+                <samples>{{horiz_num_samples | int }}</samples>
+                <resolution>{{horiz_resolution}}</resolution>
+                <min_angle>{{horiz_min_angle}}</min_angle>
+                <max_angle>{{horiz_max_angle}}</max_angle>
+            </horizontal>
+            <vertical>
+                <samples>1</samples>
+                <resolution>0.01</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+            </vertical>
+        </scan>
+        <range>
+            <min>{{range_min}}</min>
+            <max>{{range_max}}</max>
+            <resolution>{{range_resolution}}</resolution>
+        </range>
+        <noise>
+            <type>gaussian</type>
+            <mean>{{noise_mean}}</mean>
+            <stddev>{{noise_std}}</stddev>
+        </noise>
+    </ray>
+    <always_on>1</always_on>
+    <visualize>false</visualize>
+  </sensor>
+{%- endmacro -%}
+{# <!--}--> #}
+
+
+{# gazebo_threed_lidar_plugin_macro {--> #}
+{# --- sensor is always defined with respect to the sensor_link frame #}
+{%- macro gazebo_threed_lidar_plugin_macro( 
+                      lidar_name, lidar_gz_frame_id, lidar_sdf_topic_name, lidar_gz_topic_name, lidar_ros_topic_name,
                       sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
                       update_rate, 
                       horiz_num_samples, horiz_resolution, horiz_min_angle, horiz_max_angle, 
@@ -699,11 +749,13 @@ limitations under the License.
                       noise_mean, noise_std
                       ) -%}
 
-  <sensor name="{{ lidar_name }}_sensor" type='gpu_lidar'>
+  <sensor name="{{ lidar_name }}/sensor" type='gpu_lidar'>
     <pose>{{ sensor_x }} {{ sensor_y }} {{ sensor_z }} {{ sensor_roll }} {{ sensor_pitch }} {{ sensor_yaw }}</pose>
-    <topic>{{ lidar_topic_name }}</topic>
     <update_rate>{{ update_rate }}</update_rate>
-    <gz_frame_id>{{ lidar_frame_name }}</gz_frame_id>
+    <gz_frame_id>{{ lidar_gz_frame_id }}</gz_frame_id>
+    <topic>{{ lidar_sdf_topic_name }}</topic>
+    <gz_pointcloud_topic>{{ lidar_gz_topic_name }}</gz_pointcloud_topic>
+    <ros_pointcloud_topic>{{ lidar_ros_topic_name }}</ros_pointcloud_topic>
     <ray>
         <scan>
             <horizontal>
@@ -735,8 +787,6 @@ limitations under the License.
   </sensor>
 {%- endmacro -%}
 {# <!--}--> #}
-
-
 
 {# rangefinder_sensor_macro {--> #}
 {%- macro rangefinder_sensor_macro(name, update_rate, sensor_link_name, parent_link_name, samples, min_distance, max_distance, resolution, x, y, z, roll, pitch, yaw) -%}
@@ -774,18 +824,24 @@ limitations under the License.
 
 {# ========================== camera sensors ========================= #}
 
-{# camera_macro {--> #}
-{%- macro camera_macro(parent_link, camera_name, parent_frame_name, camera_frame_name, sensor_base_frame_name, camera_topic_name, frame_rate, 
-                      horizontal_fov, image_width, image_height, min_distance, max_distance, 
-                      noise_mean, noise_stddev,  
-                      x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
-  <sensor name="{{ camera_name }}_sensor" type="camera">
-    <pose relative_to="{{ parent_link }}">{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
+{# gazebo_rgb_camera_macro {--> #}
+{%- macro gazebo_rgb_camera_macro(camera_name, camera_gz_frame_id, 
+                                  camera_topic_name, ros_camera_info_topic, ros_color_image_topic, gz_camera_info_topic,
+                                  frame_rate, horizontal_fov, image_width, image_height, 
+                                  min_distance, max_distance, noise_mean, noise_stddev,  
+                                  x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
+  <sensor name="{{ camera_name }}/color" type="camera">
+    <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
     <always_on>true</always_on>
-    <visualize>false</visualize> <!-- this has no effect -->
-    <topic>{{ camera_topic_name }}/image_raw</topic>
-    <gz_frame_id>{{ camera_frame_name }}</gz_frame_id>
+    <visualize>false</visualize>
+    <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
+
+    <topic>{{ camera_topic_name }}</topic>
+    <ros_camera_info_topic>{{ ros_camera_info_topic }}</ros_camera_info_topic>
+    <ros_color_image_topic>{{ ros_color_image_topic }}</ros_color_image_topic>
+    <gz_camera_info_topic>{{ gz_camera_info_topic }}</gz_camera_info_topic>
+
     <camera name="{{ camera_name }}">
       <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
       <image>
@@ -797,7 +853,7 @@ limitations under the License.
         <far>{{ max_distance }}</far>
       </clip>
        <!-- Noise is sampled independently per pixel on each frame.
-        That pixel's noise value is added to each of its color
+        That noise value is added to each of its color
         channels, which at that point lie in the range [0,1]. -->
       <noise>
         <type>gaussian</type>
@@ -810,20 +866,34 @@ limitations under the License.
 {%- endmacro -%}
 {# <!--}--> #}
 
-{# camera_macro_meshless {--> #}
-{%- macro camera_macro_meshless(parent_link, camera_name, parent_frame_name, camera_frame_name, sensor_base_frame_name, camera_topic_name, frame_rate, horizontal_fov, image_width, image_height, min_distance, max_distance, noise_mean, noise_stddev, x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
-<link name="{{ camera_name }}_link">
-  <pose relative_to="{{ parent_link }}">{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
-  {{ zero_inertial_macro() }}
-  <sensor name="{{ camera_name }}_sensor" type="camera">
-    <topic>{{ camera_topic_name }}/image_raw</topic>
-    <gz_frame_id>{{ camera_frame_name }}</gz_frame_id>
+{# gazebo_depth_camera_macro {--> #}
+{%- macro gazebo_depth_camera_macro(camera_name, camera_gz_frame_id, camera_topic_name, 
+                                   ros_camera_info_topic, ros_depth_image_topic, ros_pointcloud_topic, 
+                                   gz_camera_info_topic, gz_pointcloud_topic,
+                                   frame_rate, horizontal_fov, image_width, image_height, 
+                                   min_distance, max_distance, noise_mean, noise_stddev,  
+                                   x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
+  <sensor name="{{ camera_name }}/depth" type="depth_camera">
+    <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
+    <always_on>true</always_on>
+    <visualize>false</visualize>
+    <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
     <update_rate>{{ frame_rate }}</update_rate>
-    <camera>
+
+    <topic>{{ camera_topic_name }}</topic>
+    <ros_camera_info_topic>{{ ros_camera_info_topic }}</ros_camera_info_topic>
+    <ros_depth_image_topic>{{ ros_depth_image_topic }}</ros_depth_image_topic>
+    <ros_pointcloud_topic>{{ ros_pointcloud_topic }}</ros_pointcloud_topic>
+    <gz_camera_info_topic>{{ gz_camera_info_topic }}</gz_camera_info_topic>
+    <gz_pointcloud_topic>{{ gz_pointcloud_topic }}</gz_pointcloud_topic>
+
+    <camera name="{{ camera_name }}">
       <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
       <image>
-        <width>{{ image_width }}</width>
+        <width> {{ image_width }} </width>
         <height>{{ image_height }}</height>
+        <format>R_FLOAT32</format>
+        <anti_aliasing>0</anti_aliasing>
       </image>
       <clip>
         <near>{{ min_distance }}</near>
@@ -831,46 +901,56 @@ limitations under the License.
       </clip>
       <noise>
         <type>gaussian</type>
-        <!-- Noise is sampled independently per pixel on each frame.
-        That pixels noise value is added to each of its color
-        channels, which at that point lie in the range [0,1]. -->
         <mean>{{ noise_mean }}</mean>
         <stddev>{{ noise_stddev }}</stddev>
       </noise>
     </camera>
-    {#
-    <plugin name="{{ camera_name }}_plugin" filename="libMrsGazeboCommonResources_CameraPlugin.so">
-      <alwaysOn>true</alwaysOn>
-      <updateRate>{{ frame_rate }}</updateRate>
-      <cameraName>{{ camera_name }}</cameraName>
-      <imageTopicName>image_raw</imageTopicName>
-      <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-      <frameName>/{{ camera_frame_name }}</frameName>
-      <hackBaseline>0.0</hackBaseline>
-      <distortionK1>0.0</distortionK1>
-      <distortionK2>0.0</distortionK2>
-      <distortionK3>0.0</distortionK3>
-      <distortionT1>0.0</distortionT1>
-      <distortionT2>0.0</distortionT2>
-      <parentFrameName>{{ parent_frame_name }}</parentFrameName>
-      <sensorBaseFrameName>{{ sensor_base_frame_name }}</sensorBaseFrameName>
-      <x>{{ x }}</x>
-      <y>{{ y }}</y>
-      <z>{{ z }}</z>
-      <roll>{{ roll }}</roll>
-      <pitch>{{ pitch }}</pitch>
-      <yaw>{{ yaw }}</yaw>
-    </plugin>
-    #}
   </sensor>
-</link>
-
-<joint name="{{ camera_name }}_joint" type="fixed">
-  <parent>{{ parent_link }}</parent>
-  <child>{{ camera_name }}_link</child>
-</joint>
-
 {%- endmacro -%}
 {# <!--}--> #}
+
+{# gazebo_rgbd_camera_macro {--> #}
+{%- macro gazebo_rgbd_camera_macro(camera_name, camera_gz_frame_id, camera_topic_name, 
+                                   ros_camera_info_topic, ros_color_image_topic, ros_depth_image_topic, ros_pointcloud_topic,
+                                   gz_camera_info_topic, gz_pointcloud_topic,
+                                   frame_rate, horizontal_fov, image_width, image_height, 
+                                   min_distance, max_distance, noise_mean, noise_stddev,  
+                                   x_offset, y_offset, z_offset, roll_offset, pitch_offset, yaw_offset) -%}
+  <sensor name="{{ camera_name }}/camera" type="rgbd_camera">
+    <pose>{{ x_offset }} {{ y_offset }} {{ z_offset }} {{ roll_offset }} {{ pitch_offset }} {{ yaw_offset }}</pose>
+    <always_on>true</always_on>
+    <visualize>false</visualize>
+    <gz_frame_id>{{ camera_gz_frame_id }}</gz_frame_id>
+    <update_rate>{{ frame_rate }}</update_rate>
+    
+    <topic>{{ camera_topic_name }}</topic>
+    <ros_camera_info_topic>{{ ros_camera_info_topic }}</ros_camera_info_topic>
+    <ros_color_image_topic>{{ ros_color_image_topic }}</ros_color_image_topic>
+    <ros_depth_image_topic>{{ ros_depth_image_topic }}</ros_depth_image_topic>
+    <ros_pointcloud_topic>{{ ros_pointcloud_topic }}</ros_pointcloud_topic>
+    <gz_camera_info_topic>{{ gz_camera_info_topic }}</gz_camera_info_topic>
+    <gz_pointcloud_topic>{{ gz_pointcloud_topic }}</gz_pointcloud_topic>
+
+    <camera name="{{ camera_name }}">
+      <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
+      <image>
+        <width> {{ image_width }} </width>
+        <height>{{ image_height }}</height>
+        <format>R8G8B8</format>
+      </image>
+      <clip>
+        <near>{{ min_distance }}</near>
+        <far>{{ max_distance }}</far>
+      </clip>
+      <noise>
+        <type>gaussian</type>
+        <mean>{{ noise_mean }}</mean>
+        <stddev>{{ noise_stddev }}</stddev>
+      </noise>
+    </camera>
+  </sensor>
+{%- endmacro -%}
+{# <!--}--> #}
+
 
 </sdf>
