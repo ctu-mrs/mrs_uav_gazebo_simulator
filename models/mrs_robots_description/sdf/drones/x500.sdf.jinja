@@ -612,7 +612,7 @@
 
       <!-- IMU {-->
       <!-- Noise modeled after IIM42653 -->
-      {{ generic.imu_sensor_macro(
+      {{ generic.imu_pixhawk_sensor_macro(
         name = "imu",
         update_rate = 250,
         angular_velocity_noise_mean_x = 0.0,

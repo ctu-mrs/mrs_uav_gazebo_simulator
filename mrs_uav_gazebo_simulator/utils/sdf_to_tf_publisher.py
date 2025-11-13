@@ -5,6 +5,7 @@ from tf2_ros import StaticTransformBroadcaster
 from geometry_msgs.msg import TransformStamped, Transform
 
 from mrs_uav_gazebo_simulator.utils.sdf_tf_enums import SensorLinkData, LinkToSensorData, TfData
+from mrs_uav_gazebo_simulator.utils.spawner_enums import GazeboSensors
 
 
 class SingletonMeta(type):
@@ -25,10 +26,10 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
         self._base_frame = base_frame
         if self._base_frame is None:
             raise RuntimeError(
-                f"[Sdf2Tf_Publisher] base_frame is not defined in the config file, cannot create tf publisher."
-            )
+                f"[Sdf2Tf_Publisher] base_frame is not defined in the config file, cannot create tf publisher.")
         self._ros_node = ros_node
-        self._camera_types = ["camera", "rgbd_camera", "depth_camera"]
+        self._camera_types = [GazeboSensors.CAMERA, GazeboSensors.RGBD_CAMERA, GazeboSensors.DEPTH_CAMERA]
+
         self._transformations = []
         self._broadcaster = StaticTransformBroadcaster(self._ros_node)
 
@@ -44,8 +45,7 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
         for link_name, data in links_to_sensors.items():
             if not self._register_sensor_link_transform(link_name=link_name, data=data):
                 self._ros_node.get_logger().info(
-                    f"[Sdf2Tf_Publisher] Sensor link {link_name} has no pose, cannot create its tf publisher."
-                )
+                    f"[Sdf2Tf_Publisher] Sensor link {link_name} has no pose, cannot create its tf publisher.")
                 continue
             sensors = data[LinkToSensorData.SENSORS]
             for sensor in sensors:
@@ -74,12 +74,9 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
             sensor_data[SensorLinkData.SENSOR_OFFSET_POSE_STR])
 
         self._transformations.append({
-            TfData.CHILD_FRAME:
-            self._append_namespace(sensor_data[SensorLinkData.SENSOR_NAME]),
-            TfData.PARENT_FRAME:
-            self._append_namespace(parent_frame),
-            TfData.TF_MATRIX:
-            T_SensorLink_SensorPlugin
+            TfData.CHILD_FRAME: self._append_namespace(sensor_data[SensorLinkData.SENSOR_NAME]),
+            TfData.PARENT_FRAME: self._append_namespace(parent_frame),
+            TfData.TF_MATRIX: T_SensorLink_SensorPlugin
         })
 
     def _register_optical_frame_transform(self, sensor_data):
@@ -118,15 +115,12 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
     def _str_to_pose(self, pose_str: str) -> np.ndarray:
         parts = pose_str.split()
         if len(parts) != 6:
-            raise ValueError(
-                f"[Sdf2Tf_Publisher] Expected 6 elements in pose string, got {len(parts)}: {pose_str}."
-            )
+            raise ValueError(f"[Sdf2Tf_Publisher] Expected 6 elements in pose string, got {len(parts)}: {pose_str}.")
         x, y, z, roll, pitch, yaw = map(float, parts)
         return np.array([x, y, z, roll, pitch, yaw])
 
     def _has_optical_frame(self, pose_SensorLink_OpticalFrame_str) -> bool:
-        if pose_SensorLink_OpticalFrame_str is not None and (pose_SensorLink_OpticalFrame_str
-                                                             != ""):
+        if pose_SensorLink_OpticalFrame_str is not None and (pose_SensorLink_OpticalFrame_str != ""):
             return True
         return False
 
@@ -155,8 +149,7 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
                                 f"[Sdf2Tf_Publisher] Link '{link_sensor_name}' may have an error in setting up the optical frame. Check the sdf file for the sensor."
                             )
                         else:
-                            pose_SensorLink_OpticalFrame_str = self._find_pose_by_link_name(
-                                model_xml, gz_frame_name)
+                            pose_SensorLink_OpticalFrame_str = self._find_pose_by_link_name(model_xml, gz_frame_name)
 
                     sensors_within_link.append({
                         SensorLinkData.SENSOR_NAME: sensor_name,
@@ -209,6 +202,9 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
             parent_frame = data[TfData.PARENT_FRAME]
             T_matrix = data[TfData.TF_MATRIX]
 
+            self._ros_node.get_logger().info(
+                f"[Sdf2Tf_Publisher] Creating tf link from: {parent_frame} to: {child_frame}")
+
             t = TransformStamped()
             t.header.stamp = time_now
             t.header.frame_id = parent_frame
@@ -217,8 +213,7 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
             tf_transforms.append(t)
 
         self._broadcaster.sendTransform(tf_transforms)
-        self._ros_node.get_logger().info(
-            f"[Sdf2Tf_Publisher] Published {len(tf_transforms)} static transforms.")
+        self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] Published {len(tf_transforms)} static transforms.")
 
     def _matrix_to_tf_pose(self, T_W_Sensor: np.ndarray) -> Transform:
         pose = Transform()
