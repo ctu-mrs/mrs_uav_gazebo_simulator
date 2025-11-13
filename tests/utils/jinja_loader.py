@@ -26,10 +26,12 @@ class JinjaLoader():
         env = self._make_env()
         try:
             tmpl = env.get_template(template_path)
-            spawner_keyword = self._get_spawner_keyword(env, template_path)
-            ctx["spawner_args"][spawner_keyword] = {"update_rate": 100, "noise": 0.0}
+            spawner_keywords = self._get_spawner_keywords_by_macro(env, template_path)
+            kw = spawner_keywords.get(macro_name)
+            ctx["spawner_args"][kw] = {"update_rate": 100, "noise": 0.0}
         except jinja2.TemplateNotFound as e:
             raise AssertionError(f"Template not found: {template_path}") from e
+
         # create a module object where macros are callables
         module = tmpl.make_module(ctx)
         macro = getattr(module, macro_name)
@@ -49,24 +51,37 @@ class JinjaLoader():
         except jinja2.TemplateRuntimeError as e:
             raise AssertionError(f"Template cannot be rendered") from e
 
-    def _get_spawner_keyword(self, env: jinja2.Environment, template_name: str) -> str | None:
-        """Return the string literal assigned to `spawner_keyword` in a template, or None."""
+    def _get_spawner_keywords_by_macro(self, env: jinja2.Environment, template_name: str) -> dict[str, str]:
         src, _filename, _ = env.loader.get_source(env, template_name)
         ast = env.parse(src)
 
         class KWVisitor(jinja2.visitor.NodeVisitor):
 
             def __init__(self):
-                self.value = None
+                self.current_macro: list[str] = []
+                self.by_macro: dict[str, str] = {}
+
+            def visit_Macro(self, node: jinja2.nodes.Macro):
+                # Enter macro
+                self.current_macro.append(node.name)
+                self.generic_visit(node)
+                # Leave macro
+                self.current_macro.pop()
 
             def visit_Assign(self, node: jinja2.nodes.Assign):
-                if (isinstance(node.target, jinja2.nodes.Name) and node.target.name == "spawner_keyword"
-                        and isinstance(node.node, jinja2.nodes.Const) and isinstance(node.node.value, str)):
-                    self.value = node.node.value
+                if (self.current_macro and isinstance(node.target, jinja2.nodes.Name)
+                        and node.target.name == "spawner_keyword" and isinstance(node.node, jinja2.nodes.Const)
+                        and isinstance(node.node.value, str)):
+                    macro_name = self.current_macro[-1]
+                    # Only store first occurrence per macro, or overwrite if you prefer
+                    if macro_name not in self.by_macro:
+                        self.by_macro[macro_name] = node.node.value
+
+                self.generic_visit(node)
 
         v = KWVisitor()
         v.visit(ast)
-        return v.value
+        return v.by_macro
 
     def _macros_in_template(self, env: jinja2.Environment, template_name: str) -> list[str]:
         src, _filename, _uptodate = env.loader.get_source(env, template_name)
@@ -79,12 +94,6 @@ class JinjaLoader():
         env = self._make_env()
         camera_templates = [name for name in env.list_templates() if name.startswith(TEMPLATES_GROUP_PATH)]
         return {name: self._macros_in_template(env, name) for name in camera_templates}
-
-    def extract_macros_and_keyword_from_template(self, template: str) -> list[str]:
-        env = self._make_env()
-        spawner_key = self._get_spawner_keyword(env, template)
-        macro = self._macros_in_template(env, template)
-        return [macro, spawner_key]
 
     def get_templates_from_group(self, group: str) -> list[str]:
         env = self._make_env()
