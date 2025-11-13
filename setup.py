@@ -2,7 +2,7 @@ import os
 from setuptools import find_packages, setup
 
 package_name = 'mrs_uav_gazebo_simulator'
-data_directories = ['launch', 'config', 'models', 'ROMFS', 'tmux', 'tests']
+data_directories = ['launch', 'config', 'models', 'ROMFS', 'tmux']
 
 data_files_list = []
 
