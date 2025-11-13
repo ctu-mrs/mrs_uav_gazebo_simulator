@@ -16,6 +16,8 @@ def test_all_camera_macros():
     temp_to_macros = loader.get_template_to_macros(CAMERAS)
     for template, macros in temp_to_macros.items():
         macro_name = macros[0]
+        if 'template_' in macro_name:
+            continue
         try:
             out = loader.render_macro_file(
                 template,

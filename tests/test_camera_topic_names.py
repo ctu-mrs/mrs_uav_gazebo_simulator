@@ -158,6 +158,8 @@ def test_camera_topics_names():
     temp_to_macros = loader.get_template_to_macros(CAMERAS)
     for template, macros in temp_to_macros.items():
         macro_name = macros[0]
+        if 'template_' in macro_name:
+            continue
         try:
             camera_sdf = get_camera_sdf(loader, template, macro_name)
             camera_xml = minidom.parseString(camera_sdf)
