@@ -524,6 +524,14 @@ class MrsDroneSpawner(Node):
             response.success = True
             return response
 
+        if not self.check_user_request(params_dict):
+            self.get_logger().warn("User request contains invalid arguments.")
+            response.message = ("The request contains invalid arguments. "
+                                "Use the --help option to see the supported arguments.")
+            response.success = False
+            self.assigned_ids = already_assigned_ids
+            return response
+
         self.get_logger().info(f'Spawner params assigned "{params_dict}"')
 
         self.get_logger().info('Adding vehicles to a spawn queue')
@@ -537,6 +545,31 @@ class MrsDroneSpawner(Node):
         response.success = True
         response.message = f'Launch sequence queued for {len(params_dict["ids"])} robots'
         return response
+
+    # #}
+
+    # #{ check_user_request(self, params_dict)
+    def check_user_request(self, params_dict) -> bool:
+        core_keys = ["help", "model", "ids", "names", "spawn_poses"]
+        user_cmds = []
+        for key, _ in params_dict.items():
+            if key in core_keys:
+                continue
+            user_cmds.append(key)
+
+        valid_cmds = []
+        try:
+            template_wrapper = self.jinja_templates[params_dict["model"]]
+            for name, component in template_wrapper.components.items():
+                valid_cmds.append(component.keyword)
+        except ValueError:
+            return False
+
+        for cmd in user_cmds:
+            if cmd not in valid_cmds:
+                return False
+
+        return True
 
     # #}
 
