@@ -29,7 +29,7 @@
     <!-- Velodyne {-->
     {%- set sensor_name = 'velodyne' -%}
     {%- set sensor_link_name = sensor_name -%}
-    {%- set sensor_gz_frame_id = spawner_args['name'] + '/' + sensor_name + '/lidar' -%}
+    {%- set lidar_gz_frame_id = spawner_args['name'] + '/' + sensor_name + '/lidar' -%}
 
     <link name="{{ sensor_link_name }}">
       <pose relative_to="{{ parent_link }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
@@ -86,8 +86,7 @@
 
       <!-- sensor + plugin {-->
       {{ generic.gazebo_threed_lidar_plugin_macro(
-          lidar_name = sensor_name,
-          lidar_gz_frame_id = sensor_gz_frame_id,
+          lidar_gz_frame_id = lidar_gz_frame_id,
           lidar_sdf_topic_name = spawner_args['name'] + '/' + sensor_name,
           lidar_gz_topic_name = spawner_args['name'] + '/' + sensor_name + '/points',
           lidar_ros_topic_name = spawner_args['name'] + '/' + sensor_name + '/points',
