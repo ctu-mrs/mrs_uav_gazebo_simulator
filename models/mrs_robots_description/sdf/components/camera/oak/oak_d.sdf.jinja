@@ -2,7 +2,7 @@
 {%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
 
 {# ================================================================================= #}
-{# ----------------------------- OAK-D Camera Macro ---------------------------- #}
+{# ------------------------------- OAK-D Camera Macro ------------------------------ #}
 {# ================================================================================= #}
 
 {# NOTE:  This RGB-D camera is using two plugins - one for RGB and one for Depth
@@ -47,7 +47,7 @@
   <link name="{{ camera_link_name }}">
     <pose relative_to="{{ parent_link }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
     {{ generic.zero_inertial_macro() }}
-    
+
     <!-- visuals {-->
     <visual name="body_visual">
       <pose>0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
@@ -138,12 +138,11 @@
       <parent>{{ camera_link_name }}</parent>
       <child>{{ camera_depth_gz_frame_id }}</child>
     </joint>
-    
+
   <!--}-->
 
 {%- endmacro -%}
 {# <!--}--> #}
-
 
 {# -------------------------------- Implementations -------------------------------- #}
 
@@ -170,7 +169,7 @@
       yaw = yaw,
       parent_link = parent_link)
     }}
-    
+
     <!-- mount {-->
       {{ mount if mount }}
     <!--}-->
