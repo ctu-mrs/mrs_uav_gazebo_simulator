@@ -456,19 +456,6 @@
     {# ||                  optional sensor definitions                 || #}
     {# ================================================================== #}
 
-    {# Ground truth {--> #}
-    {{ components.ground_truth_macro(
-      parent_link = root,
-      x = 0,
-      y = 0,
-      z = 0,
-      roll = 0,
-      pitch = 0,
-      yaw = 0,
-      spawner_args = spawner_args)
-    }}
-    {# <!--}--> #}
-
     {# ======================= rangefinder sensors ====================== #}
 
     {# Garmin down {--> #}
@@ -497,67 +484,6 @@
       mount = none,
       spawner_args = spawner_args)
     }}
-    {# <!--}--> #}
-
-    {# Ultrasonic sensors {--> #}
-    {%- set ultrasonic_sensors_list = [
-    {
-    'suffix': '_down',
-    'x': 0.02,
-    'y': 0,
-    'z': -0.1535,
-    'roll': 0,
-    'pitch': math.radians(90),
-    'yaw': 0
-    },
-    {
-    'suffix': '_up',
-    'x': -0.1686,
-    'y': 0,
-    'z': 0.001,
-    'roll': 0,
-    'pitch': math.radians(-90),
-    'yaw': 0
-    },
-    {
-    'suffix': '_fl',
-    'x': ultrasonic_x,
-    'y': ultrasonic_y,
-    'z': -0.019,
-    'roll': 0,
-    'pitch': 0,
-    'yaw': ultrasonic_yaw
-    },
-    {
-    'suffix': '_fr',
-    'x': ultrasonic_x,
-    'y': -ultrasonic_y,
-    'z': -0.019,
-    'roll': 0,
-    'pitch': 0,
-    'yaw': -ultrasonic_yaw
-    },
-    {
-    'suffix': '_bl',
-    'x': -ultrasonic_x,
-    'y': ultrasonic_y,
-    'z': -0.019,
-    'roll': 0,
-    'pitch': 0,
-    'yaw': ultrasonic_yaw + math.radians(90)
-    },
-    {
-    'suffix': '_br',
-    'x': -ultrasonic_x,
-    'y': -ultrasonic_y,
-    'z': -0.019,
-    'roll': 0,
-    'pitch': 0,
-    'yaw': -(ultrasonic_yaw + math.radians(90))
-    },
-    ]
-    -%}
-
     {# <!--}--> #}
 
     {# ========================== LIDAR sensors ========================= #}
@@ -596,8 +522,8 @@
     {# Realsense placements {--> #}
 
     {# Realsense front {--> #}
-    {{ components.realsense_rgb_plus_depth_macro(
-      camera_name = 'front_rgbd',
+    {{ components.realsense_front_macro(
+      camera_name = 'rgbd_front',
       parent_link = root,
       x = 0.118,
       y = 0.0,
@@ -612,10 +538,7 @@
 
     {# <!--}--> #}
 
-
     {# ========================== other sensors ========================= #}
-
-  
 
   </model>
 </sdf>
