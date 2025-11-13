@@ -1544,6 +1544,8 @@ class MrsDroneSpawner(Node):
             RosGzBridgeCategory.DEPTH_IMAGE: [],
             RosGzBridgeCategory.LASER_SCAN: [],
             RosGzBridgeCategory.POINTCLOUD: [],
+            RosGzBridgeCategory.ODOMETRY: [],
+            RosGzBridgeCategory.TF: [],
         }
 
         for camera in attached_sensors[AttachedSensors.CAMERAS]:
@@ -1576,6 +1578,12 @@ class MrsDroneSpawner(Node):
             #NOTE: Real-world cameras do not provide this topic, so we do not publish it either.
             # sensor_topics[RosGzBridgeCategory.POINTCLOUD].append(
             #     RosGzBridgeTopics(gazebo=depth_camera.gz_points_topic, ros=depth_camera.ros_points_topic))
+
+        sensor_topics[RosGzBridgeCategory.ODOMETRY].append(
+            RosGzBridgeTopics(gazebo="/uav1/ground_truth", ros="/uav1/ground_truth"))
+
+        sensor_topics[RosGzBridgeCategory.TF].append(
+            RosGzBridgeTopics(gazebo="/uav1/ground_truth/pose", ros="/uav1/ground_truth/pose"))
 
         return sensor_topics
 
@@ -1611,11 +1619,11 @@ class MrsDroneSpawner(Node):
 
         sensor_topics = self.get_sensor_topics(attached_sensors)
 
-        rendered_template = template.render(
-            camera_info_topic_list=sensor_topics[RosGzBridgeCategory.CAMERA_INFO],
-            laser_scan_topic_list=sensor_topics[RosGzBridgeCategory.LASER_SCAN],
-            point_cloud_topic_list=sensor_topics[RosGzBridgeCategory.POINTCLOUD],
-        )
+        rendered_template = template.render(camera_info_topic_list=sensor_topics[RosGzBridgeCategory.CAMERA_INFO],
+                                            laser_scan_topic_list=sensor_topics[RosGzBridgeCategory.LASER_SCAN],
+                                            point_cloud_topic_list=sensor_topics[RosGzBridgeCategory.POINTCLOUD],
+                                            odometry_topic_list=sensor_topics[RosGzBridgeCategory.ODOMETRY],
+                                            tf_topic_list=sensor_topics[RosGzBridgeCategory.TF])
 
         filename = f'ros_gz_bridge_config_{uav_name}.yaml'
         filepath = os.path.join(self.tempfile_folder, filename)

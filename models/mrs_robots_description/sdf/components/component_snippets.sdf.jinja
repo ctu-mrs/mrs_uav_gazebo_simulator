@@ -47,22 +47,27 @@ limitations under the License.
 
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+    
+ 
+    {%- set world_frame_name = spawner_args[spawner_keyword]['frame_name'] -%}
+    {%- set robot_base_frame = parent_link -%}
+    {%- set topic_name = spawner_args['name'] + '/' + spawner_args[spawner_keyword]['topic_name']-%}
+    {%- set update_rate = spawner_args[spawner_keyword]['update_rate'] -%}
 
-    <!-- Ground truth {-->
-    {{ generic.odometry_sensor_macro(
-      odometry_sensor_name = 'ground_truth',
-      parent_link = parent_link,
-      topic_name = spawner_args[spawner_keyword]['topic_name'],
-      noise = 0,
-      frame_name = spawner_args[spawner_keyword]['frame_name'],
-      update_rate = spawner_args[spawner_keyword]['update_rate'],
-      x = x,
-      y = y,
-      z = z,
-      roll = roll,
-      pitch = pitch,
-      yaw = yaw)
-    }}
+
+
+    <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+      <odom_frame>{{ world_frame_name }}</odom_frame>
+      <robot_base_frame>{{ robot_base_frame }}</robot_base_frame>
+      <odom_publish_frequency>{{ update_rate }}</odom_publish_frequency>
+      <odom_topic> {{ topic_name }}</odom_topic>
+      <odom_covariance_topic>{{ topic_name }}_with_covariance</odom_covariance_topic> 
+      <tf_topic>{{ topic_name }}/pose</tf_topic>
+      <dimensions>3</dimensions>
+      <xyz_offset>{{ x }} {{ y }} {{ z }}</xyz_offset>
+      <rpy_offset>{{ roll }} {{ pitch }} {{ yaw }}</rpy_offset>
+      <gaussian_noise>{{ noise }}</gaussian_noise>
+    </plugin>
     <!--}-->
 
   {%- endif -%}

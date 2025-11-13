@@ -24,6 +24,8 @@ class RosGzBridgeCategory(StrEnum):
     CAMERA_INFO = "camera_info"
     LASER_SCAN = "laser_scan"
     POINTCLOUD = "pointcloud"
+    ODOMETRY = "odometry"
+    TF = "tf"
 
 
 class SdfTopicTags(StrEnum):
@@ -68,5 +70,11 @@ class RgbdCameraRosGzBridge:
 
 @dataclass
 class LidarRosGzBridge:
+    ros_points_topic: str
+    gz_points_topic: str
+
+
+@dataclass
+class OdometryRosGzBridge:
     ros_points_topic: str
     gz_points_topic: str
