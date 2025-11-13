@@ -1,11 +1,15 @@
 <?xml version="1.0"? encoding="utf-8">
 {%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
 
-{# ============================= Bluefox Camera Macro ============================ #}
+{# ================================================================================= #}
+{# ------------------------------ Bluefox Camera Macro ----------------------------- #}
+{# ================================================================================= #}
 
-{# bluefox_camera_macro {--> #}
+{# ----------------------------------- Template ------------------------------------ #}
+
+{# template_bluefox_camera_macro {--> #}
 {# Generic macro to avoid code repetition #}
-{%- macro bluefox_camera_macro(uav_name, camera_name, update_rate, noise, x, y, z, roll, pitch, yaw, parent_link) -%}
+{%- macro template_bluefox_camera_macro(uav_name, camera_name, update_rate, noise, x, y, z, roll, pitch, yaw, parent_link) -%}
 
   {%- set camera_link_name = camera_name -%}
   {%- set camera_gz_frame_id = uav_name + '/' + camera_name + '/color_optical' -%}
@@ -89,6 +93,8 @@
 {%- endmacro -%}
 {# <!--}--> #}
 
+{# -------------------------------- Implementations -------------------------------- #}
+
 {# bluefox_camera_down_macro {--> #}
 {%- macro bluefox_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}
 
@@ -99,7 +105,7 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
-    {{ bluefox_camera_macro(
+    {{ template_bluefox_camera_macro(
       uav_name = spawner_args['name'],
       camera_name = camera_name,
       update_rate = spawner_args[spawner_keyword]['update_rate'],
@@ -127,7 +133,7 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
-    {{ bluefox_camera_macro(
+    {{ template_bluefox_camera_macro(
       uav_name = spawner_args['name'],
       camera_name = camera_name,
       update_rate = spawner_args[spawner_keyword]['update_rate'],
@@ -155,7 +161,7 @@
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
-    {{ bluefox_camera_macro(
+    {{ template_bluefox_camera_macro(
       uav_name = spawner_args['name'],
       camera_name = camera_name,
       update_rate = spawner_args[spawner_keyword]['update_rate'],
