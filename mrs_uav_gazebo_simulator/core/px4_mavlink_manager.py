@@ -4,7 +4,7 @@ import time
 import jinja2
 
 from mrs_uav_gazebo_simulator.utils.spawner_exceptions import *
-from mrs_uav_gazebo_simulator.utils.spawner_enums import Px4MavlinkConfig
+from mrs_uav_gazebo_simulator.utils.spawner_types import Px4MavlinkConfig
 
 from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory

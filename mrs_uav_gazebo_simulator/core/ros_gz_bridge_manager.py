@@ -4,7 +4,7 @@ import xml.dom.minidom
 from xml.dom.minidom import Element
 import multiprocessing
 
-from mrs_uav_gazebo_simulator.utils.spawner_enums import *
+from mrs_uav_gazebo_simulator.utils.spawner_types import *
 from mrs_uav_gazebo_simulator.utils.spawner_exceptions import *
 
 # ROS 2 Imports
