@@ -20,8 +20,4 @@ concurrency:
 jobs:
 
   build:
-    uses: ctu-mrs/ci_scripts/.github/workflows/ros_build_test.yml@ros2_tests_enabling
-    with:
-      RUN_TESTS: true
-    secrets:
-      PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
+    uses: ctu-mrs/ci_scripts/.github/workflows/ros_build_test.yml@ros2
