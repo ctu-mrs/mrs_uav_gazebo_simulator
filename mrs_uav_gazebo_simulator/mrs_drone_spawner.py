@@ -4,49 +4,32 @@ import atexit
 import copy
 import csv
 import datetime
-import jinja2
 import math
 import os
 import random
 import re
-import sys
 import rclpy
 from rclpy.node import Node
 import rclpy.exceptions
 import multiprocessing
-import xml.dom.minidom
 import time
 import tempfile
 import yaml
 
+# ROS 2 Imports
 from ament_index_python.packages import get_package_share_directory
-from mrs_uav_gazebo_simulator.utils.sdf_to_tf_publisher import SdfTfPublisherSingleton
-from mrs_uav_gazebo_simulator.utils.spawner_enums import RosGzBridgeCategory, Px4MavlinkConfig
+from ros_gz_interfaces.srv import SpawnEntity, DeleteEntity
+
+from mrs_uav_gazebo_simulator.utils.spawner_enums import Px4MavlinkConfig
 from mrs_uav_gazebo_simulator.utils.spawner_exceptions import *
 from mrs_uav_gazebo_simulator.core.jinja_template_manager import JinjaTemplateManager
 from mrs_uav_gazebo_simulator.core.ros_gz_bridge_manager import RosGzBridgeManager
 from mrs_uav_gazebo_simulator.core.px4_mavlink_manager import Px4MavlinkManager
-
-# ROS 2 Imports
-from launch import LaunchDescription, LaunchService
-from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
-
-from ros_gz_interfaces.srv import SpawnEntity, DeleteEntity
+from mrs_uav_gazebo_simulator.core.sdf_to_tf_publisher import SdfTfPublisherSingleton
 from mrs_msgs.srv import String as StringSrv
 from mrs_msgs.msg import GazeboSpawnerDiagnostics
 
 glob_running_processes = []
-
-
-# #{ dummy_function()
-def dummy_function():
-    '''Empty function to temporarily replace ros signal handlers'''
-    pass
-
-
-# #}
 
 
 # #{ exit_handler()
