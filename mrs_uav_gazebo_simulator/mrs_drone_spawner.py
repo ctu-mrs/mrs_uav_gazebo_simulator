@@ -20,12 +20,12 @@ import tempfile
 import yaml
 
 from ament_index_python.packages import get_package_share_directory
-from mrs_uav_gazebo_simulator.utils.component_wrapper import ComponentWrapper
-from mrs_uav_gazebo_simulator.utils.template_wrapper import TemplateWrapper
 from mrs_uav_gazebo_simulator.utils.sdf_to_tf_publisher import SdfTfPublisherSingleton
-from mrs_uav_gazebo_simulator.utils.ros_gz_bridge_manager import RosGzBridgeManager
-from mrs_uav_gazebo_simulator.utils.spawner_enums import RosGzBridgeCategory
-from mrs_uav_gazebo_simulator.utils.exceptions import *
+from mrs_uav_gazebo_simulator.utils.spawner_enums import RosGzBridgeCategory, Px4MavlinkConfig
+from mrs_uav_gazebo_simulator.utils.spawner_exceptions import *
+from mrs_uav_gazebo_simulator.core.jinja_template_manager import JinjaTemplateManager
+from mrs_uav_gazebo_simulator.core.ros_gz_bridge_manager import RosGzBridgeManager
+from mrs_uav_gazebo_simulator.core.px4_mavlink_manager import Px4MavlinkManager
 
 # ROS 2 Imports
 from launch import LaunchDescription, LaunchService
@@ -44,15 +44,6 @@ glob_running_processes = []
 def dummy_function():
     '''Empty function to temporarily replace ros signal handlers'''
     pass
-
-
-# #}
-
-
-# #{ filter_templates(template_name)
-def filter_templates(template_name, suffix):
-    '''Comparator used to load files with given suffix'''
-    return template_name.endswith(suffix)
 
 
 # #}
@@ -99,90 +90,18 @@ class MrsDroneSpawner(Node):
     def __init__(self):
         super().__init__('mrs_drone_spawner')
 
-        # Declare all parameters with default values. The type is inferred.
-        self.declare_parameter('mavlink_config.vehicle_base_port', 14000)
-        self.declare_parameter('mavlink_config.stream_for_qgc', True)
+        resource_paths = self._handle_rosparams()
 
-        self.declare_parameter('gazebo_models.default_robot_name', 'uav')
-        self.declare_parameter('gazebo_models.spacing', 5.0)
+        self._template_manager = JinjaTemplateManager(self, resource_paths, self.template_suffix)
+        self.jinja_templates = self._template_manager.get_jinja_templates()
 
-        self.declare_parameter('jinja_templates.suffix', '.sdf.jinja')
-
-        self.declare_parameter('firmware_launch_delay', 0.0)
-
-        self.declare_parameter('extra_resource_paths', [""])
-
-        self.declare_parameter('tf_static_publisher.base_frame', "fcu")
-        self.declare_parameter('tf_static_publisher.ignored_sensor_frames',
-                               ["air_pressure_sensor", "magnetometer_sensor", "navsat_sensor", "imu_sensor"])
-
-        # Get all parameters
-        try:
-            self.vehicle_base_port = self.get_parameter('mavlink_config.vehicle_base_port').value
-            self.stream_for_qgc = int(self.get_parameter('mavlink_config.stream_for_qgc').value)
-
-            self.default_robot_name = self.get_parameter('gazebo_models.default_robot_name').value
-            self.model_spacing = self.get_parameter('gazebo_models.spacing').value
-
-            self.template_suffix = self.get_parameter('jinja_templates.suffix').value
-
-            self.firmware_launch_delay = float(self.get_parameter('firmware_launch_delay').value)
-
-            self.tf_base_frame = self.get_parameter('tf_static_publisher.base_frame').value
-            self.tf_ignored_sensor_frames = self.get_parameter('tf_static_publisher.ignored_sensor_frames').value
-
-        except rclpy.exceptions.ParameterNotDeclaredException as e:
-            self.get_logger().error(f'Could not load required param. {e}')
-            raise RuntimeError(f'Could not load required param. {e}')
-
-        # Configure resources and Jinja environment
-        resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]
-
-        try:
-            extra_resource_paths = self.get_parameter('extra_resource_paths').value
-        except:
-            # no extra resources
-            extra_resource_paths = []
-            pass
-
-        if extra_resource_paths is not None:
-            for elem in extra_resource_paths:
-                rpath = get_package_share_directory(elem) if not os.path.exists(elem) else elem
-                self.get_logger().info(f'Adding extra resources from {rpath}')
-                resource_paths.append(rpath)
-
-        self.jinja_env = self.configure_jinja2_environment(resource_paths)
-
-        time_str = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-        tempfile_folder = f'mrs_gazebo_simulator_{time_str}'
-        self.tempfile_folder = os.path.join(tempfile.gettempdir(), tempfile_folder)
-
-        try:
-            os.makedirs(self.tempfile_folder, exist_ok=False)
-        except Exception as e:
-            raise RuntimeError(f"Error creating directory {self.tempfile_folder}: {e}")
+        self.tempfile_folder = self._create_tempfile_folder()
 
         # Find launch files
         gazebo_simulator_path = get_package_share_directory('mrs_uav_gazebo_simulator')
-        self.uav_ros_gz_bridge_launch_path = os.path.join(gazebo_simulator_path, 'launch',
-                                                          'uav_ros_gz_bridge.launch.py')
         self.ros_gz_manager = RosGzBridgeManager(self, gazebo_simulator_path, self.tempfile_folder)
-
-        px4_api_path = get_package_share_directory('mrs_uav_px4_api')
-        self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
-        self.mavros_px4_config_path = os.path.join(px4_api_path, 'config')
-        self.mavros_px4_config_template_name = 'mavros_px4_config.jinja.yaml'
-        self.px4_fimrware_launch_path = os.path.join(gazebo_simulator_path, 'launch',
-                                                     'run_simulation_firmware.launch.py')
-        self.mavros_plugin_list = os.path.join(self.mavros_px4_config_path, 'mavros_plugins.yaml')
-
-        try:
-            self.jinja_templates = self.build_template_database()
-        except RecursionError as err:
-            self.get_logger().error(f'{err}')
-            raise RuntimeError(f'{err}')
-
-        self.get_logger().info('Jinja templates loaded.')
+        self._px4_mavlink_manager = Px4MavlinkManager(self, gazebo_simulator_path, self._px4_mavlink_config,
+                                                      self.tempfile_folder)
 
         # Setup ROS 2 communications
         self.spawn_server = self.create_service(StringSrv, 'spawn', self.callback_spawn)
@@ -211,100 +130,82 @@ class MrsDroneSpawner(Node):
         self.is_initialized = True
         self.get_logger().info('Initialized')
 
-    # #{ launch_px4_firmware(self, robot_params)
-    def launch_px4_firmware(self, robot_params):
-        if self.firmware_launch_delay > 0:
-            self.get_logger().info(f'Waiting for {self.firmware_launch_delay} s before launching firmware')
-            time.sleep(self.firmware_launch_delay)
+    # #{ handle_rosparams(self)
+    def _handle_rosparams(self) -> list[str]:
+        # Declare all parameters with default values. The type is inferred.
+        self.declare_parameter('mavlink_config.vehicle_base_port', 14000)
+        self.declare_parameter('mavlink_config.stream_for_qgc', True)
 
-        name = robot_params['name']
-        self.get_logger().info(f'Launching PX4 firmware for {name}')
+        self.declare_parameter('gazebo_models.default_robot_name', 'uav')
+        self.declare_parameter('gazebo_models.spacing', 5.0)
 
-        package_name = self.jinja_templates[robot_params['model']].package_name
-        package_path = get_package_share_directory(package_name)
+        self.declare_parameter('jinja_templates.suffix', '.sdf.jinja')
 
-        romfs_path = os.path.join(str(package_path), 'ROMFS')
+        self.declare_parameter('firmware_launch_delay', 0.0)
 
-        if not os.path.exists(romfs_path) or not os.path.isdir(romfs_path):
-            self.get_logger().error(f'Could not start PX4 firmware for {name}. ROMFS folder not found')
-            raise CouldNotLaunch('ROMFS folder not found')
+        self.declare_parameter('extra_resource_paths', [""])
 
-        launch_arguments = {
-            'ID': str(robot_params['ID']),
-            'PX4_SIM_MODEL': str(robot_params['model']),
-            'ROMFS_PATH': str(romfs_path),
-            'CONNECT_TO_QGC': str(self.stream_for_qgc)
-        }
+        self.declare_parameter('tf_static_publisher.base_frame', "fcu")
+        self.declare_parameter('tf_static_publisher.ignored_sensor_frames',
+                               ["air_pressure_sensor", "magnetometer_sensor", "navsat_sensor", "imu_sensor"])
 
-        ld = LaunchDescription([
-            IncludeLaunchDescription(PythonLaunchDescriptionSource(self.px4_fimrware_launch_path),
-                                     launch_arguments=launch_arguments.items())
-        ])
+        # Get all parameters
+        try:
+            self._px4_mavlink_config = Px4MavlinkConfig()
+            self._px4_mavlink_config.vehicle_base_port = self.get_parameter('mavlink_config.vehicle_base_port').value
+            self._px4_mavlink_config.stream_for_qgc = int(self.get_parameter('mavlink_config.stream_for_qgc').value)
+            self._px4_mavlink_config.firmware_launch_delay = float(self.get_parameter('firmware_launch_delay').value)
 
-        launch_service = LaunchService(debug=False)
-        launch_service.include_launch_description(ld)
-        firmware_process = multiprocessing.Process(target=launch_service.run)
+            self.default_robot_name = self.get_parameter('gazebo_models.default_robot_name').value
+            self.model_spacing = self.get_parameter('gazebo_models.spacing').value
+
+            self.template_suffix = self.get_parameter('jinja_templates.suffix').value
+
+            self.tf_base_frame = self.get_parameter('tf_static_publisher.base_frame').value
+            self.tf_ignored_sensor_frames = self.get_parameter('tf_static_publisher.ignored_sensor_frames').value
+
+        except rclpy.exceptions.ParameterNotDeclaredException as e:
+            self.get_logger().error(f'Could not load required param. {e}')
+            raise RuntimeError(f'Could not load required param. {e}')
+
+        # Configure resources and Jinja environment
+        resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]
 
         try:
-            firmware_process.start()
-        except Exception as e:
-            self.get_logger().error(f'Could not start PX4 firmware for {name}. Node failed to launch: {e}')
-            raise CouldNotLaunch('PX4 failed to launch')
+            extra_resource_paths = self.get_parameter('extra_resource_paths').value
+        except:
+            # no extra resources
+            extra_resource_paths = []
+            pass
 
-        self.get_logger().info(f'PX4 firmware for {name} launched')
-        if self.stream_for_qgc:
-            qgc_port = robot_params['mavlink_config']['udp_qgc_port_remote']
-            self.get_logger().info(f'QGC connection for {name} created at localhost UDP port {qgc_port}')
-        return firmware_process
+        if extra_resource_paths is not None:
+            for elem in extra_resource_paths:
+                rpath = get_package_share_directory(elem) if not os.path.exists(elem) else elem
+                self.get_logger().info(f'Adding extra resources from {rpath}')
+                resource_paths.append(rpath)
+
+        return resource_paths
 
     # #}
 
-    # #{ launch_mavros(self, robot_params)
-    def launch_mavros(self, robot_params):
-        name = robot_params['name']
-        self.get_logger().info(f'Launching mavros for {name}')
-
-        launch_arguments = {
-            'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
-            'gcs_url': '',  # do not connect to QGC using mavros, we create a dedicated mavlink stream instead
-            'tgt_system': str(robot_params['ID'] + 1),
-            'tgt_component': str(1),
-            'pluginlists_yaml': self.mavros_plugin_list,
-            'config_yaml': str(robot_params['mavros_px4_config']),
-            'namespace': name + '/mavros',
-            'use_sim_time': 'true',
-            'base_link_frame_id': name + '/base_link',
-            'odom_frame_id': name + '/odom',
-            'map_frame_id': name + '/map'
-        }
-
-        ld = LaunchDescription([
-            IncludeLaunchDescription(
-                XMLLaunchDescriptionSource(self.mavros_launch_path),
-                launch_arguments=launch_arguments.items(),
-            )
-        ])
-
-        self.get_logger().info(f'launch_arguments: {launch_arguments}')
-        launch_service = LaunchService(debug=False)
-        launch_service.include_launch_description(ld)
-        mavros_process = multiprocessing.Process(target=launch_service.run)
+    # #{_create_tempfile_folder(self)
+    def _create_tempfile_folder(self) -> str:
+        time_str = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        temp_folder = f'mrs_gazebo_simulator_{time_str}'
+        tempfile_folder = os.path.join(tempfile.gettempdir(), temp_folder)
 
         try:
-            mavros_process.start()
+            os.makedirs(tempfile_folder, exist_ok=False)
+            return tempfile_folder
         except Exception as e:
-            self.get_logger().error(f'Could not start mavros for {name}. Node failed to launch: {e}')
-            raise CouldNotLaunch('Mavros failed to launch')
-
-        self.get_logger().info(f'Mavros for {name} launched')
-        return mavros_process
+            raise RuntimeError(f"Error creating directory {tempfile_folder}: {e}")
 
     # #}
 
     # #{ spawn_gazebo_model(self, robot_params)
     def spawn_gazebo_model(self, robot_params):
         name = robot_params['name']
-        sdf_content = self.render(robot_params)
+        sdf_content = self._template_manager.render_sdf(robot_params, self.jinja_templates)
 
         if sdf_content is None:
             self.get_logger().error('Template did not render, spawn failed.')
@@ -340,40 +241,6 @@ class MrsDroneSpawner(Node):
 
     # #}
 
-    # #{ launch_uav_ros_gz_bridge(self, robot_params)
-    def launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics):
-        self.get_logger().info(f'Launching ros_gz_bridge for {uav_name}')
-
-        launch_arguments = {
-            'namespace': uav_name,
-            'ros_gz_bridge_config': str(ros_gz_bridge_config),
-            'ros_gz_image_topics': ' '.join(sensor_topics[RosGzBridgeCategory.IMAGE]),
-            'bridge_debug': 'false',
-        }
-
-        ld = LaunchDescription([
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(self.uav_ros_gz_bridge_launch_path),
-                launch_arguments=launch_arguments.items(),
-            )
-        ])
-
-        self.get_logger().info(f'launch_arguments: {launch_arguments}')
-        launch_service = LaunchService(debug=False)
-        launch_service.include_launch_description(ld)
-        ros_gz_bridge_process = multiprocessing.Process(target=launch_service.run)
-
-        try:
-            ros_gz_bridge_process.start()
-        except Exception as e:
-            self.get_logger().error(f'Could not start ros_gz_bridge for {uav_name}. Node failed to launch: {e}')
-            raise CouldNotLaunch('ros_gz_bridge failed to launch')
-
-        self.get_logger().info(f'ros_gz_bridge for {uav_name} launched')
-        return ros_gz_bridge_process
-
-    # #}
-
     # #{ service_response_callback_spawn_gazebo_model(self, future, robot_params)
     def service_response_callback_spawn_gazebo_model(self, future, robot_params):
         # This function is called automatically when the service response arrives.
@@ -390,10 +257,10 @@ class MrsDroneSpawner(Node):
 
             try:
                 if ros_gz_bridge_config != "":
-                    ros_gz_bridge_process = self.launch_uav_ros_gz_bridge(robot_params['name'], ros_gz_bridge_config,
-                                                                          sensor_topics)
-                mavros_process = self.launch_mavros(robot_params)
-                firmware_process = self.launch_px4_firmware(robot_params)
+                    ros_gz_bridge_process = self.ros_gz_manager.launch_uav_ros_gz_bridge(
+                        robot_params['name'], ros_gz_bridge_config, sensor_topics)
+                mavros_process = self._px4_mavlink_manager.launch_mavros(robot_params)
+                firmware_process = self._px4_mavlink_manager.launch_px4_firmware(self.jinja_templates, robot_params)
 
             except Exception as e:
                 self.get_logger().error(f'Failed during spawn sequence for {robot_params["name"]}: {e}')
@@ -572,278 +439,6 @@ class MrsDroneSpawner(Node):
         self.diagnostics_pub.publish(diagnostics)
 
     # #}
-    # #}
-
-    # --------------------------------------------------------------
-    # |                    jinja template utils                    |
-    # --------------------------------------------------------------
-
-    # #{ get_ros_package_name(self, filepath)
-    def get_ros_package_name(self, filepath):
-        '''Return the name of a ros package that contains a given filepath'''
-
-        package_share_pattern = r'^(.*?share/[^/]+)'
-        match_result = re.match(package_share_pattern, filepath)
-        if match_result is not None:
-            package_share_path = match_result.group(0)
-        else:
-            package_share_path = None
-
-        package_name_pattern = r'share/([^/]+)'
-        search_result = re.search(package_name_pattern, filepath)
-        if search_result is not None:
-            package_name = search_result.group(1)
-        else:
-            package_name = None
-
-        if package_share_path is None or package_name is None:
-            self.get_logger().error(f'Package name or share path could not be determined from filepath "{filepath}"')
-            return None
-
-        share_path_from_ament_index = get_package_share_directory(package_name)
-
-        # sanity check
-        if share_path_from_ament_index != package_share_path:
-            self.get_logger().error(
-                f'Share path for package "{package_name}" not registered in ament index. Is the resource package installed and sourced?'
-            )
-            return None
-
-        return package_name
-
-    # #}
-
-    # #{ get_all_templates(self)
-    def get_all_templates(self):
-        '''
-        Get all templates loaded by the given jinja environment
-        :returns a list of tuples, consisting of (str_name, jinja2.Template)
-        '''
-        template_names = self.jinja_env.list_templates(
-            filter_func=lambda template_name: filter_templates(template_name, self.template_suffix))
-        templates = []
-        for i, full_name in enumerate(template_names):
-            self.get_logger().info(f'\t({i+1}/{len(template_names)}): {full_name}')
-            template_name = full_name.split(os.path.sep)[-1][:-(len(self.template_suffix))]
-            templates.append((template_name, self.jinja_env.get_template(full_name)))
-        return templates
-
-    # #}
-
-    # #{ get_template_imports(self, jinja_template)
-    def get_template_imports(self, jinja_template):
-        '''Returns a list of sub-templates imported by a given jinja_template'''
-        with open(jinja_template.filename, 'r') as f:
-            template_source = f.read()
-            preprocessed_template = template_source.replace('\n', '')
-            parsed_template = self.jinja_env.parse(preprocessed_template)
-            import_names = [node.template.value for node in parsed_template.find_all(jinja2.nodes.Import)]
-            imported_templates = []
-            for i in import_names:
-                template = self.jinja_env.get_template(i)
-                imported_templates.append(template)
-            return imported_templates
-
-    # #}
-
-    # #{ get_spawner_components_from_template(self, template)
-    def get_spawner_components_from_template(self, template):
-        '''
-        Builds a dict of spawner-compatible macros in a given template and their corresponding ComponentWrapper objects
-        Does NOT check for macros imported from other templates
-        :return a dict in format {macro name: component_wrapper.ComponentWrapper}
-        '''
-        with open(template.filename, 'r') as f:
-            template_source = f.read()
-            preprocessed_template = template_source.replace('\n', '')
-            parsed_template = self.jinja_env.parse(preprocessed_template)
-            macro_nodes = [node for node in parsed_template.find_all(jinja2.nodes.Macro)]
-            spawner_components = {}
-            for node in macro_nodes:
-                spawner_keyword = None
-                spawner_description = None
-                spawner_default_args = None
-                for elem in node.body:
-                    if isinstance(elem, jinja2.nodes.Assign) and elem.target.name == 'spawner_description':
-                        spawner_description = elem.node.value
-                    if isinstance(elem, jinja2.nodes.Assign) and elem.target.name == 'spawner_default_args':
-                        if isinstance(elem.node, jinja2.nodes.Const):
-                            spawner_default_args = elem.node.value
-                        elif isinstance(elem.node, jinja2.nodes.List):
-                            spawner_default_args = []
-                            for e in elem.node.items:
-                                spawner_default_args.append(e.value)
-                        elif isinstance(elem.node, jinja2.nodes.Dict):
-                            spawner_default_args = {}
-                            for pair in elem.node.items:
-                                spawner_default_args[pair.key.value] = pair.value.value
-                        else:
-                            self.get_logger().warn(
-                                f'Unsupported param type "{type(elem.node)}" in template {template.filename}')
-                    if isinstance(elem, jinja2.nodes.Assign) and elem.target.name == 'spawner_keyword':
-                        spawner_keyword = elem.node.value
-                if spawner_keyword is not None:
-                    spawner_components[node.name] = ComponentWrapper(spawner_keyword, spawner_description,
-                                                                     spawner_default_args)
-            return spawner_components
-
-    # #}
-
-    # #{ get_accessible_components(self, template_wrapper, all_components)
-    def get_accessible_components(self, template_wrapper, all_components):
-        '''
-        Recursive function to get all spawner-compatible components accessible from template_wrapper
-        Includes components in imported sub-templates
-        :param template_wrapper: template_wrapper.TemplateWrapper for which we want to load components
-        :param all_components: a dict to which all found ComponentWrappers will be added
-        :returns a dict of objects {macro name: component_wrapper.ComponentWrapper}
-        '''
-        all_components.update(template_wrapper.components)
-        for i in template_wrapper.imported_templates:
-            try:
-                all_components.update(self.get_accessible_components(i, all_components))
-            except RecursionError as err:
-                raise RecursionError(
-                    f'Cyclic import detected in file {template_wrapper.jinja_template.filename}. Fix your templates')
-        return all_components
-
-    # #}
-
-    # #{ get_callable_components(self, template)
-    def get_callable_components(self, template, accessible_components):
-        '''
-        Get all components that are actually called from a template
-        :param template: a jinja template file
-        :param accessible_components: a dict of macros accessible from this template (including imported modules)
-        :returns a dictionary of callable components {macro_name: component_wrapper.ComponentWrapper}
-        sorted alphabetically by keywords
-        '''
-        callable_components = {}
-        with open(template.filename, 'r') as f:
-            template_source = f.read()
-            preprocessed_template = template_source.replace('\n', '')
-            parsed_template = self.jinja_env.parse(preprocessed_template)
-            call_nodes = [node for node in parsed_template.find_all(jinja2.nodes.Call)]
-            callable_components = {}
-            for node in call_nodes:
-                if isinstance(node.node, jinja2.nodes.Getattr):
-                    if node.node.attr in accessible_components.keys():
-                        callable_components[node.node.attr] = accessible_components[node.node.attr]
-                elif isinstance(node.node, jinja2.nodes.Name):
-                    if node.node.name in accessible_components.keys():
-                        callable_components[node.node.name] = accessible_components[node.node.name]
-        return dict(sorted(callable_components.items(), key=lambda item: item[1].keyword))
-
-    # #}
-
-    # #{ build_template_database(self)
-    def build_template_database(self):
-        '''
-        Generate a database of jinja2 templates available to the spawner
-        Scans through all folders provided into the jinja2 environment for files with matching target suffix
-        Recursively checks templates imported by templates, prevents recursion loops
-        Returns a dictionary of template_wrapper.TemplateWrapper objects in format {template_name: template_wrapper.TemplateWrapper}
-        '''
-
-        template_wrappers = {}
-
-        self.get_logger().info('Loading all templates')
-        all_templates = self.get_all_templates()
-        for name, template in all_templates:
-            imports = self.get_template_imports(template)
-            components = self.get_spawner_components_from_template(template)
-            package_name = self.get_ros_package_name(template.filename)
-            wrapper = TemplateWrapper(template, imports, components, package_name)
-            template_wrappers[name] = wrapper
-
-        self.get_logger().info('Reindexing imported templates')
-        for name, wrapper in template_wrappers.items():
-            for i, it in enumerate(wrapper.imported_templates):
-                if not isinstance(it, TemplateWrapper):
-                    for ww in template_wrappers.values():
-                        if ww.jinja_template == it:
-                            wrapper.imported_templates[i] = ww
-
-        self.get_logger().info('Adding available components from dependencies')
-        for _, wrapper in template_wrappers.items():
-            prev_limit = sys.getrecursionlimit()
-            sys.setrecursionlimit(int(math.pow(len(template_wrappers), 2)))
-            wrapper.components = self.get_accessible_components(wrapper, {})
-            sys.setrecursionlimit(prev_limit)
-
-        self.get_logger().info('Pruning components to only include callables')
-        callable_components = {}
-        for name, template in all_templates:
-            callable_components[name] = self.get_callable_components(template, template_wrappers[name].components)
-
-        for name, wrapper in template_wrappers.items():
-            wrapper.components = callable_components[name]
-
-        self.get_logger().info('Template database built')
-
-        return template_wrappers
-
-    # #}
-
-    # #{ configure_jinja2_environment(self, resource_paths)
-    def configure_jinja2_environment(self, resource_paths):
-        '''Create a jinja2 environment and setup its variables'''
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader(resource_paths), autoescape=False)
-        # Allows use of math module directly in the templates
-        env.globals['math'] = math
-
-        return env
-
-    # #}
-
-    # #{ render(self, spawner_args)
-    def render(self, spawner_args):
-        '''
-        Renders a jinja template into a sdf, creates a formatted xml
-        Input has to specify the template name in spawner_args['model']
-        :param spawner_args: a dict to be passed into the template as variables, format {component_name (string): args (list or dict)}
-        :return: content of the xml file as a string or None
-        '''
-
-        params = {'spawner_args': spawner_args}
-
-        try:
-            model_name = spawner_args['model']
-        except KeyError:
-            self.get_logger().error(f'Cannot render template, model not specified')
-            return
-
-        try:
-            template_wrapper = self.jinja_templates[model_name]
-        except KeyError:
-            self.get_logger().error(f'Cannot render model "{model_name}". Template not found!')
-            return
-
-        self.get_logger().info(
-            f'Rendering model "{model_name}" using template {template_wrapper.jinja_template.filename}')
-
-        context = template_wrapper.jinja_template.new_context(params)
-        rendered_template = template_wrapper.jinja_template.render(context)
-        try:
-            root = xml.dom.minidom.parseString(rendered_template)
-        except Exception as e:
-            self.get_logger().error(f'XML error: "{e}"')
-            fd, filepath = tempfile.mkstemp(prefix='mrs_drone_spawner_' +
-                                            datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_'),
-                                            suffix='_DUMP_' + str(model_name) + '.sdf')
-            with os.fdopen(fd, 'w') as output_file:
-                output_file.write(rendered_template)
-                self.get_logger().info(f'Malformed XML for model {model_name} dumped to {filepath}')
-            return
-
-        ugly_xml = root.toprettyxml(indent='  ')
-
-        # Remove empty lines
-        pretty_xml = '\n'.join(line for line in ugly_xml.split('\n') if line.strip())
-
-        return pretty_xml
-
-    # #} end render
 
     # --------------------------------------------------------------
     # |                     user input parsing                     |
@@ -1286,54 +881,10 @@ class MrsDroneSpawner(Node):
         del robot_params['ids']
         del robot_params['spawn_poses']
 
-        robot_params['mavlink_config'] = self.get_mavlink_config_for_robot(ID)
-        robot_params['mavros_px4_config'] = self.generate_mavros_px4_config(robot_params['name'])
+        robot_params['mavlink_config'] = self._px4_mavlink_manager.get_mavlink_config_for_robot(ID)
+        robot_params['mavros_px4_config'] = self._px4_mavlink_manager.generate_mavros_px4_config(robot_params['name'])
 
         return robot_params
-
-    # #}
-
-
-# #{ get_mavlink_config_for_robot(self, ID)
-
-    def get_mavlink_config_for_robot(self, ID):
-        '''Creates a mavlink port configuration based on default values offset by ID
-
-        NOTE: The offsets have to match values assigned in px4-rc.* files located in package_root/ROMFS/px4fmu_common/init.d-posix!!
-
-        '''
-        mavlink_config = {}
-        udp_offboard_port_local = self.vehicle_base_port + (4 * ID)
-        udp_offboard_port_remote = self.vehicle_base_port + (4 * ID) + 1
-        udp_qgc_port_local = self.vehicle_base_port + (4 * ID) + 2
-        udp_qgc_port_remote = self.vehicle_base_port + (4 * ID) + 3
-        mavlink_config['udp_offboard_port_remote'] = udp_offboard_port_remote
-        mavlink_config['udp_offboard_port_local'] = udp_offboard_port_local
-        mavlink_config['udp_qgc_port_remote'] = udp_qgc_port_remote
-        mavlink_config['udp_qgc_port_local'] = udp_qgc_port_local
-        mavlink_config['fcu_url'] = f'udp://127.0.0.1:{udp_offboard_port_remote}@127.0.0.1:{udp_offboard_port_local}'
-
-        return mavlink_config
-
-    # #}
-
-    # #{ generate_mavros_px4_config(self, uav_name)
-    def generate_mavros_px4_config(self, uav_name):
-
-        jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(self.mavros_px4_config_path), autoescape=False)
-
-        template = jinja_env.get_template(self.mavros_px4_config_template_name)
-
-        rendered_template = template.render(uav_name=uav_name)
-
-        filename = f'mavros_px4_config_{uav_name}.yaml'
-        filepath = os.path.join(self.tempfile_folder, filename)
-
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(rendered_template)
-            self.get_logger().info(f'Mavros PX4 config for {uav_name} written to {filepath}')
-
-        return filepath
 
     # #}
 

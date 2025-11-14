@@ -1,9 +1,17 @@
 import os
 import jinja2
-from rclpy.node import Node
-from mrs_uav_gazebo_simulator.utils.spawner_enums import *
 import xml.dom.minidom
 from xml.dom.minidom import Element
+import multiprocessing
+
+from mrs_uav_gazebo_simulator.utils.spawner_enums import *
+from mrs_uav_gazebo_simulator.utils.spawner_exceptions import *
+
+# ROS 2 Imports
+from rclpy.node import Node
+from launch import LaunchDescription, LaunchService
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 class RosGzBridgeManager():
@@ -11,6 +19,8 @@ class RosGzBridgeManager():
     def __init__(self, ros_node: Node, gazebo_simulator_path: str, tempfile_folder: str):
         self._ros_node = ros_node
 
+        self._uav_ros_gz_bridge_launch_path = os.path.join(gazebo_simulator_path, 'launch',
+                                                           'uav_ros_gz_bridge.launch.py')
         self._uav_ros_gz_bridge_config_path = os.path.join(gazebo_simulator_path, 'config')
         self._uav_ros_gz_bridge_config_template_name = 'uav_ros_gz_bridge_config.yaml.jinja'
 
@@ -251,5 +261,40 @@ class RosGzBridgeManager():
         #     RosGzBridgeTopics(gazebo="/uav1/ground_truth/pose", ros="/uav1/ground_truth/pose"))
 
         return sensor_topics
+
+    # #}
+
+    # #{ launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics)
+    def launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics):
+        self._ros_node.get_logger().info(f'Launching ros_gz_bridge for {uav_name}')
+
+        launch_arguments = {
+            'namespace': uav_name,
+            'ros_gz_bridge_config': str(ros_gz_bridge_config),
+            'ros_gz_image_topics': ' '.join(sensor_topics[RosGzBridgeCategory.IMAGE]),
+            'bridge_debug': 'false',
+        }
+
+        ld = LaunchDescription([
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(self._uav_ros_gz_bridge_launch_path),
+                launch_arguments=launch_arguments.items(),
+            )
+        ])
+
+        self._ros_node.get_logger().info(f'launch_arguments: {launch_arguments}')
+        launch_service = LaunchService(debug=False)
+        launch_service.include_launch_description(ld)
+        ros_gz_bridge_process = multiprocessing.Process(target=launch_service.run)
+
+        try:
+            ros_gz_bridge_process.start()
+        except Exception as e:
+            self._ros_node.get_logger().error(
+                f'Could not start ros_gz_bridge for {uav_name}. Node failed to launch: {e}')
+            raise CouldNotLaunch('ros_gz_bridge failed to launch')
+
+        self._ros_node.get_logger().info(f'ros_gz_bridge for {uav_name} launched')
+        return ros_gz_bridge_process
 
     # #}

@@ -3,6 +3,13 @@ from typing import TypedDict
 from dataclasses import dataclass
 
 
+@dataclass
+class Px4MavlinkConfig:
+    vehicle_base_port: int = 0
+    stream_for_qgc: int = 0
+    firmware_launch_delay: float = 0.0
+
+
 class GazeboSensors(StrEnum):
     CAMERA = "camera"
     LIDAR = "gpu_lidar"
