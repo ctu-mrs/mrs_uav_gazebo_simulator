@@ -25,7 +25,7 @@ class RosGzBridgeCategory(StrEnum):
     LASER_SCAN = "laser_scan"
     POINTCLOUD = "pointcloud"
     ODOMETRY = "odometry"
-    TF = "tf"
+    ODOMETRY_WITH_COV = "odometry_with_cov"
 
 
 class SdfTopicTags(StrEnum):

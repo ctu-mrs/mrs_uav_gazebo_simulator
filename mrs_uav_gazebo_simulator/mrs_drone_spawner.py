@@ -23,7 +23,9 @@ from ament_index_python.packages import get_package_share_directory
 from mrs_uav_gazebo_simulator.utils.component_wrapper import ComponentWrapper
 from mrs_uav_gazebo_simulator.utils.template_wrapper import TemplateWrapper
 from mrs_uav_gazebo_simulator.utils.sdf_to_tf_publisher import SdfTfPublisherSingleton
-from mrs_uav_gazebo_simulator.utils.spawner_enums import *
+from mrs_uav_gazebo_simulator.utils.ros_gz_bridge_manager import RosGzBridgeManager
+from mrs_uav_gazebo_simulator.utils.spawner_enums import RosGzBridgeCategory
+from mrs_uav_gazebo_simulator.utils.exceptions import *
 
 # ROS 2 Imports
 from launch import LaunchDescription, LaunchService
@@ -36,46 +38,6 @@ from mrs_msgs.srv import String as StringSrv
 from mrs_msgs.msg import GazeboSpawnerDiagnostics
 
 glob_running_processes = []
-
-
-# #{ Exceptions and Errors
-#  exceptions that can be raised by the spawner
-class NoFreeIDAvailable(RuntimeError):
-    """Raised when an ID could not be automatically assigned."""
-    pass
-
-
-class NoValidIDGiven(RuntimeError):
-    """Raised when a user-provided ID is already in use."""
-    pass
-
-
-class CouldNotLaunch(RuntimeError):
-    """Raised when a subprocess (like PX4 or MAVROS) fails to start."""
-    pass
-
-
-class CouldNotSpawn(RuntimeError):
-    """Raised when a gazebo spawn call fails"""
-    pass
-
-
-class FormattingError(ValueError):
-    """Raised when spawn arguments are in an unrecognizable format."""
-    pass
-
-
-class WrongNumberOfArguments(ValueError):
-    """Raised when a command-line flag is missing its required value."""
-    pass
-
-
-class SuffixError(NameError):
-    """Raised for issues related to file suffixes, like for Jinja templates."""
-    pass
-
-
-# #} end of Exceptions and Errors
 
 
 # #{ dummy_function()
@@ -204,8 +166,8 @@ class MrsDroneSpawner(Node):
         gazebo_simulator_path = get_package_share_directory('mrs_uav_gazebo_simulator')
         self.uav_ros_gz_bridge_launch_path = os.path.join(gazebo_simulator_path, 'launch',
                                                           'uav_ros_gz_bridge.launch.py')
-        self.uav_ros_gz_bridge_config_path = os.path.join(gazebo_simulator_path, 'config')
-        self.uav_ros_gz_bridge_config_template_name = 'uav_ros_gz_bridge_config.yaml.jinja'
+        self.ros_gz_manager = RosGzBridgeManager(self, gazebo_simulator_path, self.tempfile_folder)
+
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
         self.mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
         self.mavros_px4_config_path = os.path.join(px4_api_path, 'config')
@@ -424,7 +386,7 @@ class MrsDroneSpawner(Node):
             firmware_process = None
             mavros_process = None
 
-            ros_gz_bridge_config, sensor_topics = self.generate_uav_ros_gz_config(robot_params)
+            ros_gz_bridge_config, sensor_topics = self.ros_gz_manager.generate_uav_ros_gz_config(robot_params)
 
             try:
                 if ros_gz_bridge_config != "":
@@ -1372,267 +1334,6 @@ class MrsDroneSpawner(Node):
             self.get_logger().info(f'Mavros PX4 config for {uav_name} written to {filepath}')
 
         return filepath
-
-    # #}
-
-    # #{ get_attached_sensors(self, robot_params)
-    def get_attached_sensors(self, robot_params):
-        attached_sensors = {
-            AttachedSensors.CAMERAS: [],
-            AttachedSensors.RGBD_CAMERAS: [],
-            AttachedSensors.TWO_D_LIDAR: [],
-            AttachedSensors.THREE_D_LIDAR: [],
-            AttachedSensors.DEPTH_CAMERAS: [],
-        }
-
-        # not using try-catch, it's already done during the sdf's generation
-        xmldoc = xml.dom.minidom.parse(robot_params['sdf_filepath'])
-        sensor_blocks = xmldoc.getElementsByTagName('sensor')
-
-        for sensor in sensor_blocks:
-            sensor_type = sensor.getAttribute('type')
-            if sensor_type == GazeboSensors.CAMERA:
-                self.get_attached_camera(attached_sensors, sensor)
-            elif sensor_type == GazeboSensors.LIDAR:
-                self.get_attached_lidar(attached_sensors, sensor)
-            elif sensor_type == GazeboSensors.RGBD_CAMERA:
-                self.get_attached_rgbd_camera(attached_sensors, sensor)
-            elif sensor_type == GazeboSensors.DEPTH_CAMERA:
-                self.get_attached_depth_camera(attached_sensors, sensor)
-
-        return attached_sensors
-
-    # #}
-
-    # #{ get_attached_camera(self, attached_sensors, camera_sensor)
-    def get_attached_camera(self, attached_sensors, camera_sensor) -> None:
-        gz_camera_info_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.GZ_CAMERA_INFO)
-        ros_camera_info_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_CAMERA_INFO)
-        ros_color_image_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_COLOR_IMAGE)
-
-        required_topics = [gz_camera_info_topic, ros_camera_info_topic, ros_color_image_topic]
-
-        if not all(required_topics):
-            self.get_logger().warn("Skipping RGB camera because one or more required topics are missing.")
-            return
-
-        camera = CameraRosGzBridge(image_topic=ros_color_image_topic,
-                                   ros_info_topic=ros_camera_info_topic,
-                                   gz_info_topic=gz_camera_info_topic)
-
-        attached_sensors[AttachedSensors.CAMERAS].append(camera)
-
-    # #}
-
-    # #{ get_attached_rgbd_camera(self, attached_sensors, camera_sensor)
-    def get_attached_rgbd_camera(self, attached_sensors, camera_sensor) -> None:
-        gz_camera_info_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.GZ_CAMERA_INFO)
-        gz_pointcloud_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.GZ_POINTCLOUD)
-        ros_camera_info_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_CAMERA_INFO)
-        ros_color_image_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_COLOR_IMAGE)
-        ros_depth_image_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_DEPTH_IMAGE)
-        ros_pointcloud_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_POINTCLOUD)
-
-        required_topics = [
-            gz_camera_info_topic,
-            gz_pointcloud_topic,
-            ros_camera_info_topic,
-            ros_color_image_topic,
-            ros_depth_image_topic,
-            ros_pointcloud_topic,
-        ]
-
-        if not all(required_topics):
-            self.get_logger().warn("Skipping RGB-D camera because one or more required topics are missing.")
-            return
-
-        camera = RgbdCameraRosGzBridge(rgb_image_topic=ros_color_image_topic,
-                                       depth_image_topic=ros_depth_image_topic,
-                                       ros_info_topic=ros_camera_info_topic,
-                                       gz_info_topic=gz_camera_info_topic,
-                                       ros_points_topic=ros_pointcloud_topic,
-                                       gz_points_topic=gz_pointcloud_topic)
-
-        attached_sensors[AttachedSensors.RGBD_CAMERAS].append(camera)
-
-    # #}
-
-    # #{ get_attached_depth_camera(self, attached_sensors, camera_sensor)
-    def get_attached_depth_camera(self, attached_sensors, camera_sensor) -> None:
-        gz_camera_info_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.GZ_CAMERA_INFO)
-        gz_pointcloud_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.GZ_POINTCLOUD)
-        ros_camera_info_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_CAMERA_INFO)
-        ros_depth_image_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_DEPTH_IMAGE)
-        ros_pointcloud_topic = self.get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_POINTCLOUD)
-
-        required_topics = [
-            gz_camera_info_topic, gz_pointcloud_topic, ros_camera_info_topic, ros_depth_image_topic,
-            ros_pointcloud_topic
-        ]
-
-        if not all(required_topics):
-            self.get_logger().warn("Skipping Depth camera because one or more required topics are missing.")
-            return
-
-        depth_camera = DepthCameraRosGzBridge(image_topic=ros_depth_image_topic,
-                                              ros_info_topic=ros_camera_info_topic,
-                                              gz_info_topic=gz_camera_info_topic,
-                                              ros_points_topic=ros_pointcloud_topic,
-                                              gz_points_topic=gz_pointcloud_topic)
-
-        attached_sensors[AttachedSensors.DEPTH_CAMERAS].append(depth_camera)
-
-    # #}
-
-    # #{ get_attached_lidar(self, attached_sensors, lidar_sensor)
-    def get_attached_lidar(self, attached_sensors, lidar_sensor) -> None:
-
-        # NOTE: PX4 requires its own bridge with the Garmin rangefinder, so we do not set it up.
-        # The Garmin rangefinder link is named 'lidar_sensor_link' in the garmin.sdf.jinja template.
-        # Do not rename the Garmin link or the rangefinder plugin, as PX4 may fail to detect it otherwise.
-        if lidar_sensor.getAttribute('name') == "lidar_sensor_link":  # Garmin rangefinder
-            return
-
-        gz_pointcloud_topic = self.get_sensor_topic_from_tag_name(lidar_sensor, SdfTopicTags.GZ_POINTCLOUD)
-        ros_pointcloud_topic = self.get_sensor_topic_from_tag_name(lidar_sensor, SdfTopicTags.ROS_POINTCLOUD)
-
-        required_topics = [gz_pointcloud_topic, ros_pointcloud_topic]
-
-        if not all(required_topics):
-            self.get_logger().warn("Skipping Lidar because one or more required topics are missing.")
-            return
-
-        vertical_samples = self.get_number_of_vertical_samples(lidar_sensor)
-        lidar = LidarRosGzBridge(ros_points_topic=ros_pointcloud_topic, gz_points_topic=gz_pointcloud_topic)
-        if vertical_samples == 1:  # 2D lidar
-            attached_sensors[AttachedSensors.TWO_D_LIDAR].append(lidar)
-        elif vertical_samples > 1:  # 3D lidar
-            attached_sensors[AttachedSensors.THREE_D_LIDAR].append(lidar)
-        else:  # Incorrect lidar
-            self.get_logger().error(
-                f"The lidar {lidar_sensor.getAttribute('name')} cannot be loaded. Check if the number of vertical samples is correct."
-            )
-
-        return
-
-    # #}
-
-    # #{ get_number_of_vertical_samples(self, lidar_sensor)
-    def get_number_of_vertical_samples(self, lidar_sensor):
-        vertical_elements = lidar_sensor.getElementsByTagName('vertical')
-        samples_elements = vertical_elements[0].getElementsByTagName('samples')
-        vertical_samples = int(samples_elements[0].firstChild.nodeValue.strip())
-
-        return vertical_samples
-
-    # #}
-
-    # #{ get_sensor_topic_from_tag_name(self, sensor, tag_name)
-    def get_sensor_topic_from_tag_name(self, sensor, tag_name):
-        topic = sensor.getElementsByTagName(tag_name)
-        if topic:
-            topic = '/' + topic[0].firstChild.data
-        return topic
-
-    # #}
-
-    # #{ get_sensor_topics(self, attached_sensors: dict) -> dict:
-    def get_sensor_topics(self, attached_sensors: dict) -> dict:
-        sensor_topics = {
-            RosGzBridgeCategory.IMAGE: [],
-            RosGzBridgeCategory.CAMERA_INFO: [],
-            RosGzBridgeCategory.DEPTH_IMAGE: [],
-            RosGzBridgeCategory.LASER_SCAN: [],
-            RosGzBridgeCategory.POINTCLOUD: [],
-            RosGzBridgeCategory.ODOMETRY: [],
-            RosGzBridgeCategory.TF: [],
-        }
-
-        for camera in attached_sensors[AttachedSensors.CAMERAS]:
-            sensor_topics[RosGzBridgeCategory.IMAGE].append(camera.image_topic)
-            sensor_topics[RosGzBridgeCategory.CAMERA_INFO].append(
-                RosGzBridgeTopics(gazebo=camera.gz_info_topic, ros=camera.ros_info_topic))
-
-        for two_d_lidar in attached_sensors[AttachedSensors.TWO_D_LIDAR]:
-            sensor_topics[RosGzBridgeCategory.LASER_SCAN].append(
-                RosGzBridgeTopics(gazebo=two_d_lidar.gz_points_topic, ros=two_d_lidar.ros_points_topic))
-
-        for three_d_lidar in attached_sensors[AttachedSensors.THREE_D_LIDAR]:
-            sensor_topics[RosGzBridgeCategory.POINTCLOUD].append(
-                RosGzBridgeTopics(gazebo=three_d_lidar.gz_points_topic, ros=three_d_lidar.ros_points_topic))
-
-        for rgbd_camera in attached_sensors[AttachedSensors.RGBD_CAMERAS]:
-            sensor_topics[RosGzBridgeCategory.IMAGE].append(rgbd_camera.rgb_image_topic)
-            sensor_topics[RosGzBridgeCategory.IMAGE].append(rgbd_camera.depth_image_topic)
-            sensor_topics[RosGzBridgeCategory.CAMERA_INFO].append(
-                RosGzBridgeTopics(gazebo=rgbd_camera.gz_info_topic, ros=rgbd_camera.ros_info_topic))
-            #NOTE: Real-world cameras do not provide this topic, so we do not publish it either.
-            # sensor_topics[RosGzBridgeCategory.POINTCLOUD].append(
-            #     RosGzBridgeTopics(gazebo=rgbd_camera.gz_points_topic,
-            #                       ros=rgbd_camera.ros_points_topic))
-
-        for depth_camera in attached_sensors[AttachedSensors.DEPTH_CAMERAS]:
-            sensor_topics[RosGzBridgeCategory.IMAGE].append(depth_camera.image_topic)
-            sensor_topics[RosGzBridgeCategory.CAMERA_INFO].append(
-                RosGzBridgeTopics(gazebo=depth_camera.gz_info_topic, ros=depth_camera.ros_info_topic))
-            #NOTE: Real-world cameras do not provide this topic, so we do not publish it either.
-            # sensor_topics[RosGzBridgeCategory.POINTCLOUD].append(
-            #     RosGzBridgeTopics(gazebo=depth_camera.gz_points_topic, ros=depth_camera.ros_points_topic))
-
-        sensor_topics[RosGzBridgeCategory.ODOMETRY].append(
-            RosGzBridgeTopics(gazebo="/uav1/ground_truth", ros="/uav1/ground_truth"))
-
-        sensor_topics[RosGzBridgeCategory.TF].append(
-            RosGzBridgeTopics(gazebo="/uav1/ground_truth/pose", ros="/uav1/ground_truth/pose"))
-
-        return sensor_topics
-
-    # #}
-
-    # #{ has_attached_sensors(self, attached_sensors)
-    def has_attached_sensors(self, attached_sensors):
-        flag = any(attached_sensors[key] for key in (
-            AttachedSensors.CAMERAS,
-            AttachedSensors.TWO_D_LIDAR,
-            AttachedSensors.THREE_D_LIDAR,
-            AttachedSensors.RGBD_CAMERAS,
-            AttachedSensors.DEPTH_CAMERAS,
-        ))
-
-        return flag
-
-    # #}
-
-    # #{ generate_uav_ros_gz_config(self, uav_name)
-    def generate_uav_ros_gz_config(self, robot_params):
-        uav_name = robot_params['name']
-
-        jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(self.uav_ros_gz_bridge_config_path),
-                                       autoescape=False)
-
-        template = jinja_env.get_template(self.uav_ros_gz_bridge_config_template_name)
-
-        attached_sensors = self.get_attached_sensors(robot_params)
-        if not self.has_attached_sensors(attached_sensors):
-            self.get_logger().info(f"There are no additional sensors. Skipping launching ros_gz_bridge for {uav_name}")
-            return "", []
-
-        sensor_topics = self.get_sensor_topics(attached_sensors)
-
-        rendered_template = template.render(camera_info_topic_list=sensor_topics[RosGzBridgeCategory.CAMERA_INFO],
-                                            laser_scan_topic_list=sensor_topics[RosGzBridgeCategory.LASER_SCAN],
-                                            point_cloud_topic_list=sensor_topics[RosGzBridgeCategory.POINTCLOUD],
-                                            odometry_topic_list=sensor_topics[RosGzBridgeCategory.ODOMETRY],
-                                            tf_topic_list=sensor_topics[RosGzBridgeCategory.TF])
-
-        filename = f'ros_gz_bridge_config_{uav_name}.yaml'
-        filepath = os.path.join(self.tempfile_folder, filename)
-
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(rendered_template)
-            self.get_logger().info(f'ros_gz_bridge config for {uav_name} written to {filepath}')
-
-        return filepath, sensor_topics
 
     # #}
 
