@@ -44,18 +44,22 @@ def get_camera_sdf(loader, template, macro_name):
 
 def get_rgb_camera_topics_from_xml(camera_sensor) -> None:
     gz_camera_info_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.GZ_CAMERA_INFO)
-    ros_camera_info_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_CAMERA_INFO)
-    ros_color_image_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_COLOR_IMAGE)
-    sdf_topic_tag = '/' + camera_sensor.getElementsByTagName('topic')[0].firstChild.data
-
     if not gz_camera_info_topic:
-        assert "Missing <gz_camera_info_topic> tag."
+        pytest.fail("Missing <gz_camera_info_topic> tag.")
+
+    ros_camera_info_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_CAMERA_INFO)
     if not ros_camera_info_topic:
-        assert "Missing <ros_camera_info_topic> tag."
+        pytest.fail("Missing <ros_camera_info_topic> tag.")
+
+    ros_color_image_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_COLOR_IMAGE)
     if not ros_color_image_topic:
-        assert "Missing <ros_color_image_topic> tag."
-    if not sdf_topic_tag:
-        assert "Missing <topic> tag."
+        pytest.fail("Missing <ros_color_image_topic> tag.")
+
+    topic = camera_sensor.getElementsByTagName('topic')
+    if not topic:
+        pytest.fail("Missing <sdf_topic_tag> tag.")
+    else:
+        sdf_topic_tag = '/' + topic[0].firstChild.data
 
     return sdf_topic_tag, CameraRosGzBridge(
         image_topic=ros_color_image_topic,
@@ -73,24 +77,30 @@ def check_rgb_naming_convention(sdf_tag_topic: str, custom_topics: CameraRosGzBr
 
 def get_depth_camera_topics_from_xml(camera_sensor) -> None:
     gz_camera_info_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.GZ_CAMERA_INFO)
-    ros_camera_info_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_CAMERA_INFO)
-    ros_depth_image_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_DEPTH_IMAGE)
-    sdf_topic_tag = '/' + camera_sensor.getElementsByTagName('topic')[0].firstChild.data
-    gz_pointcloud_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.GZ_POINTCLOUD)
-    ros_pointcloud_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_POINTCLOUD)
-
     if not gz_camera_info_topic:
-        assert "Missing <gz_camera_info_topic> tag."
+        pytest.fail("Missing <gz_camera_info_topic> tag.")
+
+    ros_camera_info_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_CAMERA_INFO)
     if not ros_camera_info_topic:
-        assert "Missing <ros_camera_info_topic> tag."
+        pytest.fail("Missing <ros_camera_info_topic> tag.")
+
+    ros_depth_image_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_DEPTH_IMAGE)
     if not ros_depth_image_topic:
-        assert "Missing <ros_depth_image_topic> tag."
-    if not sdf_topic_tag:
-        assert "Missing <topic> tag."
+        pytest.fail("Missing <ros_depth_image_topic> tag.")
+
+    gz_pointcloud_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.GZ_POINTCLOUD)
     if not gz_pointcloud_topic:
-        assert "Missing <gz_pointcloud_topic> tag."
+        pytest.fail("Missing <gz_pointcloud_topic> tag.")
+
+    ros_pointcloud_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_POINTCLOUD)
     if not ros_pointcloud_topic:
-        assert "Missing <ros_pointcloud_topic> tag."
+        pytest.fail("Missing <ros_pointcloud_topic> tag.")
+
+    topic = camera_sensor.getElementsByTagName('topic')
+    if not topic:
+        pytest.fail("Missing <sdf_topic_tag> tag.")
+    else:
+        sdf_topic_tag = '/' + topic[0].firstChild.data
 
     return sdf_topic_tag, DepthCameraRosGzBridge(image_topic=ros_depth_image_topic,
                                                  ros_info_topic=ros_camera_info_topic,
@@ -108,27 +118,34 @@ def check_depth_naming_convention(sdf_tag_topic: str, custom_topics: DepthCamera
 
 def get_rgbd_camera_topics_from_xml(camera_sensor) -> None:
     gz_camera_info_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.GZ_CAMERA_INFO)
-    gz_pointcloud_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.GZ_POINTCLOUD)
-    ros_camera_info_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_CAMERA_INFO)
-    ros_color_image_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_COLOR_IMAGE)
-    ros_depth_image_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_DEPTH_IMAGE)
-    ros_pointcloud_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_POINTCLOUD)
-    sdf_topic_tag = '/' + camera_sensor.getElementsByTagName('topic')[0].firstChild.data
-
     if not gz_camera_info_topic:
-        assert "Missing <gz_camera_info_topic> tag."
-    if not ros_camera_info_topic:
-        assert "Missing <ros_camera_info_topic> tag."
-    if not ros_depth_image_topic:
-        assert "Missing <ros_depth_image_topic> tag."
-    if not ros_color_image_topic:
-        assert "Missing <ros_color_image_topic> tag."
-    if not sdf_topic_tag:
-        assert "Missing <topic> tag."
+        pytest.fail("Missing <gz_camera_info_topic> tag.")
+
+    gz_pointcloud_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.GZ_POINTCLOUD)
     if not gz_pointcloud_topic:
-        assert "Missing <gz_pointcloud_topic> tag."
+        pytest.fail("Missing <gz_pointcloud_topic> tag.")
+
+    ros_camera_info_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_CAMERA_INFO)
+    if not ros_camera_info_topic:
+        pytest.fail("Missing <ros_camera_info_topic> tag.")
+
+    ros_color_image_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_COLOR_IMAGE)
+    if not ros_color_image_topic:
+        pytest.fail("Missing <ros_color_image_topic> tag.")
+
+    ros_depth_image_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_DEPTH_IMAGE)
+    if not ros_depth_image_topic:
+        pytest.fail("Missing <ros_depth_image_topic> tag.")
+
+    ros_pointcloud_topic = get_sensor_topic_from_tag_name(camera_sensor, SdfTopicTags.ROS_POINTCLOUD)
     if not ros_pointcloud_topic:
-        assert "Missing <ros_pointcloud_topic> tag."
+        pytest.fail("Missing <ros_pointcloud_topic> tag.")
+
+    topic = camera_sensor.getElementsByTagName('topic')
+    if not topic:
+        pytest.fail("Missing <sdf_topic_tag> tag.")
+    else:
+        sdf_topic_tag = '/' + topic[0].firstChild.data
 
     return sdf_topic_tag, RgbdCameraRosGzBridge(rgb_image_topic=ros_color_image_topic,
                                                 depth_image_topic=ros_depth_image_topic,
