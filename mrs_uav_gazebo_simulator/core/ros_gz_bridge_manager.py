@@ -235,13 +235,13 @@ class RosGzBridgeManager():
 
     # #{ get_attached_imu(self, attached_sensors, imu_sensor)
     def get_attached_imu(self, attached_sensors, imu_sensor):
-        gz_imu_topic = self.get_sensor_topic_from_tag_name(imu_sensor, SdfTopicTags.GZ_IMU)
-        ros_imu_topic = self.get_sensor_topic_from_tag_name(imu_sensor, SdfTopicTags.ROS_IMU)
+        gz_imu_topic = self._get_elem_topic_from_tag_name(imu_sensor, SdfTopicTags.GZ_IMU)
+        ros_imu_topic = self._get_elem_topic_from_tag_name(imu_sensor, SdfTopicTags.ROS_IMU)
 
         required_topics = [gz_imu_topic, ros_imu_topic]
 
         if not all(required_topics):
-            self.get_logger().warn("Skipping IMU because one or more required topics are missing.")
+            self._ros_node.get_logger().warn("Skipping IMU because one or more required topics are missing.")
             return
 
         imu = ImuRosGzBridge(ros_imu_topic=ros_imu_topic, gz_imu_topic=gz_imu_topic)

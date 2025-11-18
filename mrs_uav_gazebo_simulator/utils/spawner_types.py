@@ -98,6 +98,7 @@ class OdometryRosGzBridge:
     gz_odometry_cov_topic: str
 
 
+@dataclass
 class ImuRosGzBridge:
     ros_imu_topic: str
     gz_imu_topic: str

@@ -5,7 +5,7 @@ from tf2_ros import StaticTransformBroadcaster
 from geometry_msgs.msg import TransformStamped, Transform
 
 from mrs_uav_gazebo_simulator.utils.sdf_tf_enums import SensorLinkData, LinkToSensorData, TfData
-from mrs_uav_gazebo_simulator.utils.spawner_enums import GazeboSensors
+from mrs_uav_gazebo_simulator.utils.spawner_types import GazeboSensors
 
 
 class SingletonMeta(type):
