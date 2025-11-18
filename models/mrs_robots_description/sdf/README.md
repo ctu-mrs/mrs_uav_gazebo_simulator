@@ -354,8 +354,11 @@ For more information about which message types can be bridged, we recommend the 
 
 #### Tests
 There are unit tests that can partially verify the Jinja syntax within macros.
-Be aware that these tests only ensure the Jinja templates can be rendered successfully. They do not check whether the resulting SDF is valid. Additionally, there is a `test_camera_topic_names` test that verifies the naming conventions for all types of camera sensors.
-These tests automatically detect the sensor folders, so you should not need to modify them.
+Be aware that these tests only ensure the Jinja templates can be rendered successfully. They do not check whether the resulting SDF is valid. Additionally, there is a camera test that verifies the naming conventions for all types of camera sensors.
+These tests automatically detect the sensor folders, so you should not need to modify them. You can run these tests in the `tests` folder by running:
+```bash
+pytest -vv
+```
 
 
 
