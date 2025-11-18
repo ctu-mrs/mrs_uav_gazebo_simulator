@@ -15,6 +15,7 @@ class GazeboSensors(StrEnum):
     LIDAR = "gpu_lidar"
     RGBD_CAMERA = "rgbd_camera"
     DEPTH_CAMERA = "depth_camera"
+    IMU = "imu"
 
 
 class GazeboPlugins(StrEnum):
@@ -27,6 +28,7 @@ class AttachedSensors(Enum):
     TWO_D_LIDAR = 2
     THREE_D_LIDAR = 3
     DEPTH_CAMERAS = 4
+    IMU = 5
 
 
 class RosGzBridgeCategory(StrEnum):
@@ -37,6 +39,7 @@ class RosGzBridgeCategory(StrEnum):
     POINTCLOUD = "pointcloud"
     ODOMETRY = "odometry"
     ODOMETRY_WITH_COV = "odometry_with_cov"
+    IMU = "imu"
 
 
 class SdfTopicTags(StrEnum):
@@ -46,6 +49,8 @@ class SdfTopicTags(StrEnum):
     ROS_POINTCLOUD = "ros_pointcloud_topic"
     GZ_CAMERA_INFO = "gz_camera_info_topic"
     GZ_POINTCLOUD = "gz_pointcloud_topic"
+    ROS_IMU = "imu_ros_topic"
+    GZ_IMU = "imu_gz_topic"
 
 
 class RosGzBridgeTopics(TypedDict):
@@ -91,3 +96,8 @@ class OdometryRosGzBridge:
     gz_odometry_topic: str
     ros_odometry_cov_topic: str
     gz_odometry_cov_topic: str
+
+
+class ImuRosGzBridge:
+    ros_imu_topic: str
+    gz_imu_topic: str

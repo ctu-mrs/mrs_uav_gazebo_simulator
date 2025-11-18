@@ -5,6 +5,7 @@ from tf2_ros import StaticTransformBroadcaster
 from geometry_msgs.msg import TransformStamped, Transform
 
 from mrs_uav_gazebo_simulator.utils.sdf_tf_enums import SensorLinkData, LinkToSensorData, TfData
+from mrs_uav_gazebo_simulator.utils.spawner_enums import GazeboSensors
 
 
 class SingletonMeta(type):
@@ -27,7 +28,8 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
             raise RuntimeError(
                 f"[Sdf2Tf_Publisher] base_frame is not defined in the config file, cannot create tf publisher.")
         self._ros_node = ros_node
-        self._camera_types = ["camera", "rgbd_camera", "depth_camera"]
+        self._camera_types = [GazeboSensors.CAMERA, GazeboSensors.RGBD_CAMERA, GazeboSensors.DEPTH_CAMERA]
+
         self._transformations = []
         self._broadcaster = StaticTransformBroadcaster(self._ros_node)
 
@@ -245,6 +247,9 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
             child_frame = data[TfData.CHILD_FRAME]
             parent_frame = data[TfData.PARENT_FRAME]
             T_matrix = data[TfData.TF_MATRIX]
+
+            self._ros_node.get_logger().info(
+                f"[Sdf2Tf_Publisher] Creating tf link from: {parent_frame} to: {child_frame}")
 
             t = TransformStamped()
             t.header.stamp = time_now

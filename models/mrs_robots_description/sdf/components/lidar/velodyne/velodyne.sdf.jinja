@@ -86,8 +86,7 @@
 
       <!-- sensor + plugin {-->
       {{ generic.gazebo_threed_lidar_plugin_macro(
-          lidar_name = sensor_name,
-          lidar_gz_frame_id = sensor_gz_frame_id,
+          lidar_gz_frame_id = lidar_gz_frame_id,
           lidar_sdf_topic_name = spawner_args['name'] + '/' + sensor_name,
           lidar_gz_topic_name = spawner_args['name'] + '/' + sensor_name + '/points',
           lidar_ros_topic_name = spawner_args['name'] + '/' + sensor_name + '/points',

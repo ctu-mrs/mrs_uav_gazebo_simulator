@@ -51,6 +51,7 @@ class RosGzBridgeManager():
             camera_info_topic_list=ros_gz_topics[RosGzBridgeCategory.CAMERA_INFO],
             laser_scan_topic_list=ros_gz_topics[RosGzBridgeCategory.LASER_SCAN],
             point_cloud_topic_list=ros_gz_topics[RosGzBridgeCategory.POINTCLOUD],
+            imu_topic_list=ros_gz_topics[RosGzBridgeCategory.IMU],
             odometry_topic_list=ros_gz_topics[RosGzBridgeCategory.ODOMETRY],
             odometry_cov_topic_list=ros_gz_topics[RosGzBridgeCategory.ODOMETRY_WITH_COV])
 
@@ -113,7 +114,8 @@ class RosGzBridgeManager():
                 self._get_attached_rgbd_camera(attached_sensors, sensor)
             elif sensor_type == GazeboSensors.DEPTH_CAMERA:
                 self._get_attached_depth_camera(attached_sensors, sensor)
-
+            elif sensor_type == GazeboSensors.IMU:
+                self.get_attached_imu(attached_sensors, sensor)
         return attached_sensors
 
     # #}
@@ -231,6 +233,23 @@ class RosGzBridgeManager():
 
     # #}
 
+    # #{ get_attached_imu(self, attached_sensors, imu_sensor)
+    def get_attached_imu(self, attached_sensors, imu_sensor):
+        gz_imu_topic = self.get_sensor_topic_from_tag_name(imu_sensor, SdfTopicTags.GZ_IMU)
+        ros_imu_topic = self.get_sensor_topic_from_tag_name(imu_sensor, SdfTopicTags.ROS_IMU)
+
+        required_topics = [gz_imu_topic, ros_imu_topic]
+
+        if not all(required_topics):
+            self.get_logger().warn("Skipping IMU because one or more required topics are missing.")
+            return
+
+        imu = ImuRosGzBridge(ros_imu_topic=ros_imu_topic, gz_imu_topic=gz_imu_topic)
+
+        attached_sensors[AttachedSensors.IMU].append(imu)
+
+    # #}
+
     # #{ _get_elem_topic_from_tag_name(self, elem, tag_name)
     def _get_elem_topic_from_tag_name(self, elem, tag_name):
         topic = elem.getElementsByTagName(tag_name)
@@ -295,6 +314,10 @@ class RosGzBridgeManager():
             #NOTE: Real-world cameras do not provide this topic, so we do not publish it either.
             # sensor_topics[RosGzBridgeCategory.POINTCLOUD].append(
             #     RosGzBridgeTopics(gazebo=depth_camera.gz_points_topic, ros=depth_camera.ros_points_topic))
+
+        for imu in attached_sensors[AttachedSensors.IMU]:
+            sensor_topics[RosGzBridgeCategory.IMU].append(
+                RosGzBridgeTopics(gazebo=imu.gz_imu_topic, ros=imu.ros_imu_topic))
 
     # #}
 

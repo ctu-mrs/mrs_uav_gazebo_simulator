@@ -654,7 +654,80 @@ limitations under the License.
 {# <!--}--> #}
 
 {# imu_sensor_macro {--> #}
-{%- macro imu_sensor_macro(name, update_rate, angular_velocity_noise_mean_x, angular_velocity_noise_std_x, angular_velocity_noise_mean_y, angular_velocity_noise_std_y,angular_velocity_noise_mean_z, angular_velocity_noise_std_z, linear_acceleration_noise_mean_x, linear_acceleration_noise_std_x, linear_acceleration_noise_mean_y, linear_acceleration_noise_std_y, linear_acceleration_noise_mean_z, linear_acceleration_noise_std_z) -%}
+{%- macro imu_sensor_macro(name, update_rate, 
+                          imu_sdf_topic_name, imu_gz_topic_name, imu_ros_topic_name,
+                          sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
+                          angular_velocity_noise_mean_x, angular_velocity_noise_std_x, 
+                          angular_velocity_noise_mean_y, angular_velocity_noise_std_y, 
+                          angular_velocity_noise_mean_z, angular_velocity_noise_std_z, 
+                          linear_acceleration_noise_mean_x, linear_acceleration_noise_std_x, 
+                          linear_acceleration_noise_mean_y, linear_acceleration_noise_std_y, 
+                          linear_acceleration_noise_mean_z, linear_acceleration_noise_std_z) -%}
+<sensor name="{{ name }}/imu" type="imu">
+  <pose>{{ sensor_x }} {{ sensor_y }} {{ sensor_z }} {{ sensor_roll }} {{ sensor_pitch }} {{ sensor_yaw }}</pose>
+  <always_on>1</always_on>
+  <update_rate>{{ update_rate }}</update_rate>
+  <topic>{{ imu_sdf_topic_name }}</topic>
+  <imu_gz_topic>{{ imu_gz_topic_name }}</imu_gz_topic>
+  <imu_ros_topic>{{ imu_ros_topic_name }}</imu_ros_topic>
+  <imu>
+    <angular_velocity>
+      <!-- 0.05 deg/s converted to rad/s -->
+      <x>
+        <noise type="gaussian">
+          <mean>{{ angular_velocity_noise_mean_x }}</mean>
+          <stddev>{{ angular_velocity_noise_std_x }}</stddev>
+        </noise>
+      </x>
+      <y>
+        <noise type="gaussian">
+          <mean>{{ angular_velocity_noise_mean_y }}</mean>
+          <stddev>{{ angular_velocity_noise_std_y }}</stddev>
+        </noise>
+      </y>
+      <z>
+        <noise type="gaussian">
+          <mean>{{ angular_velocity_noise_mean_z }}</mean>
+          <stddev>{{ angular_velocity_noise_std_z }}</stddev>
+        </noise>
+      </z>
+    </angular_velocity>
+    <linear_acceleration>
+      <!-- X & Y axis: 0.65 mg-rms converted to m/ss -->
+      <x>
+        <noise type="gaussian">
+          <mean>{{ linear_acceleration_noise_mean_x }}</mean>
+          <stddev>{{ linear_acceleration_noise_std_x }}</stddev>
+        </noise>
+      </x>
+      <y>
+        <noise type="gaussian">
+          <mean>{{ linear_acceleration_noise_mean_y }}</mean>
+          <stddev>{{ linear_acceleration_noise_std_y }}</stddev>
+        </noise>
+      </y>
+      <!-- Z axis: 0.70 mg-rms converted to m/ss-->
+      <z>
+        <noise type="gaussian">
+          <mean>{{ linear_acceleration_noise_mean_z }}</mean>
+          <stddev>{{ linear_acceleration_noise_std_z }}</stddev>
+        </noise>
+      </z>
+    </linear_acceleration>
+  </imu>
+</sensor>
+{%- endmacro -%}
+{# <!--}--> #}
+
+
+{# imu_pixhawk_sensor_macro {--> #}
+{%- macro imu_pixhawk_sensor_macro(name, update_rate, 
+                          angular_velocity_noise_mean_x, angular_velocity_noise_std_x, 
+                          angular_velocity_noise_mean_y, angular_velocity_noise_std_y, 
+                          angular_velocity_noise_mean_z, angular_velocity_noise_std_z, 
+                          linear_acceleration_noise_mean_x, linear_acceleration_noise_std_x, 
+                          linear_acceleration_noise_mean_y, linear_acceleration_noise_std_y, 
+                          linear_acceleration_noise_mean_z, linear_acceleration_noise_std_z) -%}
 <sensor name="{{ name }}_sensor" type="imu">
   <always_on>1</always_on>
   <update_rate>{{ update_rate }}</update_rate>
@@ -703,13 +776,14 @@ limitations under the License.
       </z>
     </linear_acceleration>
   </imu>
-</sensor>{%- endmacro -%}
+</sensor>
+{%- endmacro -%}
 {# <!--}--> #}
 
 {# gazebo_twod_lidar_plugin_macro {--> #}
 {# --- sensor is always defined with respect to the sensor_link frame #}
 {%- macro gazebo_twod_lidar_plugin_macro( 
-                      lidar_name, lidar_gz_frame_id, lidar_sdf_topic_name, lidar_gz_topic_name, lidar_ros_topic_name,
+                      lidar_gz_frame_id, lidar_sdf_topic_name, lidar_gz_topic_name, lidar_ros_topic_name,
                       sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
                       update_rate, 
                       horiz_num_samples, horiz_resolution, horiz_min_angle, horiz_max_angle, 
@@ -717,7 +791,7 @@ limitations under the License.
                       noise_mean, noise_std
                       ) -%}
 
-  <sensor name="{{ lidar_name }}/lidar" type='gpu_lidar'>
+  <sensor name="{{ lidar_gz_frame_id }}" type='gpu_lidar'>
     <pose>{{ sensor_x }} {{ sensor_y }} {{ sensor_z }} {{ sensor_roll }} {{ sensor_pitch }} {{ sensor_yaw }}</pose>
     <topic>{{ lidar_sdf_topic_name }}</topic>
     <update_rate>{{ update_rate }}</update_rate>
@@ -760,7 +834,7 @@ limitations under the License.
 {# gazebo_threed_lidar_plugin_macro {--> #}
 {# --- sensor is always defined with respect to the sensor_link frame #}
 {%- macro gazebo_threed_lidar_plugin_macro( 
-                      lidar_name, lidar_gz_frame_id, lidar_sdf_topic_name, lidar_gz_topic_name, lidar_ros_topic_name,
+                      lidar_gz_frame_id, lidar_sdf_topic_name, lidar_gz_topic_name, lidar_ros_topic_name,
                       sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
                       update_rate, 
                       horiz_num_samples, horiz_resolution, horiz_min_angle, horiz_max_angle, 
@@ -769,7 +843,7 @@ limitations under the License.
                       noise_mean, noise_std
                       ) -%}
 
-  <sensor name="{{ lidar_name }}/lidar" type='gpu_lidar'>
+  <sensor name="{{ lidar_gz_frame_id }}" type='gpu_lidar'>
     <pose>{{ sensor_x }} {{ sensor_y }} {{ sensor_z }} {{ sensor_roll }} {{ sensor_pitch }} {{ sensor_yaw }}</pose>
     <update_rate>{{ update_rate }}</update_rate>
     <gz_frame_id>{{ lidar_gz_frame_id }}</gz_frame_id>

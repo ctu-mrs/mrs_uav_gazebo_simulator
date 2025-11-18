@@ -37,3 +37,11 @@
   gz_type_name: "gz.msgs.OdometryWithCovariance"
   direction: GZ_TO_ROS
 {% endfor %}
+
+{%- for topic in imu_topic_list -%}
+- ros_topic_name: "{{ topic["ros"] }}"
+  gz_topic_name: "{{ topic["gazebo"] }}"
+  ros_type_name: "sensor_msgs/msg/Imu"
+  gz_type_name: "gz.msgs.IMU"
+  direction: GZ_TO_ROS
+{% endfor %}

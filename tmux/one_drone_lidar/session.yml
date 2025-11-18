@@ -1,0 +1,59 @@
+# do not modify these
+root: ./
+name: simulation
+socket_name: mrs
+attach: false
+tmux_options: -f /etc/ctu-mrs/tmux.conf
+# you can modify these
+pre_window:
+  - export UAV_NAME=uav1
+  - export RUN_TYPE=simulation
+  - export UAV_TYPE=x500
+  - export PLATFORM_CONFIG=`ros2 pkg prefix mrs_uav_gazebo_simulator`/share/mrs_uav_gazebo_simulator/config/mrs_uav_system/$UAV_TYPE.yaml
+  - export RMW_IMPLEMENTATION=rmw_zenoh_cpp
+  - export USE_SIM_TIME="true"
+  - export WORLD_FILE=`ros2 pkg prefix mrs_gazebo_common_resources`/share/mrs_gazebo_common_resources/worlds/pine_forest.sdf
+startup_window: status
+windows:
+  - zenoh_router:
+      layout: tiled
+      panes:
+        - ros2 run rmw_zenoh_cpp rmw_zenohd
+  - gazebo:
+      layout: tiled
+      panes:
+        - ros2 launch mrs_uav_gazebo_simulator simulation.launch.py gz_headless:=false gz_verbose:=true world_file:=$WORLD_FILE
+        - |
+          waitForGazebo; sleep 30; ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE --enable-rangefinder --enable-ouster model:=OS0-64 horizontal_samples:=256 update_rate:=10 --pos 0 0 0.5 0'}"
+  - px4_api:
+      layout: tiled
+      panes:
+        - ros2 launch mrs_uav_px4_api api.launch.py
+  - core:
+      layout: tiled
+      panes:
+        - ros2 launch mrs_uav_core core.launch.py
+          platform_config:=$PLATFORM_CONFIG
+          world_config:=./config/world_config.yaml
+          custom_config:=./config/custom_config.yaml
+          network_config:=./config/network_config.yaml
+  - status:
+      layout: tiled
+      panes:
+        - ros2 run mrs_uav_status status.sh
+  - autostart:
+      layout: tiled
+      panes:
+        - ros2 launch mrs_uav_autostart automatic_start.launch.py custom_config:=./config/automatic_start.yaml
+  - takeoff:
+      layout: tiled
+      panes:
+        - waitForCore; history -s './takeoff.sh'
+  - rviz:
+      layout: tiled
+      panes:
+        - waitForCore; ros2 run rviz2 rviz2 -d ./rviz.rviz --ros-args -p use_sim_time:=true
+  - layout:
+      layout: tiled
+      panes:
+        - waitForCore; sleep 2; ~/.i3/layout_manager.sh ./layout.json
