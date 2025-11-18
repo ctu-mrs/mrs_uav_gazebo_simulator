@@ -283,6 +283,11 @@ To keep consistency with the previous sensors, we define three topics for each l
 2. `lidar_gz_topic_name` - the Gazebo topic that will be bridged to ROS by mrs_drone_spawner
 3. `lidar_ros_topic_name` - the resulting ROS topic created by the bridge
 
+To correctly create a TF frame, do not remove the '/lidar' suffix from `sensor_gz_frame_id`:
+```
+{%- set sensor_gz_frame_id = spawner_args['name'] + '/' + sensor_name + '/lidar' -%}
+```
+
 #### 2D lidar
 Example topics of 2D RPLidar. For more details, please check the [rplidar_macro.sdf.jinja](./components/lidar/rplidar/rplidar.sdf.jinja) example.
 <table>
