@@ -47,13 +47,11 @@ class RosGzBridgeManager():
         self._get_sensor_topics(ros_gz_topics, attached_sensors)
         self._get_plugin_topics(ros_gz_topics, attached_plugins)
 
-        rendered_template = template.render(
-            camera_info_topic_list=ros_gz_topics[RosGzBridgeCategory.CAMERA_INFO],
-            laser_scan_topic_list=ros_gz_topics[RosGzBridgeCategory.LASER_SCAN],
-            point_cloud_topic_list=ros_gz_topics[RosGzBridgeCategory.POINTCLOUD],
-            imu_topic_list=ros_gz_topics[RosGzBridgeCategory.IMU],
-            odometry_topic_list=ros_gz_topics[RosGzBridgeCategory.ODOMETRY],
-            odometry_cov_topic_list=ros_gz_topics[RosGzBridgeCategory.ODOMETRY_WITH_COV])
+        rendered_template = template.render(camera_info_topic_list=ros_gz_topics[RosGzBridgeCategory.CAMERA_INFO],
+                                            laser_scan_topic_list=ros_gz_topics[RosGzBridgeCategory.LASER_SCAN],
+                                            point_cloud_topic_list=ros_gz_topics[RosGzBridgeCategory.POINTCLOUD],
+                                            imu_topic_list=ros_gz_topics[RosGzBridgeCategory.IMU],
+                                            odometry_topic_list=ros_gz_topics[RosGzBridgeCategory.ODOMETRY])
 
         filename = f'ros_gz_bridge_config_{uav_name}.yaml'
         filepath = os.path.join(self._tempfile_folder, filename)
@@ -326,9 +324,9 @@ class RosGzBridgeManager():
         for odometry_plugin in attached_plugins[GazeboPlugins.ODOMETRY_PUBLISHER]:
             plugin_topics[RosGzBridgeCategory.ODOMETRY].append(
                 RosGzBridgeTopics(gazebo=odometry_plugin.gz_odometry_topic, ros=odometry_plugin.ros_odometry_topic))
-            plugin_topics[RosGzBridgeCategory.ODOMETRY_WITH_COV].append(
-                RosGzBridgeTopics(gazebo=odometry_plugin.gz_odometry_cov_topic,
-                                  ros=odometry_plugin.ros_odometry_cov_topic))
+            # plugin_topics[RosGzBridgeCategory.ODOMETRY_WITH_COV].append(
+            #     RosGzBridgeTopics(gazebo=odometry_plugin.gz_odometry_cov_topic,
+            #                       ros=odometry_plugin.ros_odometry_cov_topic))
 
     # #}
 
