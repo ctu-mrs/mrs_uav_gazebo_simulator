@@ -3,7 +3,7 @@ import pytest
 import os
 from ament_index_python.packages import get_package_share_directory
 from utils.jinja_loader import JinjaLoader
-from mrs_uav_gazebo_simulator.utils.spawner_enums import *
+from mrs_uav_gazebo_simulator.utils.spawner_types import *
 from xml.dom import minidom
 import traceback
 

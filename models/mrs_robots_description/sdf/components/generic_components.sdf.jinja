@@ -633,9 +633,29 @@ limitations under the License.
 {%- endmacro -%}
 {# <!--}--> #}
 
+{# odometry_sensor_macro {--> #}
+{%- macro odometry_sensor_macro(odometry_sensor_name, topic_name, 
+                                noise, frame_name, update_rate, 
+                                x, y, z, roll, pitch, yaw
+                                ) -%}
+  <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+    <odom_frame>{{ frame_name }}</odom_frame>
+    <robot_base_frame>{{ odometry_sensor_name }}</robot_base_frame>
+    <odom_publish_frequency>{{ update_rate }}</odom_publish_frequency>
+    <odom_topic>{{ topic_name }}</odom_topic>
+    <odom_covariance_topic>{{ topic_name }}_with_covariance</odom_covariance_topic> 
+    <tf_topic>{{ odometry_sensor_name }}/pose</tf_topic>
+    <dimensions>3</dimensions>
+    <xyz_offset>{{ x }} {{ y }} {{ z }}</xyz_offset>
+    <rpy_offset>{{ roll }} {{ pitch }} {{ yaw }}</rpy_offset>
+    <gaussian_noise>{{ noise }}</gaussian_noise>
+  </plugin>
+{%- endmacro -%}
+{# <!--}--> #}
+
 {# imu_sensor_macro {--> #}
 {%- macro imu_sensor_macro(name, update_rate, 
-                          imu_sdf_topic_name, imu_gz_topic_name, imu_ros_topic_name,
+                          imu_sdf_topic_name, imu_gz_frame_id, imu_gz_topic_name, imu_ros_topic_name,
                           sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw,
                           angular_velocity_noise_mean_x, angular_velocity_noise_std_x, 
                           angular_velocity_noise_mean_y, angular_velocity_noise_std_y, 
@@ -643,11 +663,12 @@ limitations under the License.
                           linear_acceleration_noise_mean_x, linear_acceleration_noise_std_x, 
                           linear_acceleration_noise_mean_y, linear_acceleration_noise_std_y, 
                           linear_acceleration_noise_mean_z, linear_acceleration_noise_std_z) -%}
-<sensor name="{{ name }}/imu" type="imu">
+<sensor name="{{ imu_gz_frame_id }}" type="imu">
   <pose>{{ sensor_x }} {{ sensor_y }} {{ sensor_z }} {{ sensor_roll }} {{ sensor_pitch }} {{ sensor_yaw }}</pose>
   <always_on>1</always_on>
   <update_rate>{{ update_rate }}</update_rate>
   <topic>{{ imu_sdf_topic_name }}</topic>
+  <gz_frame_id>{{ imu_gz_frame_id }}</gz_frame_id>
   <imu_gz_topic>{{ imu_gz_topic_name }}</imu_gz_topic>
   <imu_ros_topic>{{ imu_ros_topic_name }}</imu_ros_topic>
   <imu>

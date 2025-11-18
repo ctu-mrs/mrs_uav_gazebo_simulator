@@ -3,12 +3,23 @@ from typing import TypedDict
 from dataclasses import dataclass
 
 
+@dataclass
+class Px4MavlinkConfig:
+    vehicle_base_port: int = 0
+    stream_for_qgc: int = 0
+    firmware_launch_delay: float = 0.0
+
+
 class GazeboSensors(StrEnum):
     CAMERA = "camera"
     LIDAR = "gpu_lidar"
     RGBD_CAMERA = "rgbd_camera"
     DEPTH_CAMERA = "depth_camera"
     IMU = "imu"
+
+
+class GazeboPlugins(StrEnum):
+    ODOMETRY_PUBLISHER = "gz::sim::systems::OdometryPublisher"
 
 
 class AttachedSensors(Enum):
@@ -26,6 +37,8 @@ class RosGzBridgeCategory(StrEnum):
     CAMERA_INFO = "camera_info"
     LASER_SCAN = "laser_scan"
     POINTCLOUD = "pointcloud"
+    ODOMETRY = "odometry"
+    ODOMETRY_WITH_COV = "odometry_with_cov"
     IMU = "imu"
 
 
@@ -75,6 +88,14 @@ class RgbdCameraRosGzBridge:
 class LidarRosGzBridge:
     ros_points_topic: str
     gz_points_topic: str
+
+
+@dataclass
+class OdometryRosGzBridge:
+    ros_odometry_topic: str
+    gz_odometry_topic: str
+    ros_odometry_cov_topic: str
+    gz_odometry_cov_topic: str
 
 
 @dataclass
