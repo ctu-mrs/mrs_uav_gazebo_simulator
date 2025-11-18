@@ -3,43 +3,63 @@ import pytest
 import os
 from ament_index_python.packages import get_package_share_directory
 from utils.jinja_loader import JinjaLoader
-import traceback
+from xml.dom import minidom
+
+from mrs_uav_gazebo_simulator.utils.spawner_types import *
+from utils.sensor_tag_checks import check_required_imu_tags, check_required_lidar_tags
 
 LIDARS = "mrs_robots_description/sdf/components/lidar/"
+resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]
+loader = JinjaLoader(resource_paths)
 
 
-def test_all_lidar_macros():
-    resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]
-    loader = JinjaLoader(resource_paths)
-
-    failures = []
-
+# #{ collect_macros()
+def collect_macros():
+    items = []
     temp_to_macros = loader.get_template_to_macros(LIDARS)
     for template, macros in temp_to_macros.items():
-        for macro_name in macros:
-            if "template" in macro_name:
-                continue
+        for macro in macros:
+            if "template" not in macro:
+                items.append((template, macro))
+    return items
 
-            try:
-                out = loader.render_macro_file(
-                    template,
-                    macro_name,
-                    parent_link="base_link",
-                    x=0,
-                    y=0,
-                    z=0,
-                    roll=0,
-                    pitch=0,
-                    yaw=0,
-                    mount=None,
-                    spawner_args={"name": "uav1"},
-                )
-                assert out.strip(), "rendered empty"
-            except Exception as e:
-                print(f"Error while rendering {template}::{macro_name}")
-                traceback.print_exc()
-                failures.append((f"{template}::{macro_name}", f"{type(e).__name__}: {e}"))
 
-    if failures:
-        lines = [f"{t} -> {err}" for (t, err) in failures]
-        pytest.fail("Some macros failed:\n" + "\n".join(lines), pytrace=True)
+# #}
+
+
+# #{ render_lidar_sdf(loader, template, macro_name)
+def render_lidar_sdf(loader, template, macro_name):
+    lidar_sdf = loader.render_macro_file(
+        template,
+        macro_name,
+        parent_link="base_link",
+        x=0,
+        y=0,
+        z=0,
+        roll=0,
+        pitch=0,
+        yaw=0,
+        mount=None,
+        spawner_args={"name": "uav1"},
+    )
+    assert lidar_sdf.strip(), "rendered empty"
+    return f"<model>{lidar_sdf}</model>"
+
+
+# #}
+
+
+@pytest.mark.parametrize("template,macro", collect_macros())
+def test_lidar_macro(template, macro):
+    lidar_sdf = render_lidar_sdf(loader, template, macro)
+
+    camera_xml = minidom.parseString(lidar_sdf)
+    sensor_blocks = camera_xml.getElementsByTagName('sensor')
+
+    for sensor in sensor_blocks:
+        sensor_type = sensor.getAttribute('type')
+
+        if sensor_type == GazeboSensors.LIDAR:
+            check_required_lidar_tags(sensor)
+        if sensor_type == GazeboSensors.IMU:
+            check_required_imu_tags(sensor)
