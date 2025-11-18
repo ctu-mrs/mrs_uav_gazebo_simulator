@@ -365,6 +365,19 @@
     {# ||                 optional sensor definitions                  || #}
     {# ================================================================== #}
 
+    {# Ground truth {--> #}
+    {{ components.ground_truth_macro(
+      parent_link = root,
+      x = 0,
+      y = 0,
+      z = 0,
+      roll = 0,
+      pitch = 0,
+      yaw = 0,
+      spawner_args = spawner_args)
+    }}
+    {# <!--}--> #}
+
     {# ======================= rangefinder sensors ====================== #}
 
     {# Garmin down {--> #}
