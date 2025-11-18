@@ -43,7 +43,7 @@ limitations under the License.
 
   {%- set spawner_keyword = 'enable-ground-truth' -%}
   {%- set spawner_description = 'Enable ROS topic with ground truth odometry published under model namespace' -%}
-  {%- set spawner_default_args = {'topic_name': 'ground_truth', 'frame_name': 'world', 'update_rate': 150} -%}
+  {%- set spawner_default_args = {'topic_name': 'ground_truth', 'frame_name': 'world', 'update_rate': 150, 'noise' : 0} -%}
 
   {%- if spawner_keyword in spawner_args.keys() -%}
     {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
@@ -53,14 +53,13 @@ limitations under the License.
     {%- set robot_base_frame = parent_link -%}
     {%- set topic_name = spawner_args['name'] + '/' + spawner_args[spawner_keyword]['topic_name']-%}
     {%- set update_rate = spawner_args[spawner_keyword]['update_rate'] -%}
-
-
+    {%- set noise = spawner_args[spawner_keyword]['noise'] -%}
 
     <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
       <odom_frame>{{ world_frame_name }}</odom_frame>
       <robot_base_frame>{{ robot_base_frame }}</robot_base_frame>
       <odom_publish_frequency>{{ update_rate }}</odom_publish_frequency>
-      <odom_topic> {{ topic_name }}</odom_topic>
+      <odom_topic>{{ topic_name }}</odom_topic>
       <odom_covariance_topic>{{ topic_name }}_with_covariance</odom_covariance_topic> 
       <tf_topic>{{ topic_name }}/pose</tf_topic>
       <dimensions>3</dimensions>

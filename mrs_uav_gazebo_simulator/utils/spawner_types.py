@@ -17,6 +17,10 @@ class GazeboSensors(StrEnum):
     DEPTH_CAMERA = "depth_camera"
 
 
+class GazeboPlugins(StrEnum):
+    ODOMETRY_PUBLISHER = "gz::sim::systems::OdometryPublisher"
+
+
 class AttachedSensors(Enum):
     CAMERAS = 0
     RGBD_CAMERAS = 1
@@ -83,5 +87,7 @@ class LidarRosGzBridge:
 
 @dataclass
 class OdometryRosGzBridge:
-    ros_points_topic: str
-    gz_points_topic: str
+    ros_odometry_topic: str
+    gz_odometry_topic: str
+    ros_odometry_cov_topic: str
+    gz_odometry_cov_topic: str

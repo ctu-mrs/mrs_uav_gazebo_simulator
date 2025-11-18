@@ -29,7 +29,7 @@
     <!-- Velodyne {-->
     {%- set sensor_name = 'velodyne' -%}
     {%- set sensor_link_name = sensor_name -%}
-    {%- set sensor_gz_frame_id = spawner_args['name'] + '/' + sensor_name + '/sensor' -%}
+    {%- set sensor_gz_frame_id = spawner_args['name'] + '/' + sensor_name + '/lidar' -%}
 
     <link name="{{ sensor_link_name }}">
       <pose relative_to="{{ parent_link }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>

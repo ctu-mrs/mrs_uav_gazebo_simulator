@@ -22,7 +22,12 @@ def filter_templates(template_name, suffix):
 
 class JinjaTemplateManager():
 
-    def __init__(self, ros_node: Node, resource_paths: list[str], template_suffix: str):
+    def __init__(
+        self,
+        ros_node: Node,
+        resource_paths: list[str],
+        template_suffix: str,
+    ):
         self._ros_node = ros_node
         self._jinja_env = self._configure_jinja2_environment(resource_paths)
         self._template_suffix = template_suffix
@@ -71,7 +76,8 @@ class JinjaTemplateManager():
     # #{ get_jinja_templates(self)
     def get_jinja_templates(self):
         try:
-            return self._build_template_database()
+            self._jinja_templates = self._build_template_database()
+            return self._jinja_templates
         except RecursionError as err:
             self._ros_node.get_logger().error(f'{err}')
             raise RuntimeError(f'{err}')
@@ -283,7 +289,7 @@ class JinjaTemplateManager():
         return all_components
 
     # #{ render(self, spawner_args)
-    def render_sdf(self, spawner_args, jinja_templates):
+    def render_sdf(self, spawner_args):
         '''
         Renders a jinja template into a sdf, creates a formatted xml
         Input has to specify the template name in spawner_args['model']
@@ -300,7 +306,7 @@ class JinjaTemplateManager():
             return
 
         try:
-            template_wrapper = jinja_templates[model_name]
+            template_wrapper = self._jinja_templates[model_name]
         except KeyError:
             self._ros_node.get_logger().error(f'Cannot render model "{model_name}". Template not found!')
             return

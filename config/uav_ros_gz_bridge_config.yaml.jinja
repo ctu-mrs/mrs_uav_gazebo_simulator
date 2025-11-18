@@ -30,10 +30,10 @@
   direction: GZ_TO_ROS
 {% endfor %}
 
-{%- for topic in odometry_covariance_topic_list -%}
+{%- for topic in odometry_cov_topic_list -%}
 - ros_topic_name: "{{ topic["ros"] }}"
   gz_topic_name: "{{ topic["gazebo"] }}"
-  ros_type_name: "tf2_msgs/msg/TFMessage"
+  ros_type_name: "nav_msgs/msg/Odometry"
   gz_type_name: "gz.msgs.OdometryWithCovariance"
   direction: GZ_TO_ROS
 {% endfor %}

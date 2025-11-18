@@ -17,7 +17,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 class Px4MavlinkManager():
 
     def __init__(self, ros_node: Node, gazebo_simulator_path: str, px4_mavlink_config: Px4MavlinkConfig,
-                 tempfile_folder: str):
+                 tempfile_folder: str, jinja_templates: dict):
         self._ros_node = ros_node
 
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
@@ -31,6 +31,7 @@ class Px4MavlinkManager():
         self._px4_mavlink_config = px4_mavlink_config
 
         self._tempfile_folder = tempfile_folder
+        self._jinja_templates = jinja_templates
 
     # #{ launch_mavros(self, robot_params)
     def launch_mavros(self, robot_params):
@@ -75,7 +76,7 @@ class Px4MavlinkManager():
     # #}
 
     # #{ launch_px4_firmware(self, robot_params)
-    def launch_px4_firmware(self, jinja_templates, robot_params):
+    def launch_px4_firmware(self, robot_params):
         if self._px4_mavlink_config.firmware_launch_delay > 0:
             self._ros_node.get_logger().info(
                 f'Waiting for {self._px4_mavlink_config.firmware_launch_delay} s before launching firmware')
@@ -84,7 +85,7 @@ class Px4MavlinkManager():
         name = robot_params['name']
         self._ros_node.get_logger().info(f'Launching PX4 firmware for {name}')
 
-        package_name = jinja_templates[robot_params['model']].package_name
+        package_name = self._jinja_templates[robot_params['model']].package_name
         package_path = get_package_share_directory(package_name)
 
         romfs_path = os.path.join(str(package_path), 'ROMFS')

@@ -12,7 +12,7 @@ from mrs_uav_gazebo_simulator.utils.spawner_exceptions import *
 
 class UserInputManager():
 
-    def __init__(self, ros_node: Node, jinja_templates, model_spacing, default_robot_name):
+    def __init__(self, ros_node: Node, jinja_templates: dict, model_spacing: float, default_robot_name: str):
         self._ros_node = ros_node
         self._jinja_templates = jinja_templates
         self._model_spacing = model_spacing
