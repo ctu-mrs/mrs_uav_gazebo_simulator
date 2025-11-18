@@ -53,8 +53,8 @@ def render_lidar_sdf(loader, template, macro_name):
 def test_lidar_macro(template, macro):
     lidar_sdf = render_lidar_sdf(loader, template, macro)
 
-    camera_xml = minidom.parseString(lidar_sdf)
-    sensor_blocks = camera_xml.getElementsByTagName('sensor')
+    lidar_xml = minidom.parseString(lidar_sdf)
+    sensor_blocks = lidar_xml.getElementsByTagName('sensor')
 
     for sensor in sensor_blocks:
         sensor_type = sensor.getAttribute('type')

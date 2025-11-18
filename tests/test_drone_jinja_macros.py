@@ -3,7 +3,6 @@ import pytest
 import os
 from ament_index_python.packages import get_package_share_directory
 from utils.jinja_loader import JinjaLoader
-import traceback
 
 DRONES = "mrs_robots_description/sdf/drones/"
 resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]

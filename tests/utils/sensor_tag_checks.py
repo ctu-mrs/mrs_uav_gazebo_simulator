@@ -121,16 +121,12 @@ def check_required_lidar_tags(sensor):
     ray = sensor.getElementsByTagName('ray')[0]
 
     scan = ray.getElementsByTagName('scan')[0]
-    horizontal = scan.getElementsByTagName('horizontal')[0]
-    get_elem_by_tag_name(horizontal, 'samples')
-    get_elem_by_tag_name(horizontal, 'resolution')
-    get_elem_by_tag_name(horizontal, 'min_angle')
-    get_elem_by_tag_name(horizontal, 'max_angle')
-    vertical = scan.getElementsByTagName('vertical')[0]
-    get_elem_by_tag_name(vertical, 'samples')
-    get_elem_by_tag_name(vertical, 'resolution')
-    get_elem_by_tag_name(vertical, 'min_angle')
-    get_elem_by_tag_name(vertical, 'max_angle')
+    for direct in ['horizontal', 'vertical']:
+        direction = scan.getElementsByTagName(direct)[0]
+        get_elem_by_tag_name(direction, 'samples')
+        get_elem_by_tag_name(direction, 'resolution')
+        get_elem_by_tag_name(direction, 'min_angle')
+        get_elem_by_tag_name(direction, 'max_angle')
 
     range = ray.getElementsByTagName('range')[0]
     get_elem_by_tag_name(range, 'min')
@@ -176,6 +172,33 @@ def check_required_imu_tags(sensor):
         noise = axis_elem.getElementsByTagName('noise')[0]
         get_elem_by_tag_name(noise, 'mean')
         get_elem_by_tag_name(noise, 'stddev')
+
+
+# #}
+
+
+# #{ check_required_lidar_tags(sensor)
+def check_required_rangefinder_tags(sensor):
+    pose_str = get_elem_by_tag_name(sensor, 'pose')
+    if not check_str_to_pose(pose_str):
+        raise AssertionError(f"The <pose> tag should have 6 elements.")
+
+    get_elem_by_tag_name(sensor, 'update_rate')
+
+    lidar = sensor.getElementsByTagName('lidar')[0]
+
+    scan = lidar.getElementsByTagName('scan')[0]
+    for direct in ['horizontal', 'vertical']:
+        direction = scan.getElementsByTagName(direct)[0]
+        get_elem_by_tag_name(direction, 'samples')
+        get_elem_by_tag_name(direction, 'resolution')
+        get_elem_by_tag_name(direction, 'min_angle')
+        get_elem_by_tag_name(direction, 'max_angle')
+
+    range = lidar.getElementsByTagName('range')[0]
+    get_elem_by_tag_name(range, 'min')
+    get_elem_by_tag_name(range, 'max')
+    get_elem_by_tag_name(range, 'resolution')
 
 
 # #}

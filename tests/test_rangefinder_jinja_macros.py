@@ -3,7 +3,9 @@ import pytest
 import os
 from ament_index_python.packages import get_package_share_directory
 from utils.jinja_loader import JinjaLoader
-import traceback
+from xml.dom import minidom
+from mrs_uav_gazebo_simulator.utils.spawner_types import *
+from utils.sensor_tag_checks import check_required_rangefinder_tags
 
 RANGEFINDERS = "mrs_robots_description/sdf/components/rangefinder/"
 resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]
@@ -24,11 +26,11 @@ def collect_macros():
 # #}
 
 
-@pytest.mark.parametrize("template,macro", collect_macros())
-def test_rangefinder_macro(template, macro):
-    out = loader.render_macro_file(
+# #{ render_lidar_sdf(loader, template, macro_name)
+def render_rangefinder_sdf(loader, template, macro_name):
+    rangefinder_sdf = loader.render_macro_file(
         template,
-        macro,
+        macro_name,
         parent_link="base_link",
         x=0,
         y=0,
@@ -39,4 +41,22 @@ def test_rangefinder_macro(template, macro):
         mount=None,
         spawner_args={"name": "uav1"},
     )
-    assert out.strip(), "rendered empty"
+    assert rangefinder_sdf.strip(), "rendered empty"
+    return f"<model>{rangefinder_sdf}</model>"
+
+
+# #}
+
+
+@pytest.mark.parametrize("template,macro", collect_macros())
+def test_rangefinder_macro(template, macro):
+    rangefinder_sdf = render_rangefinder_sdf(loader, template, macro)
+
+    lidar_xml = minidom.parseString(rangefinder_sdf)
+    sensor_blocks = lidar_xml.getElementsByTagName('sensor')
+
+    for sensor in sensor_blocks:
+        sensor_type = sensor.getAttribute('type')
+
+        if sensor_type == GazeboSensors.LIDAR:
+            check_required_rangefinder_tags(sensor)
