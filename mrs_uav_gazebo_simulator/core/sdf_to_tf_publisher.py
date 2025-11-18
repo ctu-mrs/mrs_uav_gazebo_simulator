@@ -20,6 +20,7 @@ class SingletonMeta(type):
 
 class SdfTfPublisherSingleton(metaclass=SingletonMeta):
 
+    # #{ __init__(self, ros_node, base_frame, ignored_sensors)
     def __init__(self, ros_node, base_frame, ignored_sensors):
         self._model_name = ""
         self._ignored_sensors = ignored_sensors
@@ -32,6 +33,17 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
 
         self._transformations = []
         self._broadcaster = StaticTransformBroadcaster(self._ros_node)
+
+    # #}
+
+    # #{ publish_sensor_tfs(self)
+    def publish_sensor_tfs(self):
+        if len(self._transformations) == 0:
+            self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] There are no TFs to publish.")
+            return
+        self._generate_static_tf_broadcasters(self._transformations)
+
+    # #}
 
     # #{ generate_sensor_tfs(self, sdf_xml)
     def generate_sensor_tfs(self, sdf_xml):
@@ -226,15 +238,6 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
             if link.get("name") == link_name:
                 return link.findtext('pose')
         return ""
-
-    # #}
-
-    # #{ publish_sensor_tfs(self)
-    def publish_sensor_tfs(self):
-        if len(self._transformations) == 0:
-            self._ros_node.get_logger().info(f"[Sdf2Tf_Publisher] There are no TFs to publish.")
-            return
-        self._generate_static_tf_broadcasters(self._transformations)
 
     # #}
 

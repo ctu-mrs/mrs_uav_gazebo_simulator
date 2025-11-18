@@ -18,10 +18,12 @@ from mrs_uav_gazebo_simulator.utils.template_wrapper import TemplateWrapper
 def filter_templates(template_name, suffix):
     '''Comparator used to load files with given suffix'''
     return template_name.endswith(suffix)
+# #}
 
 
 class JinjaTemplateManager():
 
+    # #{ __init__(self, ros_node, resource_paths, template_suffix)
     def __init__(
         self,
         ros_node: Node,
@@ -31,6 +33,111 @@ class JinjaTemplateManager():
         self._ros_node = ros_node
         self._jinja_env = self._configure_jinja2_environment(resource_paths)
         self._template_suffix = template_suffix
+
+    # #}
+
+    # #{ get_jinja_templates(self)
+    def get_jinja_templates(self):
+        try:
+            self._jinja_templates = self._build_template_database()
+            return self._jinja_templates
+        except RecursionError as err:
+            self._ros_node.get_logger().error(f'{err}')
+            raise RuntimeError(f'{err}')
+
+    # #}
+
+    # #{ get_spawner_components_from_template(self, template)
+    def _get_spawner_components_from_template(self, template):
+        '''
+        Builds a dict of spawner-compatible macros in a given template and their corresponding ComponentWrapper objects
+        Does NOT check for macros imported from other templates
+        :return a dict in format {macro name: component_wrapper.ComponentWrapper}
+        '''
+        with open(template.filename, 'r') as f:
+            template_source = f.read()
+            preprocessed_template = template_source.replace('\n', '')
+            parsed_template = self._jinja_env.parse(preprocessed_template)
+            macro_nodes = [node for node in parsed_template.find_all(jinja2.nodes.Macro)]
+            spawner_components = {}
+            for node in macro_nodes:
+                spawner_keyword = None
+                spawner_description = None
+                spawner_default_args = None
+                for elem in node.body:
+                    if isinstance(elem, jinja2.nodes.Assign) and elem.target.name == 'spawner_description':
+                        spawner_description = elem.node.value
+                    if isinstance(elem, jinja2.nodes.Assign) and elem.target.name == 'spawner_default_args':
+                        if isinstance(elem.node, jinja2.nodes.Const):
+                            spawner_default_args = elem.node.value
+                        elif isinstance(elem.node, jinja2.nodes.List):
+                            spawner_default_args = []
+                            for e in elem.node.items:
+                                spawner_default_args.append(e.value)
+                        elif isinstance(elem.node, jinja2.nodes.Dict):
+                            spawner_default_args = {}
+                            for pair in elem.node.items:
+                                spawner_default_args[pair.key.value] = pair.value.value
+                        else:
+                            self._ros_node.get_logger().warn(
+                                f'Unsupported param type "{type(elem.node)}" in template {template.filename}')
+                    if isinstance(elem, jinja2.nodes.Assign) and elem.target.name == 'spawner_keyword':
+                        spawner_keyword = elem.node.value
+                if spawner_keyword is not None:
+                    spawner_components[node.name] = ComponentWrapper(spawner_keyword, spawner_description,
+                                                                     spawner_default_args)
+            return spawner_components
+
+    # #}
+
+    # #{ render_sdf(self, spawner_args)
+    def render_sdf(self, spawner_args):
+        '''
+        Renders a jinja template into a sdf, creates a formatted xml
+        Input has to specify the template name in spawner_args['model']
+        :param spawner_args: a dict to be passed into the template as variables, format {component_name (string): args (list or dict)}
+        :return: content of the xml file as a string or None
+        '''
+
+        params = {'spawner_args': spawner_args}
+
+        try:
+            model_name = spawner_args['model']
+        except KeyError:
+            self._ros_node.get_logger().error(f'Cannot render template, model not specified')
+            return
+
+        try:
+            template_wrapper = self._jinja_templates[model_name]
+        except KeyError:
+            self._ros_node.get_logger().error(f'Cannot render model "{model_name}". Template not found!')
+            return
+
+        self._ros_node.get_logger().info(
+            f'Rendering model "{model_name}" using template {template_wrapper.jinja_template.filename}')
+
+        context = template_wrapper.jinja_template.new_context(params)
+        rendered_template = template_wrapper.jinja_template.render(context)
+        try:
+            root = xml.dom.minidom.parseString(rendered_template)
+        except Exception as e:
+            self._ros_node.get_logger().error(f'XML error: "{e}"')
+            fd, filepath = tempfile.mkstemp(prefix='mrs_drone_spawner_' +
+                                            datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_'),
+                                            suffix='_DUMP_' + str(model_name) + '.sdf')
+            with os.fdopen(fd, 'w') as output_file:
+                output_file.write(rendered_template)
+                self._ros_node.get_logger().info(f'Malformed XML for model {model_name} dumped to {filepath}')
+            return
+
+        ugly_xml = root.toprettyxml(indent='  ')
+
+        # Remove empty lines
+        pretty_xml = '\n'.join(line for line in ugly_xml.split('\n') if line.strip())
+
+        return pretty_xml
+
+    # #}
 
     # #{ _configure_jinja2_environment(self, resource_paths)
     def _configure_jinja2_environment(self, resource_paths: list[str]):
@@ -61,7 +168,7 @@ class JinjaTemplateManager():
 
         self._adding_components_from_depend(template_wrappers)
 
-        callable_components = self._prun_components(all_templates, template_wrappers)
+        callable_components = self._prune_components(all_templates, template_wrappers)
 
         for name, wrapper in template_wrappers.items():
             wrapper.components = callable_components[name]
@@ -70,17 +177,6 @@ class JinjaTemplateManager():
         self._ros_node.get_logger().info('Jinja templates loaded.')
 
         return template_wrappers
-
-    # #}
-
-    # #{ get_jinja_templates(self)
-    def get_jinja_templates(self):
-        try:
-            self._jinja_templates = self._build_template_database()
-            return self._jinja_templates
-        except RecursionError as err:
-            self._ros_node.get_logger().error(f'{err}')
-            raise RuntimeError(f'{err}')
 
     # #}
 
@@ -127,49 +223,6 @@ class JinjaTemplateManager():
                 template = self._jinja_env.get_template(i)
                 imported_templates.append(template)
             return imported_templates
-
-    # #}
-
-    # #{ get_spawner_components_from_template(self, template)
-    def _get_spawner_components_from_template(self, template):
-        '''
-        Builds a dict of spawner-compatible macros in a given template and their corresponding ComponentWrapper objects
-        Does NOT check for macros imported from other templates
-        :return a dict in format {macro name: component_wrapper.ComponentWrapper}
-        '''
-        with open(template.filename, 'r') as f:
-            template_source = f.read()
-            preprocessed_template = template_source.replace('\n', '')
-            parsed_template = self._jinja_env.parse(preprocessed_template)
-            macro_nodes = [node for node in parsed_template.find_all(jinja2.nodes.Macro)]
-            spawner_components = {}
-            for node in macro_nodes:
-                spawner_keyword = None
-                spawner_description = None
-                spawner_default_args = None
-                for elem in node.body:
-                    if isinstance(elem, jinja2.nodes.Assign) and elem.target.name == 'spawner_description':
-                        spawner_description = elem.node.value
-                    if isinstance(elem, jinja2.nodes.Assign) and elem.target.name == 'spawner_default_args':
-                        if isinstance(elem.node, jinja2.nodes.Const):
-                            spawner_default_args = elem.node.value
-                        elif isinstance(elem.node, jinja2.nodes.List):
-                            spawner_default_args = []
-                            for e in elem.node.items:
-                                spawner_default_args.append(e.value)
-                        elif isinstance(elem.node, jinja2.nodes.Dict):
-                            spawner_default_args = {}
-                            for pair in elem.node.items:
-                                spawner_default_args[pair.key.value] = pair.value.value
-                        else:
-                            self._ros_node.get_logger().warn(
-                                f'Unsupported param type "{type(elem.node)}" in template {template.filename}')
-                    if isinstance(elem, jinja2.nodes.Assign) and elem.target.name == 'spawner_keyword':
-                        spawner_keyword = elem.node.value
-                if spawner_keyword is not None:
-                    spawner_components[node.name] = ComponentWrapper(spawner_keyword, spawner_description,
-                                                                     spawner_default_args)
-            return spawner_components
 
     # #}
 
@@ -233,8 +286,8 @@ class JinjaTemplateManager():
 
     # #}
 
-    # #{ _prun_components(self, all_templates, template_wrappers)
-    def _prun_components(self, all_templates, template_wrappers):
+    # #{ _prune_components(self, all_templates, template_wrappers)
+    def _prune_components(self, all_templates, template_wrappers):
         self._ros_node.get_logger().info('Pruning components to only include callables')
         callable_components = {}
         for name, template in all_templates:
@@ -267,7 +320,6 @@ class JinjaTemplateManager():
                     if node.node.name in accessible_components.keys():
                         callable_components[node.node.name] = accessible_components[node.node.name]
         return dict(sorted(callable_components.items(), key=lambda item: item[1].keyword))
-
     # #}
 
     # #{ _get_accessible_components(self, template_wrapper, all_components)
@@ -287,52 +339,4 @@ class JinjaTemplateManager():
                 raise RecursionError(
                     f'Cyclic import detected in file {template_wrapper.jinja_template.filename}. Fix your templates')
         return all_components
-
-    # #{ render(self, spawner_args)
-    def render_sdf(self, spawner_args):
-        '''
-        Renders a jinja template into a sdf, creates a formatted xml
-        Input has to specify the template name in spawner_args['model']
-        :param spawner_args: a dict to be passed into the template as variables, format {component_name (string): args (list or dict)}
-        :return: content of the xml file as a string or None
-        '''
-
-        params = {'spawner_args': spawner_args}
-
-        try:
-            model_name = spawner_args['model']
-        except KeyError:
-            self._ros_node.get_logger().error(f'Cannot render template, model not specified')
-            return
-
-        try:
-            template_wrapper = self._jinja_templates[model_name]
-        except KeyError:
-            self._ros_node.get_logger().error(f'Cannot render model "{model_name}". Template not found!')
-            return
-
-        self._ros_node.get_logger().info(
-            f'Rendering model "{model_name}" using template {template_wrapper.jinja_template.filename}')
-
-        context = template_wrapper.jinja_template.new_context(params)
-        rendered_template = template_wrapper.jinja_template.render(context)
-        try:
-            root = xml.dom.minidom.parseString(rendered_template)
-        except Exception as e:
-            self._ros_node.get_logger().error(f'XML error: "{e}"')
-            fd, filepath = tempfile.mkstemp(prefix='mrs_drone_spawner_' +
-                                            datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_'),
-                                            suffix='_DUMP_' + str(model_name) + '.sdf')
-            with os.fdopen(fd, 'w') as output_file:
-                output_file.write(rendered_template)
-                self._ros_node.get_logger().info(f'Malformed XML for model {model_name} dumped to {filepath}')
-            return
-
-        ugly_xml = root.toprettyxml(indent='  ')
-
-        # Remove empty lines
-        pretty_xml = '\n'.join(line for line in ugly_xml.split('\n') if line.strip())
-
-        return pretty_xml
-
     # #}

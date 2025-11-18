@@ -16,6 +16,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 class Px4MavlinkManager():
 
+    # #{ __init__(self, ros_node, gazebo_simulator_path, px4_mavlink_config, tempfile_folder, jinja_templates)
     def __init__(self, ros_node: Node, gazebo_simulator_path: str, px4_mavlink_config: Px4MavlinkConfig,
                  tempfile_folder: str, jinja_templates: dict):
         self._ros_node = ros_node
@@ -32,6 +33,8 @@ class Px4MavlinkManager():
 
         self._tempfile_folder = tempfile_folder
         self._jinja_templates = jinja_templates
+
+    # #}
 
     # #{ launch_mavros(self, robot_params)
     def launch_mavros(self, robot_params):

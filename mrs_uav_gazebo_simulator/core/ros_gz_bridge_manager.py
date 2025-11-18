@@ -16,6 +16,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 class RosGzBridgeManager():
 
+    # #{ __init__(self, ros_node, gazebo_simulator_path, tempfile_folder)
     def __init__(self, ros_node: Node, gazebo_simulator_path: str, tempfile_folder: str):
         self._ros_node = ros_node
 
@@ -26,7 +27,9 @@ class RosGzBridgeManager():
 
         self._tempfile_folder = tempfile_folder
 
-    # #{ _get_attached_sensors(self, robot_params: dict) -> dict:
+    # #}
+
+    # #{ generate_uav_ros_gz_config(self, robot_params: dict) -> tuple[str, dict]:
     def generate_uav_ros_gz_config(self, robot_params: dict) -> tuple[str, dict]:
         uav_name = robot_params['name']
 
@@ -41,7 +44,7 @@ class RosGzBridgeManager():
         if not self._has_attached_sensors(attached_sensors) and not self._has_attached_plugins(attached_plugins):
             self._ros_node.get_logger().info(
                 f"There are no additional sensors nor plugins. Skipping launching ros_gz_bridge for {uav_name}")
-            return "", []
+            return "", {}
 
         ros_gz_topics = {category: [] for category in RosGzBridgeCategory}
         self._get_sensor_topics(ros_gz_topics, attached_sensors)
@@ -66,7 +69,42 @@ class RosGzBridgeManager():
 
     # #}
 
-    # #{ def _get_ground_truth(self, robot_params: dict) -> dict:
+    # #{ launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics)
+    def launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics):
+        self._ros_node.get_logger().info(f'Launching ros_gz_bridge for {uav_name}')
+
+        launch_arguments = {
+            'namespace': uav_name,
+            'ros_gz_bridge_config': str(ros_gz_bridge_config),
+            'ros_gz_image_topics': ' '.join(sensor_topics[RosGzBridgeCategory.IMAGE]),
+            'bridge_debug': 'false',
+        }
+
+        ld = LaunchDescription([
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(self._uav_ros_gz_bridge_launch_path),
+                launch_arguments=launch_arguments.items(),
+            )
+        ])
+
+        self._ros_node.get_logger().info(f'launch_arguments: {launch_arguments}')
+        launch_service = LaunchService(debug=False)
+        launch_service.include_launch_description(ld)
+        ros_gz_bridge_process = multiprocessing.Process(target=launch_service.run)
+
+        try:
+            ros_gz_bridge_process.start()
+        except Exception as e:
+            self._ros_node.get_logger().error(
+                f'Could not start ros_gz_bridge for {uav_name}. Node failed to launch: {e}')
+            raise CouldNotLaunch('ros_gz_bridge failed to launch')
+
+        self._ros_node.get_logger().info(f'ros_gz_bridge for {uav_name} launched')
+        return ros_gz_bridge_process
+
+    # #}
+
+    # #{ _get_attached_plugins(self, robot_params: dict) -> dict:
     def _get_attached_plugins(self, robot_params: dict) -> dict:
         attached_plugins = {plugin: [] for plugin in GazeboPlugins}
 
@@ -115,7 +153,7 @@ class RosGzBridgeManager():
             elif sensor_type == GazeboSensors.DEPTH_CAMERA:
                 self._get_attached_depth_camera(attached_sensors, sensor)
             elif sensor_type == GazeboSensors.IMU:
-                self.get_attached_imu(attached_sensors, sensor)
+                self._get_attached_imu(attached_sensors, sensor)
         return attached_sensors
 
     # #}
@@ -233,8 +271,8 @@ class RosGzBridgeManager():
 
     # #}
 
-    # #{ get_attached_imu(self, attached_sensors, imu_sensor)
-    def get_attached_imu(self, attached_sensors, imu_sensor):
+    # #{ _get_attached_imu(self, attached_sensors, imu_sensor)
+    def _get_attached_imu(self, attached_sensors, imu_sensor):
         gz_imu_topic = self._get_elem_topic_from_tag_name(imu_sensor, SdfTopicTags.GZ_IMU)
         ros_imu_topic = self._get_elem_topic_from_tag_name(imu_sensor, SdfTopicTags.ROS_IMU)
 
@@ -329,40 +367,5 @@ class RosGzBridgeManager():
             plugin_topics[RosGzBridgeCategory.ODOMETRY_WITH_COV].append(
                 RosGzBridgeTopics(gazebo=odometry_plugin.gz_odometry_cov_topic,
                                   ros=odometry_plugin.ros_odometry_cov_topic))
-
-    # #}
-
-    # #{ launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics)
-    def launch_uav_ros_gz_bridge(self, uav_name, ros_gz_bridge_config, sensor_topics):
-        self._ros_node.get_logger().info(f'Launching ros_gz_bridge for {uav_name}')
-
-        launch_arguments = {
-            'namespace': uav_name,
-            'ros_gz_bridge_config': str(ros_gz_bridge_config),
-            'ros_gz_image_topics': ' '.join(sensor_topics[RosGzBridgeCategory.IMAGE]),
-            'bridge_debug': 'false',
-        }
-
-        ld = LaunchDescription([
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(self._uav_ros_gz_bridge_launch_path),
-                launch_arguments=launch_arguments.items(),
-            )
-        ])
-
-        self._ros_node.get_logger().info(f'launch_arguments: {launch_arguments}')
-        launch_service = LaunchService(debug=False)
-        launch_service.include_launch_description(ld)
-        ros_gz_bridge_process = multiprocessing.Process(target=launch_service.run)
-
-        try:
-            ros_gz_bridge_process.start()
-        except Exception as e:
-            self._ros_node.get_logger().error(
-                f'Could not start ros_gz_bridge for {uav_name}. Node failed to launch: {e}')
-            raise CouldNotLaunch('ros_gz_bridge failed to launch')
-
-        self._ros_node.get_logger().info(f'ros_gz_bridge for {uav_name} launched')
-        return ros_gz_bridge_process
 
     # #}
