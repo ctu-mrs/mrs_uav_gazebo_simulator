@@ -25,6 +25,9 @@ def collect_macros():
 
 @pytest.mark.parametrize("template", collect_macros())
 def test_drone_macro(template):
+    """
+    Verify template rendering.
+    """
     ctx = {}
     ctx["spawner_args"] = {"name": "uav1"}
     loader.render_drone_file(template, **ctx)
