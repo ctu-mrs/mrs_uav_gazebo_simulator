@@ -2,46 +2,62 @@
 import pytest
 import os
 from ament_index_python.packages import get_package_share_directory
+from xml.dom import minidom
+
 from utils.jinja_loader import JinjaLoader
-import traceback
+from utils.camera_macro_utils import *
+from mrs_uav_gazebo_simulator.utils.spawner_types import *
+from utils.common_utils import *
+from utils.sensor_tag_checks import check_required_depth_camera_tags, check_required_rgb_camera_tags, check_required_rgbd_camera_tags, check_required_imu_tags
 
 CAMERAS = "mrs_robots_description/sdf/components/camera/"
+resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]
+loader = JinjaLoader(resource_paths)
 
 
-def test_all_camera_macros():
-    resource_paths = [os.path.join(get_package_share_directory('mrs_uav_gazebo_simulator'), 'models')]
-    loader = JinjaLoader(resource_paths)
-
-    failures = []
-
+def collect_macros():
+    items = []
     temp_to_macros = loader.get_template_to_macros(CAMERAS)
     for template, macros in temp_to_macros.items():
-        for macro_name in macros:
-            if "template" in macro_name:
-                continue
+        for macro in macros:
+            if "template" not in macro:
+                items.append((template, macro))
+    return items
 
-            try:
-                out = loader.render_macro_file(
-                    template,
-                    macro_name,
-                    camera_name="camera_dummy",
-                    parent_link="base_link",
-                    x=0,
-                    y=0,
-                    z=0,
-                    roll=0,
-                    pitch=0,
-                    yaw=0,
-                    mount=None,
-                    spawner_args={"name": "uav1"},
-                )
-                assert out.strip(), "rendered empty"
 
-            except Exception as e:
-                print(f"Error while rendering {template}::{macro_name}")
-                traceback.print_exc()
-                failures.append((f"{template}::{macro_name}", f"{type(e).__name__}: {e}"))
+@pytest.mark.parametrize("template,macro", collect_macros())
+def test_camera_macro(template, macro):
+    """
+    Verify template rendering, ROS-Gazebo topic names, the link pose, and whether any arguments are missing.
+    """
+    camera_sdf = render_camera_sdf(loader, template, macro)
+    camera_xml = minidom.parseString(camera_sdf)
 
-    if failures:
-        lines = [f"{t} -> {err}" for (t, err) in failures]
-        pytest.fail("Some macros failed:\n" + "\n".join(lines), pytrace=True)
+    # Check the sensor plugin
+    sensor_blocks = camera_xml.getElementsByTagName('sensor')
+    for sensor in sensor_blocks:
+        sensor_type = sensor.getAttribute('type')
+        if sensor_type == GazeboSensors.CAMERA:
+            sdf_tag_topic, custom_topics = get_rgb_camera_topics_from_xml(sensor)
+            check_rgb_naming_convention(sdf_tag_topic, custom_topics)
+            check_required_rgb_camera_tags(sensor)
+
+        if sensor_type == GazeboSensors.DEPTH_CAMERA:
+            sdf_tag_topic, custom_topics = get_depth_camera_topics_from_xml(sensor)
+            check_depth_naming_convention(sdf_tag_topic, custom_topics)
+            check_required_depth_camera_tags(sensor)
+
+        if sensor_type == GazeboSensors.RGBD_CAMERA:
+            sdf_tag_topic, custom_topics = get_rgbd_camera_topics_from_xml(sensor)
+            check_rgbd_naming_convention(sdf_tag_topic, custom_topics)
+            check_required_rgbd_camera_tags(sensor)
+
+        if sensor_type == GazeboSensors.IMU:
+            check_required_imu_tags(sensor)
+
+    # Check the link pose
+    link_blocks = camera_xml.getElementsByTagName('link')
+    for link in link_blocks:
+        pose_str = get_elem_by_tag_name(link, 'pose')
+        if not check_str_to_pose(pose_str):
+            raise AssertionError(f"The <pose> tag should have 6 elements.")

@@ -14,7 +14,7 @@
     <!-- scanse sweep {-->
     {%- set sensor_name = 'scanse_sweep' -%}
     {%- set sensor_link_name = sensor_name -%}
-    {%- set sensor_gz_frame_id = spawner_args['name'] + '/' + sensor_name + '/lidar' -%}
+    {%- set lidar_gz_frame_id = spawner_args['name'] + '/' + sensor_name + '/lidar' -%}
 
     {# -- tf from link to sensor -- #}
     {%- set lidar_x = 0.0 -%}
