@@ -102,7 +102,7 @@ ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "value: 1 2 3 4 5
 
 The default parameters of some components may be reconfigured by adding `param:=value` after the component keyword. Multiple params may be used at the same time:
 ```bash
-ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "value: 1 --x500 --enable-rangefinder --enable-ouster model:=OS0-32 use_gpu:=True horizontal_samples:=128 update_rate:=10"
+ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "value: 1 --x500 --enable-rangefinder --enable-ouster model:=OS0-32 horizontal_samples:=128 update_rate:=10"
 ```
 The list of components and their reconfigurable parameters can be displayed using the platform-specific help.
 
