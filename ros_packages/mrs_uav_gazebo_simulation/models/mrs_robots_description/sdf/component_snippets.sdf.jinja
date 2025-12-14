@@ -1969,7 +1969,6 @@ limitations under the License.
   {%- set spawner_default_args = none -%}
 
   {%- if spawner_keyword in spawner_args.keys() -%}
-    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
     <!-- Servo camera {-->
 
@@ -2200,6 +2199,282 @@ limitations under the License.
     <!--}-->
 
     <!--}-->
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}
+
+{# servo_realsense_camera_macro {--> #}
+{%- macro servo_realsense_camera_macro(parent, offset_pitch_link_x, offset_pitch_link_y, offset_pitch_link_z, offset_pitch_link_yaw, offset_pitch_link_roll, offset_pitch_link_pitch, offset_roll_link_x, offset_roll_link_y, offset_roll_link_z, offset_roll_link_yaw, offset_roll_link_roll, offset_roll_link_pitch, offset_yaw_link_x, offset_yaw_link_y, offset_yaw_link_z, offset_yaw_link_yaw, offset_yaw_link_roll, offset_yaw_link_pitch, tilt_update_rate, max_pitch, min_pitch, max_pitch_rate, max_roll, min_roll, max_roll_rate, max_yaw, min_yaw, max_yaw_rate, compensate_tilt_roll, compensate_tilt_pitch, compensate_tilt_yaw, parent_frame_name, frame_namespace, camera_update_rate, horizontal_fov, img_width, img_height, roll_link_mesh_file, pitch_link_mesh_file, yaw_link_mesh_file, mesh_scale, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-realsense-servo-camera' -%}
+  {%- set spawner_description = 'Add a servo-gimballed RealSense camera to the vehicle' -%}
+  {%- set spawner_default_args = none -%}
+  
+  {# Realsense settings #}
+  {%- set use_realistic = false -%}
+  {%- set namespace = spawner_args.get('name', 'uav1') -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+
+    <link name="servo_camera_gimbal_yaw_link">
+      <pose relative_to="servo_camera_yaw_joint">0 0 0 0 0 0</pose>
+      {{ generic.zero_inertial_macro() }}
+      <visual name="visual">
+        <geometry>
+          {%- if yaw_link_mesh_file == '' -%}
+            <box><size>0.01 0.01 0.01</size></box>
+          {%- else -%}
+            <mesh><uri>{{ yaw_link_mesh_file }}</uri><scale>{{ mesh_scale }}</scale></mesh>
+          {%- endif -%}
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Black</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name="servo_camera_gimbal_roll_link">
+      <pose relative_to="servo_camera_roll_joint">0 0 0 0 0 0</pose>
+      {{ generic.zero_inertial_macro() }}
+      <visual name="visual">
+        <geometry>
+          {%- if roll_link_mesh_file == '' -%}
+            <box><size>0.01 0.01 0.01</size></box>
+          {%- else -%}
+            <mesh><uri>{{ roll_link_mesh_file }}</uri><scale>{{ mesh_scale }}</scale></mesh>
+          {%- endif -%}
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Black</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name="servo_camera_link">
+      <pose relative_to="servo_camera_pitch_joint">0 0 0 0 0 0</pose>
+      {{ generic.zero_inertial_macro() }}
+      <visual name="visual">
+        <geometry>
+          {%- if pitch_link_mesh_file == '' -%}
+            <mesh><uri>model://mrs_robots_description/meshes/sensors/realsense_body.stl</uri><scale>0.001 0.001 0.001</scale></mesh>
+          {%- else -%}
+            <mesh>
+              <uri>{{ pitch_link_mesh_file }}</uri>
+              <scale>{{ mesh_scale }}</scale>
+            </mesh>
+          {%- endif -%}
+        </geometry>
+        <material>
+          <script>
+          <name>Gazebo/Black</name>
+          <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+
+      <sensor name="{{ namespace }}/servo_camera_color" type="camera">
+        <pose>0 0 -0.0115 0 0 0</pose>
+        <camera name="{{ namespace }}/servo_camera_color">
+          <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
+          <image>
+            <width>{{ img_width }}</width>
+            <height>{{ img_height }}</height>
+            <format>RGB_INT8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>100</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.007</stddev>
+          </noise>
+        </camera>
+        <always_on>1</always_on>
+        <update_rate>{{ camera_update_rate }}</update_rate>
+        <visualize>0</visualize>
+      </sensor>
+
+      <sensor name="{{ namespace }}/servo_camera_infra_stereo" type="multicamera">
+        <always_on>1</always_on>
+        <update_rate>{{ camera_update_rate }}</update_rate>
+        <visualize>0</visualize>
+        <camera name="{{ namespace }}/servo_camera_infra1">
+          <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>360</height>
+            <format>L_INT8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>50</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+        </camera>
+        <camera name="{{ namespace }}/servo_camera_infra2">
+          <pose>0 0.05 0 0 0 0</pose>
+          <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>360</height>
+            <format>L_INT8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>50</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+        </camera>
+      </sensor>
+
+      <sensor name="{{ namespace }}/servo_camera_aligned_depth_to_color" type="depth">
+        <pose>0 -0.0115 0.0 0 0 0</pose>
+        <camera name="{{ namespace }}/servo_camera_aligned_depth_to_color">
+        <horizontal_fov>1.211259</horizontal_fov>
+          <image>
+            {% if use_realistic %}
+              <width>320</width>
+              <height>180</height>
+            {% else %}
+              <width>{{ img_width }}</width>
+              <height>{{ img_height }}</height>
+            {% endif %}
+          </image>
+          <clip>
+            <near>0.3</near>
+            <far>12</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>5000.0</stddev>
+          </noise>
+        </camera>
+        <always_on>1</always_on>
+        <update_rate>{{ camera_update_rate }}</update_rate>
+        <visualize>0</visualize>
+      </sensor>
+      </link>
+
+    <plugin name="servo_camera_plugin" filename="libMrsGazeboCommonResources_ServoCameraPlugin.so">
+      <update_rate>{{ tilt_update_rate }}</update_rate>
+      <parent_frame_name>{{ parent_frame_name }}</parent_frame_name>
+      <yaw>
+        <joint_name>servo_camera_yaw_joint</joint_name>
+        <parent_link>{{ parent }}</parent_link>
+        <frame_name>{{ frame_namespace }}/yaw</frame_name>
+        <min_angle>{{ min_yaw }}</min_angle>
+        <max_angle>{{ max_yaw }}</max_angle>
+        <max_rate>{{ max_yaw_rate }}</max_rate>
+        <compensate_tilt>{{ compensate_tilt_yaw }}</compensate_tilt>
+        <offset_x>{{ offset_yaw_link_x }}</offset_x>
+        <offset_y>{{ offset_yaw_link_y }}</offset_y>
+        <offset_z>{{ offset_yaw_link_z }}</offset_z>
+      </yaw>
+      <roll>
+        <joint_name>servo_camera_roll_joint</joint_name>
+        <parent_link>servo_camera_gimbal_yaw_link</parent_link>
+        <frame_name>{{ frame_namespace }}/roll</frame_name>
+        <min_angle>{{ min_roll }}</min_angle>
+        <max_angle>{{ max_roll }}</max_angle>
+        <max_rate>{{ max_roll_rate }}</max_rate>
+        <compensate_tilt>{{ compensate_tilt_roll }}</compensate_tilt>
+        <offset_x>{{ offset_roll_link_x }}</offset_x>
+        <offset_y>{{ offset_roll_link_y }}</offset_y>
+        <offset_z>{{ offset_roll_link_z }}</offset_z>
+      </roll>
+      <pitch>
+        <joint_name>servo_camera_pitch_joint</joint_name>
+        <parent_link>servo_camera_gimbal_roll_link</parent_link>
+        <frame_name>{{ frame_namespace }}/pitch</frame_name>
+        <min_angle>{{ min_pitch }}</min_angle>
+        <max_angle>{{ max_pitch }}</max_angle>
+        <max_rate>{{ max_pitch_rate }}</max_rate>
+        <compensate_tilt>{{ compensate_tilt_pitch }}</compensate_tilt>
+        <offset_x>{{ offset_pitch_link_x }}</offset_x>
+        <offset_y>{{ offset_pitch_link_y }}</offset_y>
+        <offset_z>{{ offset_pitch_link_z }}</offset_z>
+      </pitch>
+    </plugin>
+
+    <plugin name="servo_camera_realsense_plugin" filename="libMrsGazeboCommonResources_RealsensePlugin.so">
+      <camera_name>servo_camera</camera_name>
+      <camera_suffix></camera_suffix>
+      <useRealistic>{{ use_realistic }}</useRealistic>
+      <noisePerMeter>0.2</noisePerMeter>
+      <minNoiseDistance>4.0</minNoiseDistance>
+      <perlinEmptyThreshold>0.8</perlinEmptyThreshold>
+      <perlinEmptySpeed>0.2</perlinEmptySpeed>
+      <imageScaling>4</imageScaling>
+      <blurSize>15</blurSize>
+      <erosionSize>5</erosionSize>
+      <parentFrameName>{{ frame_namespace }}/pitch</parentFrameName>
+      <x>0</x>
+      <y>0</y>
+      <z>0</z>
+      <roll>0</roll>
+      <pitch>0</pitch>
+      <yaw>0</yaw>
+    </plugin>
+
+    <joint name="servo_camera_yaw_joint" type="revolute">
+      <parent>{{ parent }}</parent>
+      <child>servo_camera_gimbal_yaw_link</child>
+      <pose relative_to="{{ parent }}">{{ offset_yaw_link_x }} {{ offset_yaw_link_y }} {{ offset_yaw_link_z }} {{ offset_yaw_link_roll }} {{ offset_yaw_link_pitch }} {{ offset_yaw_link_yaw }}</pose>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit><lower>{{ min_yaw }}</lower><upper>{{ max_yaw }}</upper><effort>1.0</effort><velocity>10.0</velocity></limit>
+        <dynamics>
+          <damping>0.0</damping>
+          <friction>0.0</friction>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <joint name="servo_camera_roll_joint" type="revolute">
+      <parent>servo_camera_gimbal_yaw_link</parent>
+      <child>servo_camera_gimbal_roll_link</child>
+      <pose relative_to="servo_camera_yaw_joint">{{ offset_roll_link_x }} {{ offset_roll_link_y }} {{ offset_roll_link_z }} {{ offset_roll_link_roll }} {{ offset_roll_link_pitch }} {{ offset_roll_link_yaw }}</pose>
+      <axis>
+        <xyz>1 0 0</xyz>
+        <limit><lower>{{ min_roll }}</lower><upper>{{ max_roll }}</upper><effort>1.0</effort><velocity>10.0</velocity></limit>
+        <dynamics>
+          <damping>0.0</damping>
+          <friction>0.0</friction>
+        </dynamics>
+      </axis>
+    </joint>
+
+    <joint name="servo_camera_pitch_joint" type="revolute">
+      <parent>servo_camera_gimbal_roll_link</parent>
+      <child>servo_camera_link</child>
+      <pose relative_to="servo_camera_roll_joint">{{ offset_pitch_link_x }} {{ offset_pitch_link_y }} {{ offset_pitch_link_z }} {{ offset_pitch_link_roll }} {{ offset_pitch_link_pitch }} {{ offset_pitch_link_yaw }}</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit><lower>{{ min_pitch }}</lower><upper>{{ max_pitch }}</upper><effort>1.0</effort><velocity>10.0</velocity></limit>
+        <dynamics>
+          <damping>0.0</damping>
+          <friction>0.0</friction>
+        </dynamics>
+      </axis>
+    </joint>
 
   {%- endif -%}
 {%- endmacro -%}
@@ -2543,7 +2818,6 @@ limitations under the License.
 {%- endmacro -%}
 {# <!--}--> #}
 
-
 {# ========================== VIO components ======================== #}
 
 {# vio_macro {--> #}
@@ -2852,8 +3126,6 @@ limitations under the License.
   {%- endif -%}
 {%- endmacro -%}
 {# <!--}--> #}
-
-
 
 {# pendulum_macro {--> #}
 {%- macro pendulum_macro(parent_link, x, y, z, spawner_args) -%}
