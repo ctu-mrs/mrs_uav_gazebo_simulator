@@ -1027,9 +1027,11 @@ limitations under the License.
     {%- set frame_parent = spawner_args['name'] + '/fcu' -%}
     {%- set frame_sensor = spawner_args['name'] + '/' + sensor_name + '_sensor' -%}
     {%- set frame_lidar = spawner_args['name'] + '/' + sensor_name + '_lidar'  -%}
+    {%- set frame_imu = spawner_args['name'] + '/' + sensor_name + '_imu'  -%}
 
     {# -- topics -- #}
     {%- set topic_lidar = '/' + spawner_args['name'] + '/' + sensor_name + '_cloud_nodelet/points' -%}
+    {%- set topic_imu = '/' + spawner_args['name'] + '/' + sensor_name + '_cloud_nodelet/imu' -%}
 
     {# -- tf from sensor to lidar -- #}
     {# The laser rays should be coming approximately from the half of sensor height #}
@@ -1039,6 +1041,14 @@ limitations under the License.
     {%- set lidar_roll = 0 -%}
     {%- set lidar_pitch = 0 -%}
     {%- set lidar_yaw = 0  -%}
+    
+    {# -- tf from sensor to imu -- #}
+    {%- set imu_x = 0.011 -%}
+    {%- set imu_y = 0.02329 -%}
+    {%- set imu_z = -0.04412 -%}
+    {%- set imu_roll = 0 -%}
+    {%- set imu_pitch = 0 -%}
+    {%- set imu_yaw = 0 -%}
 
     {# <!--}--> #}
 
@@ -1060,6 +1070,27 @@ limitations under the License.
         pitch = 0,
         yaw = 0)
       }}
+      <!--}-->
+      
+      <!-- IMU {-->
+      <sensor name="{{ sensor_name }}_imu_sensor" type="imu">
+        <pose>{{ imu_x }} {{ imu_y }} {{ imu_z }} {{ imu_roll }} {{ imu_pitch }} {{ imu_yaw }}</pose>
+        <gravity>true</gravity>
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+        <visualize>false</visualize>
+        <topic>__default_topic__</topic>
+        <plugin name="{{ sensor_name }}_imu_plugin" filename="libgazebo_ros_imu_sensor.so">
+          <robotNamespace></robotNamespace>
+          <topicName>{{ topic_imu }}</topicName>
+          <bodyName>{{ sensor_link }}</bodyName>
+          <updateRateHZ>100</updateRateHZ>
+          <gaussianNoise>0.005</gaussianNoise>
+          <xyzOffset>0 0 0</xyzOffset>
+          <rpyOffset>0 0 0</rpyOffset>
+          <frameName>{{ frame_imu }}</frameName>
+        </plugin>
+      </sensor>
       <!--}-->
 
       <!-- LIDAR {-->
