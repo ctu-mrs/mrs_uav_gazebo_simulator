@@ -49,7 +49,7 @@ Use one of the prepared Tmuxinator sessions in [`roscd mrs_uav_gazebo_simulation
 
 ## Using the MRS drone spawner in your simulations
 
-The drone models are dynamically created in runtime using the [MRS drone spawner](https://ctu-mrs.github.io/docs/simulation/gazebo/gazebo/drone_spawner.html). The UAV platforms can be additionally equipped by adding [components](ros_packages/mrs_uav_gazebo_simulation/models/mrs_robots_description/sdf/component_snippets.sdf.jinja) (rangefinders, LiDARs, cameras, plugins etc.).
+The drone models are dynamically created in runtime using the [MRS drone spawner](https://ctu-mrs.github.io/docs/1.5.0/simulations/gazebo/drone_spawner). The UAV platforms can be additionally equipped by adding [components](ros_packages/mrs_uav_gazebo_simulation/models/mrs_robots_description/sdf/component_snippets.sdf.jinja) (rangefinders, LiDARs, cameras, plugins etc.).
 
 ### Start the Gazebo simulator
 
@@ -63,7 +63,7 @@ At this point the Gazebo world will only contain the environment with grass plan
 
 ### Spawning the UAVs
 
-The `simulation.launch` will automatically start the `mrs_drone_spawner` as a ROS node. If you use a custom launch file to start Gazbo, you can launch the spawner separately:
+The `simulation.launch` will automatically start the `mrs_drone_spawner` as a ROS node. If you use a custom launch file to start Gazebo, you can launch the spawner separately:
 
 ```bash
 roslaunch mrs_uav_gazebo_simulation mrs_drone_spawner.launch
@@ -109,4 +109,4 @@ rosservice call /mrs_drone_spawner/spawn "1 --x500 --enable-rangefinder --enable
 ```
 The list of components and their reconfigurable parameters can be displayed using the platform-specific help.
 
-For more details, please refer to the [MRS drone spawner](https://ctu-mrs.github.io/docs/simulation/gazebo/gazebo/drone_spawner.html) page.
+For more details, please refer to the [MRS drone spawner](https://ctu-mrs.github.io/docs/1.5.0/simulations/gazebo/drone_spawner) page.
