@@ -68,6 +68,78 @@
   {%- set prop_izz = (prop_mass * prop_radius * prop_radius) / 2 -%}
   {# <!--}--> #}
 
+{# fisheye_camera_macro_meshless {--> #}
+{%- macro fisheye_camera_macro_meshless(parent_link, camera_name, camera_frame_name, sensor_base_frame_name, frame_rate, parent_frame_name, horizontal_fov, image_width, image_height, min_distance, max_distance, lens_type, lens_c1, lens_c2, lens_f, lens_fun, lens_scale, lens_cutoff_angle, lens_texture_size, noise_mean, noise_stddev, x, y, z, roll, pitch, yaw) -%}
+
+  <link name="{{ camera_name }}_link">
+    <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+    {{ generic.zero_inertial_macro() }}
+    <sensor name="{{ camera_name }}_sensor" type="wideanglecamera">
+      <update_rate>{{ frame_rate }}</update_rate>
+      <camera>
+        <horizontal_fov>{{ horizontal_fov }}</horizontal_fov>
+        <image>
+          <width>{{ image_width }}</width>
+          <height>{{ image_height }}</height>
+          <format>L_INT8</format>
+        </image>
+        <clip>
+          <near>{{ min_distance }}</near>
+          <far>{{ max_distance }}</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <!-- Noise is sampled independently per pixel on each frame.
+          That pixel's noise value is added to each of its color
+          channels, which at that point lie in the range [0,1]. -->
+          <mean>{{ noise_mean }}</mean>
+          <stddev>{{ noise_stddev }}</stddev>
+        </noise>
+        <lens>
+          <type>{{ lens_type }}</type>
+          <custom_function>
+            <c1>{{ lens_c1 }}</c1>
+            <c2>{{ lens_c2 }}</c2>
+            <f>{{ lens_f }}</f>
+            <fun>{{ lens_fun }}</fun>
+          </custom_function>
+          <scale_to_hfov>{{ lens_scale }}</scale_to_hfov>
+          <cutoff_angle>{{ lens_cutoff_angle }}</cutoff_angle>
+          <env_texture_size>{{ lens_texture_size }}</env_texture_size>
+        </lens>
+      </camera>
+      <plugin name="{{ camera_name }}_plugin" filename="libMrsGazeboCommonResources_CameraPlugin.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>{{ frame_rate }}</updateRate>
+        <cameraName>{{ camera_name }}</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>/{{ camera_frame_name }}</frameName>
+        <hackBaseline>0.0</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+        <parentFrameName>{{ parent_frame_name }}</parentFrameName>
+        <sensorBaseFrameName>{{ sensor_base_frame_name }}</sensorBaseFrameName>
+        <x>{{ x }}</x>
+        <y>{{ y }}</y>
+        <z>{{ z }}</z>
+        <roll>{{ roll }}</roll>
+        <pitch>{{ pitch }}</pitch>
+        <yaw>{{ yaw }}</yaw>
+      </plugin>
+    </sensor>
+  </link>
+
+  <joint name="{{ camera_name }}_joint" type="fixed">
+    <parent>{{ parent_link }}</parent>
+    <child>{{ camera_name }}_link</child>
+  </joint>
+  {%- endmacro -%}
+  <!--}-->
+
   <model name="{{ spawner_args['name'] }}">
 
     {# ================================================================== #}
@@ -357,18 +429,26 @@
       {%- if spawner_keyword in spawner_args.keys() -%}
         {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
-        {{ generic.camera_macro_meshless(
-          camera_name = 'camera_down',
+        {{ fisheye_camera_macro_meshless(
           parent_link = root,
+          camera_name = 'camera_down',
           camera_frame_name = spawner_args['name'] + '/camera_down_optical',
-          parent_frame_name = spawner_args['name'] + '/fcu',
           sensor_base_frame_name = spawner_args['name'] + '/camera_down',
-          frame_rate = rate,
-          horizontal_fov = 1.5476,
+          frame_rate = spawner_args[spawner_keyword]['rate'],
+          parent_frame_name = spawner_args['name'] + '/fcu',
+          horizontal_fov = math.radians(127),
           image_width = 1280,
           image_height = 800,
           min_distance = 0.02,
           max_distance = 80,
+          lens_type = 'custom',
+          lens_c1 = 1.05,
+          lens_c2 = 4,
+          lens_f = 1.0,
+          lens_fun = 'tan',
+          lens_scale = true,
+          lens_cutoff_angle = math.radians(90),
+          lens_texture_size = 512,
           noise_mean = 0.0,
           noise_stddev = spawner_args[spawner_keyword]['noise'],
           x = 0.0821,
@@ -376,7 +456,8 @@
           z = -0.01,
           roll = 3.14,
           pitch = 1.57,
-          yaw = 0.0)
+          yaw = 0)
+
         }}
 
       {%- endif -%}
@@ -385,6 +466,21 @@
 
     {{ camera_down_macro(
       spawner_args = spawner_args)
+    }}
+
+    {{ generic.imu_sensor_macro(
+      sensor_name = 'vio_imu',
+      parent_link = root,
+      update_rate = 250,
+      topic_name = spawner_args['name'] + '/vio/imu',
+      frame_name = spawner_args['name'] + '/fmu',
+      noise_mean = 0.006,
+      x = 0,
+      y = 0,
+      z = 0,
+      roll = 0,
+      pitch = 0,
+      yaw = 0)
     }}
 
     {# <!--}--> #}
@@ -402,3 +498,4 @@
   </model>
 
 </sdf>
+
