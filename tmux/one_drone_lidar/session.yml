@@ -48,7 +48,7 @@ windows:
   - takeoff:
       layout: tiled
       panes:
-        - waitForCore; history -s './takeoff.sh'
+        - waitForCore; sleep 10; ./takeoff.sh
   - rviz:
       layout: tiled
       panes:
