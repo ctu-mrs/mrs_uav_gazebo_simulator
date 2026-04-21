@@ -320,7 +320,7 @@
           camera_frame_name = spawner_args['name'] + '/camera_front_optical',
           parent_frame_name = spawner_args['name'] + '/fcu',
           sensor_base_frame_name = spawner_args['name'] + '/camera_front',
-          frame_rate = rate,
+          frame_rate = spawner_args[spawner_keyword]['rate'],
           horizontal_fov = 0.79622,
           image_width = 728,
           image_height = 544,
@@ -357,26 +357,34 @@
       {%- if spawner_keyword in spawner_args.keys() -%}
         {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
 
-        {{ generic.camera_macro_meshless(
-          camera_name = 'camera_down',
+        {{ generic.fisheye_camera_macro_meshless(
           parent_link = root,
+          camera_name = 'camera_down',
           camera_frame_name = spawner_args['name'] + '/camera_down_optical',
-          parent_frame_name = spawner_args['name'] + '/fcu',
           sensor_base_frame_name = spawner_args['name'] + '/camera_down',
-          frame_rate = rate,
-          horizontal_fov = 1.5476,
+          frame_rate = spawner_args[spawner_keyword]['rate'],
+          parent_frame_name = spawner_args['name'] + '/fcu',
+          horizontal_fov = math.radians(136),
           image_width = 1280,
           image_height = 800,
           min_distance = 0.02,
           max_distance = 80,
+          lens_type = 'custom',
+          lens_c1 = 1.0,
+          lens_c2 = 1.0,
+          lens_f = 1.0,
+          lens_fun = 'id',
+          lens_scale = true,
+          lens_cutoff_angle = math.radians(66),
+          lens_texture_size = 512,
           noise_mean = 0.0,
           noise_stddev = spawner_args[spawner_keyword]['noise'],
           x = 0.0821,
           y = 0.0,
-          z = -0.01,
+          z = -0.017,
           roll = 3.14,
           pitch = 1.57,
-          yaw = 0.0)
+          yaw = 0)
         }}
 
       {%- endif -%}
@@ -389,16 +397,22 @@
 
     {# <!--}--> #}
 
-    {# third person camera {--> #}
-    {%- set third_person_camera = components.third_person_camera_macro(
-      camera_name = 'third_person_camera',
+    {{ generic.imu_sensor_macro(
+      sensor_name = 'icm_imu',
       parent_link = root,
-      mount = none,
-      spawner_args = spawner_args)
-    -%}
-    {{ third_person_camera }}
-    {# <!--}--> #}
+      update_rate = 125,
+      topic_name = spawner_args['name'] + '/icm_imu/imu',
+      frame_name = spawner_args['name'] + '/fmu',
+      noise_mean = 0.006,
+      x = 0,
+      y = 0,
+      z = 0,
+      roll = 0,
+      pitch = 0,
+      yaw = 0)
+    }}
 
   </model>
 
 </sdf>
+
