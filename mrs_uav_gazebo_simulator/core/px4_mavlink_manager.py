@@ -10,7 +10,6 @@ from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription, LaunchService
 from launch.actions import IncludeLaunchDescription
-from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
@@ -22,12 +21,11 @@ class Px4MavlinkManager():
         self._ros_node = ros_node
 
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
-        self._mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
+        self._mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch.py')
         self._mavros_px4_config_path = os.path.join(px4_api_path, 'config')
         self._mavros_px4_config_template_name = 'mavros_px4_config.jinja.yaml'
         self._px4_fimrware_launch_path = os.path.join(gazebo_simulator_path, 'launch',
                                                       'run_simulation_firmware.launch.py')
-        self._mavros_plugin_list = os.path.join(self._mavros_px4_config_path, 'mavros_plugins.yaml')
 
         self._px4_mavlink_config = px4_mavlink_config
 
@@ -42,22 +40,17 @@ class Px4MavlinkManager():
         self._ros_node.get_logger().info(f'Launching mavros for {name}')
 
         launch_arguments = {
+            'uav_name': name,
+            'frame_id_namespace': name,
             'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
-            'gcs_url': '',  # do not connect to QGC using mavros, we create a dedicated mavlink stream instead
             'tgt_system': str(robot_params['ID'] + 1),
-            'tgt_component': str(1),
-            'pluginlists_yaml': self._mavros_plugin_list,
             'config_yaml': str(robot_params['mavros_px4_config']),
-            'namespace': name + '/mavros',
             'use_sim_time': 'true',
-            'base_link_frame_id': name + '/base_link',
-            'odom_frame_id': name + '/odom',
-            'map_frame_id': name + '/map'
         }
 
         ld = LaunchDescription([
             IncludeLaunchDescription(
-                XMLLaunchDescriptionSource(self._mavros_launch_path),
+                PythonLaunchDescriptionSource(self._mavros_launch_path),
                 launch_arguments=launch_arguments.items(),
             )
         ])
