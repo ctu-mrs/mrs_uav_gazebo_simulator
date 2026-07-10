@@ -884,9 +884,9 @@ limitations under the License.
 {# <!--}--> #}
 
 {# rangefinder_sensor_macro {--> #}
-{%- macro rangefinder_sensor_macro(name, update_rate, sensor_link_name, parent_link_name, samples, min_distance, max_distance, resolution, x, y, z, roll, pitch, yaw) -%}
+{%- macro rangefinder_sensor_macro(name, update_rate, samples, min_distance, max_distance, resolution, sensor_x, sensor_y, sensor_z, sensor_roll, sensor_pitch, sensor_yaw) -%}
   <sensor name="{{ name }}" type="gpu_lidar">
-  <pose relative_to="{{ parent_link_name }}">{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
+  <pose>{{ sensor_x }} {{ sensor_y }} {{ sensor_z }} {{ sensor_roll }} {{ sensor_pitch }} {{ sensor_yaw }}</pose>
   <update_rate>{{ update_rate }}</update_rate>
   <lidar>
     <scan>
