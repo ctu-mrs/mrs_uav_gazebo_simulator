@@ -41,7 +41,7 @@ class Px4MavlinkManager():
 
         launch_arguments = {
             'uav_name': name,
-            'frame_id_namespace': name,
+            'tf_namespace': name,
             'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
             'tgt_system': str(robot_params['ID'] + 1),
             'config_yaml': str(robot_params['mavros_px4_config']),
