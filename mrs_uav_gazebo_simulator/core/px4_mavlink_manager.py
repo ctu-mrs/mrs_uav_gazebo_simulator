@@ -37,7 +37,7 @@ class Px4MavlinkManager():
 
         launch_arguments = {
             'uav_name': name,
-            # tf_namespace intentionally not overridden: mavros.launch.py defaults it to
+            # frame_namespace intentionally not overridden: mavros.launch.py defaults it to
             # "<uav_name>/mavros", matching the frame IDs baked into mavros_px4_config.yaml.
             'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
             'tgt_system': str(robot_params['ID'] + 1),
