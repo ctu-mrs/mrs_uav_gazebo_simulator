@@ -1,7 +1,6 @@
 import os
 import multiprocessing
 import time
-import jinja2
 
 from mrs_uav_gazebo_simulator.utils.spawner_exceptions import *
 from mrs_uav_gazebo_simulator.utils.spawner_types import Px4MavlinkConfig
@@ -15,21 +14,18 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 class Px4MavlinkManager():
 
-    # #{ __init__(self, ros_node, gazebo_simulator_path, px4_mavlink_config, tempfile_folder, jinja_templates)
+    # #{ __init__(self, ros_node, gazebo_simulator_path, px4_mavlink_config, jinja_templates)
     def __init__(self, ros_node: Node, gazebo_simulator_path: str, px4_mavlink_config: Px4MavlinkConfig,
-                 tempfile_folder: str, jinja_templates: dict):
+                 jinja_templates: dict):
         self._ros_node = ros_node
 
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
         self._mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch.py')
-        self._mavros_px4_config_path = os.path.join(px4_api_path, 'config')
-        self._mavros_px4_config_template_name = 'mavros_px4_config.jinja.yaml'
         self._px4_fimrware_launch_path = os.path.join(gazebo_simulator_path, 'launch',
                                                       'run_simulation_firmware.launch.py')
 
         self._px4_mavlink_config = px4_mavlink_config
 
-        self._tempfile_folder = tempfile_folder
         self._jinja_templates = jinja_templates
 
     # #}
@@ -41,11 +37,17 @@ class Px4MavlinkManager():
 
         launch_arguments = {
             'uav_name': name,
-            'tf_namespace': name,
+            # tf_namespace intentionally not overridden: mavros.launch.py defaults it to
+            # "<uav_name>/mavros", matching the frame IDs baked into mavros_px4_config.yaml.
             'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
             'tgt_system': str(robot_params['ID'] + 1),
-            'config_yaml': str(robot_params['mavros_px4_config']),
             'use_sim_time': 'true',
+            # PX4 SITL's Gazebo bridge reports the simulated Garmin's mount orientation as
+            # ROTATION_CUSTOM (it doesn't match any of the fixed front/down/left references
+            # GZBridge checks against) - mavros silently drops range readings that don't
+            # match this exactly.
+            'garmin_id': '0',
+            'garmin_orientation': 'CUSTOM',
         }
 
         ld = LaunchDescription([
@@ -139,25 +141,5 @@ class Px4MavlinkManager():
         mavlink_config['fcu_url'] = f'udp://127.0.0.1:{udp_offboard_port_remote}@127.0.0.1:{udp_offboard_port_local}'
 
         return mavlink_config
-
-    # #}
-
-    # #{ generate_mavros_px4_config(self, uav_name)
-    def generate_mavros_px4_config(self, uav_name):
-
-        jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(self._mavros_px4_config_path), autoescape=False)
-
-        template = jinja_env.get_template(self._mavros_px4_config_template_name)
-
-        rendered_template = template.render(uav_name=uav_name)
-
-        filename = f'mavros_px4_config_{uav_name}.yaml'
-        filepath = os.path.join(self._tempfile_folder, filename)
-
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(rendered_template)
-            self._ros_node.get_logger().info(f'Mavros PX4 config for {uav_name} written to {filepath}')
-
-        return filepath
 
     # #}
