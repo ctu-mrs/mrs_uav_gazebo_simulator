@@ -37,8 +37,10 @@ class Px4MavlinkManager():
 
         launch_arguments = {
             'uav_name': name,
+            # frame_namespace intentionally not overridden: mavros.launch.py defaults it to
+            # "<uav_name>/mavros", matching the frame IDs baked into mavros_px4_config.yaml.
             'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
-            'gcs_url': '', # Empty string disables GCS TCP connection, which is not needed for simulation and might cause issues if multiple UAVs are launched in the same simulation.
+            'gcs_url': '', # do not connect to QGC using mavros, we create a dedicated mavlink stream instead
             'tgt_system': str(robot_params['ID'] + 1),
             'use_sim_time': 'true',
             # PX4 SITL's Gazebo bridge reports the simulated Garmin's mount orientation as
