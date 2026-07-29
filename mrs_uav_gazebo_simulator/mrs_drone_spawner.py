@@ -84,7 +84,6 @@ class MrsDroneSpawner(Node):
         self._px4_mavlink_manager = Px4MavlinkManager(ros_node=self,
                                                       gazebo_simulator_path=gazebo_simulator_path,
                                                       px4_mavlink_config=self._px4_mavlink_config,
-                                                      tempfile_folder=self._tempfile_folder,
                                                       jinja_templates=self._jinja_templates)
 
         self._user_input_manager = UserInputManager(ros_node=self,
@@ -422,7 +421,6 @@ class MrsDroneSpawner(Node):
         del robot_params['spawn_poses']
 
         robot_params['mavlink_config'] = self._px4_mavlink_manager.get_mavlink_config_for_robot(ID)
-        robot_params['mavros_px4_config'] = self._px4_mavlink_manager.generate_mavros_px4_config(robot_params['name'])
 
         return robot_params
 
