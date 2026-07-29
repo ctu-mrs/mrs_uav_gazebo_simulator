@@ -59,11 +59,20 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
     # #{ _detect_sensors_transformations(self, links_to_sensors)
     def _detect_sensors_transformations(self, links_to_sensors):
         for link_name, data in links_to_sensors.items():
+            sensors = data[LinkToSensorData.SENSORS]
+
+            # A link whose only sensor sits at an identity offset (and has no optical frame) has no
+            # meaningful housing frame of its own (e.g. a bare rangefinder or 2D lidar). Publish one
+            # direct base_frame -> sensor transform instead of a redundant base_frame -> link -> sensor chain.
+            if self._is_standalone_sensor_link(data):
+                self._register_direct_sensor_transform(sensor_data=sensors[0],
+                                                       pose_str=data[LinkToSensorData.LINK_POSE_STR])
+                continue
+
             if not self._register_sensor_link_transform(link_name=link_name, data=data):
                 self._ros_node.get_logger().info(
                     f"[Sdf2Tf_Publisher] Sensor link {link_name} has no pose, cannot create its tf publisher.")
                 continue
-            sensors = data[LinkToSensorData.SENSORS]
             for sensor in sensors:
                 self._register_sensor_offset_transform(sensor_data=sensor, parent_frame=link_name)
 
@@ -72,20 +81,53 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
 
     # #}
 
+    # #{ _is_standalone_sensor_link(self, data) -> bool
+    def _is_standalone_sensor_link(self, data) -> bool:
+        sensors = data[LinkToSensorData.SENSORS]
+        if len(sensors) != 1:
+            return False
+        sensor = sensors[0]
+        if self._has_optical_frame(sensor[SensorLinkData.OPTICAL_FRAME_POSE_STR]):
+            return False
+        return self._is_identity_pose(sensor[SensorLinkData.SENSOR_OFFSET_POSE_STR])
+
+    # #}
+
+    # #{ _is_identity_pose(self, pose_str) -> bool
+    def _is_identity_pose(self, pose_str) -> bool:
+        if pose_str is None or pose_str == "":
+            return True
+        return bool(np.all(self._str_to_pose(pose_str) == 0))
+
+    # #}
+
     # #{ _register_sensor_link_transform(self, link_name, data)
     def _register_sensor_link_transform(self, link_name, data):
-        # Publish transform of the sensor link with respect to the world frame
-        pose_World_SensorLink_str = data[LinkToSensorData.LINK_POSE_STR]
-        if pose_World_SensorLink_str is None or (pose_World_SensorLink_str == ""):
+        # Publish transform of the sensor link with respect to the base frame
+        pose_Base_SensorLink_str = data[LinkToSensorData.LINK_POSE_STR]
+        if pose_Base_SensorLink_str is None or (pose_Base_SensorLink_str == ""):
             return False
-        T_W_SensorLink = self._get_transform_from_string_pose(pose_World_SensorLink_str)
+        T_Base_SensorLink = self._get_transform_from_string_pose(pose_Base_SensorLink_str)
 
         self._transformations.append({
             TfData.CHILD_FRAME: self._append_namespace(link_name),
             TfData.PARENT_FRAME: self._append_namespace(self._base_frame),
-            TfData.TF_MATRIX: T_W_SensorLink
+            TfData.TF_MATRIX: T_Base_SensorLink
         })
         return True
+
+    # #}
+
+    # #{ _register_direct_sensor_transform(self, sensor_data, pose_str)
+    def _register_direct_sensor_transform(self, sensor_data, pose_str):
+        # Publish transform of a standalone sensor directly with respect to the base frame
+        T_Base_Sensor = self._get_transform_from_string_pose(pose_str)
+
+        self._transformations.append({
+            TfData.CHILD_FRAME: self._append_namespace(sensor_data[SensorLinkData.SENSOR_NAME]),
+            TfData.PARENT_FRAME: self._append_namespace(self._base_frame),
+            TfData.TF_MATRIX: T_Base_Sensor
+        })
 
     # #}
 
@@ -180,6 +222,10 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
                 sensors_within_link = []
                 for sensor in sensors:
                     sensor_name = sensor.get("name")
+                    # PX4's gazebo_mavlink_interface requires the Garmin rangefinder's SDF sensor to be
+                    # literally named "lidar"; use the more descriptive name for the published TF frame.
+                    if sensor_name == "lidar":
+                        sensor_name = "garmin"
                     sensor_offset_pose_str = sensor.findtext('pose')
                     gz_frame_name = sensor.findtext("gz_frame_id")
 
@@ -266,14 +312,14 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
 
     # #}
 
-    # #{ _matrix_to_tf_pose(self, T_W_Sensor: np.ndarray) -> Transform
-    def _matrix_to_tf_pose(self, T_W_Sensor: np.ndarray) -> Transform:
+    # #{ _matrix_to_tf_pose(self, T_matrix: np.ndarray) -> Transform
+    def _matrix_to_tf_pose(self, T_matrix: np.ndarray) -> Transform:
         pose = Transform()
-        pose.translation.x = T_W_Sensor[0, 3]
-        pose.translation.y = T_W_Sensor[1, 3]
-        pose.translation.z = T_W_Sensor[2, 3]
+        pose.translation.x = T_matrix[0, 3]
+        pose.translation.y = T_matrix[1, 3]
+        pose.translation.z = T_matrix[2, 3]
 
-        quat = R.from_matrix(T_W_Sensor[:3, :3]).as_quat()
+        quat = R.from_matrix(T_matrix[:3, :3]).as_quat()
         pose.rotation.x = quat[0]
         pose.rotation.y = quat[1]
         pose.rotation.z = quat[2]

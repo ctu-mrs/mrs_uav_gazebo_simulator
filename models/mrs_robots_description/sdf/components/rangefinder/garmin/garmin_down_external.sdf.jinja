@@ -37,18 +37,16 @@
       {{ generic.rangefinder_sensor_macro(
         name = sensor_name,
         update_rate = spawner_args[spawner_keyword]['update_rate'],
-        sensor_link_name = sensor_name ~ "_sensor_link",
-        parent_link_name = parent_link,
         samples = 3,
         min_distance = spawner_args[spawner_keyword]['min_range'],
         max_distance = spawner_args[spawner_keyword]['max_range'],
         resolution = 0.005,
-        x = x,
-        y = y,
-        z = z,
-        roll = roll,
-        pitch = pitch,
-        yaw = yaw)
+        sensor_x = 0,
+        sensor_y = 0,
+        sensor_z = 0,
+        sensor_roll = 0,
+        sensor_pitch = 0,
+        sensor_yaw = 0)
       }}
 
     </link>
