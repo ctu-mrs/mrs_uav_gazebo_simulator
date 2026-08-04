@@ -40,7 +40,10 @@
   {# Per-blade LiftDrag area, sized so that 4x(2 blades) produce hover #}
   {# thrust at ~0.47 of the velocity range (the MRS motor_constant design #}
   {# point): lift/blade = cla*a0 * 0.5*rho*(omega*2/3*prop_radius)^2 * area #}
-  {%- set ap_blade_area = 0.00175 -%} {# [m^2] per blade #}
+  {# = 0.02091 * area * omega^2. With area=0.002 this is 4.2e-5*omega^2 per #}
+  {# rotor, EXACTLY the MRS x500 'force_constant 0.000042' (and the #}
+  {# MrsMulticopterMotorModel motor_constant) used everywhere else in MRS. #}
+  {%- set ap_blade_area = 0.002 -%} {# [m^2] per blade #}
   {# pwm range of the ArduPilotPlugin control channels, must match the #}
   {# MOT_PWM_MIN/MOT_PWM_MAX of the SITL parameters (config/ardupilot) #}
   {%- set ap_servo_min = 1100 -%}

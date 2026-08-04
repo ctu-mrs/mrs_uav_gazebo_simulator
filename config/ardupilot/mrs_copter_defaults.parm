@@ -24,6 +24,19 @@ GUID_OPTIONS 8
 MOT_PWM_MIN 1100
 MOT_PWM_MAX 1900
 
+# Linear thrust->pwm mapping for MRS offboard control.
+# MRS commands a force-fraction through SET_ATTITUDE_TARGET (GUID_OPTIONS=8
+# thrust-as-thrust). ArduPilot's default mixer (SPIN_MIN=0.15, SPIN_ARM=0.10,
+# THST_EXPO=0.65) pushes the actuator floor well above idle - a small 0.2
+# thrust command then maps to a pwm high enough to produce thrust above the
+# motor cutoff (the "thrust over cutoff at 0.2 thrust" behavior). Setting
+# these to zero makes pwm = PWM_MIN + thrust*(PWM_MAX-PWM_MIN) exactly linear
+# with a true zero at idle (motors stop at thrust 0), which matches both the
+# MRS a/b thrust curve and the ArduPilotPlugin pwm->velocity mapping.
+MOT_SPIN_MIN 0
+MOT_SPIN_ARM 0
+MOT_THST_EXPO 0
+
 # Simulated battery: analog voltage & current monitor so that MAVROS
 # reports battery state
 BATT_MONITOR 4
