@@ -8,8 +8,9 @@ from mrs_uav_gazebo_simulator.utils.spawner_types import Px4MavlinkConfig
 from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription, LaunchService
-from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import IncludeLaunchDescription, GroupAction
+from launch.launch_description_sources import AnyLaunchDescriptionSource
+from launch_ros.actions import PushRosNamespace
 
 
 class Px4MavlinkManager():
@@ -20,7 +21,9 @@ class Px4MavlinkManager():
         self._ros_node = ros_node
 
         px4_api_path = get_package_share_directory('mrs_uav_px4_api')
-        self._mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch.py')
+        self._mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch')
+        self._mavros_pluginlists_path = os.path.join(px4_api_path, 'config', 'mavros_plugins.yaml')
+        self._mavros_config_path = os.path.join(px4_api_path, 'config', 'mavros_px4_config.yaml')
         self._px4_fimrware_launch_path = os.path.join(gazebo_simulator_path, 'launch',
                                                       'run_simulation_firmware.launch.py')
 
@@ -33,29 +36,35 @@ class Px4MavlinkManager():
     # #{ launch_mavros(self, robot_params)
     def launch_mavros(self, robot_params):
         name = robot_params['name']
+
+        # NOTE: PX4 SITL's Gazebo bridge reports the simulated Garmin's mount
+        # orientation as ROTATION_CUSTOM. mavros silently drops range readings
+        # whose orientation does not match its configuration exactly. If the
+        # garmin range topic is missing, set garmin_id=0 and
+        # garmin_orientation=CUSTOM in mrs_uav_px4_api/config/mavros_px4_config.yaml.
+
         self._ros_node.get_logger().info(f'Launching mavros for {name}')
 
         launch_arguments = {
-            'uav_name': name,
-            # frame_namespace intentionally not overridden: mavros.launch.py defaults it to
-            # "<uav_name>/mavros", matching the frame IDs baked into mavros_px4_config.yaml.
             'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
             'gcs_url': '', # do not connect to QGC using mavros, we create a dedicated mavlink stream instead
             'tgt_system': str(robot_params['ID'] + 1),
+            'tgt_component': '1',
+            'fcu_protocol': 'v2.0',
+            'namespace': 'mavros',
+            'pluginlists_yaml': self._mavros_pluginlists_path,
+            'config_yaml': self._mavros_config_path,
             'use_sim_time': 'true',
-            # PX4 SITL's Gazebo bridge reports the simulated Garmin's mount orientation as
-            # ROTATION_CUSTOM (it doesn't match any of the fixed front/down/left references
-            # GZBridge checks against) - mavros silently drops range readings that don't
-            # match this exactly.
-            'garmin_id': '0',
-            'garmin_orientation': 'CUSTOM',
         }
 
         ld = LaunchDescription([
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(self._mavros_launch_path),
-                launch_arguments=launch_arguments.items(),
-            )
+            GroupAction(actions=[
+                PushRosNamespace(name),
+                IncludeLaunchDescription(
+                    AnyLaunchDescriptionSource(self._mavros_launch_path),
+                    launch_arguments=launch_arguments.items(),
+                ),
+            ]),
         ])
 
         self._ros_node.get_logger().info(f'launch_arguments: {launch_arguments}')

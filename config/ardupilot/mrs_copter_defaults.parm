@@ -1,0 +1,36 @@
+# ArduPilot SITL defaults for MRS UAV simulation (ArduCopter, Quad X)
+#
+# Loaded per SITL instance with --defaults. MAVLink sysid is set per instance
+# with the --sysid command line option.
+
+# The MRS Gazebo worlds run physics at 200 Hz (max_step_size 0.005), so the
+# FDM JSON (and the gyro samples it carries) arrives at ~200 Hz. The default
+# 400 Hz main loop would reject that as "Gyro rate too slow" (PreArm failure)
+# and report "Main loop slow", so run the SITL scheduler at 100 Hz.
+SCHED_LOOP_RATE 100
+
+# Vehicle frame: Quad, X motor layout. The MRS x500 template propeller
+# order matches the ArduCopter Quad X motor order
+# (ch1=front-right CCW, ch2=rear-left CCW, ch3=front-left CW, ch4=rear-right CW)
+FRAME_CLASS 1
+FRAME_TYPE 1
+
+# Guided mode: accept thrust as sent by the companion computer
+# (required by the mrs_uav_ardupilot_api attitude/thrust setpoints)
+GUID_OPTIONS 8
+
+# Motor PWM range, matches the servo_min/servo_max range expected by the
+# ArduPilotPlugin control channels in the Gazebo model
+MOT_PWM_MIN 1100
+MOT_PWM_MAX 1900
+
+# Simulated battery: analog voltage & current monitor so that MAVROS
+# reports battery state
+BATT_MONITOR 4
+
+# Offboard-style control hygiene (see mrs_uav_ardupilot_api README)
+DISARM_DELAY 0 # do not auto-disarm on landing detection
+FS_THR_ENABLE 0 # no radio in SITL, do not fight offboard control with throttle failsafe
+
+# The JSON FDM backend provides GPS, magnetometer and barometer data.
+# No additional simulation parameters are required.

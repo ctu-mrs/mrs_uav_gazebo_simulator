@@ -160,6 +160,78 @@ limitations under the License.
 {%- endmacro -%}
 {# <!--}--> #}
 
+{# ardupilot_propellers_macro {--> #}
+{%- macro ardupilot_propellers_macro(prop_list, parent, mass, radius, blade_area, meshes_z_offset, prop_ixx, prop_ixy, prop_ixz, prop_iyy, prop_iyz, prop_izz, spawner_args) -%}
+
+  <!-- Propellers (ArduPilot backend) {-->
+  {%- for prop_params in prop_list -%}
+    {%- if prop_params['mesh_files'] | length == 2 -%}
+      <!-- Propeller {{ prop_params['motor_number'] }} {-->
+      {{ generic.ardupilot_prop_macro(
+        direction = prop_params['direction'],
+        parent = parent,
+        mass = mass,
+        radius = radius,
+        motor_number = prop_params['motor_number'],
+        color = prop_params['color'],
+        mesh_file_1 = prop_params['mesh_files'][0],
+        mesh_file_2 = prop_params['mesh_files'][1],
+        meshes_z_offset = meshes_z_offset,
+        mesh_scale = prop_params['mesh_scale'],
+        x = prop_params['x'],
+        y = prop_params['y'],
+        z = prop_params['z'],
+        blade_area = blade_area,
+        ixx = prop_ixx,
+        ixy = prop_ixy,
+        ixz = prop_ixz,
+        iyy = prop_iyy,
+        iyz = prop_iyz,
+        izz = prop_izz)
+      }}
+      <!--}-->
+    {%- endif -%}
+
+  {%- endfor -%}
+  <!--}-->
+
+{%- endmacro -%}
+{# <!--}--> #}
+
+{# use_ardupilot_macro {--> #}
+{# Switch the drone to the ArduPilot SITL backend: renders the ArduPilotPlug #}
+{# in (servo-packet JSON fdm <-> propeller joint velocity PID) instead of    #}
+{# driving the propellers with the PX4 MrsMulticopterMotorModel. Needs the   #}
+{# spawner to inject spawner_args['ardupilot_config'] (fdm_port_in etc.) #}
+{# and pairs with the ArduCopter Quad X motor order of the propeller list.   #}
+{%- macro use_ardupilot_macro(imu_name, channels, servo_min, servo_max, p_gain, cmd_max, cmd_min, fdm_addr, spawner_args) -%}
+
+  {%- set spawner_keyword = 'use-ardupilot' -%}
+  {%- set spawner_description = 'Use ArduPilot SITL (JSON fdm) behind the ArduPilotPlugin instead of PX4' -%}
+  {%- set spawner_default_args = {} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    <!-- ArduPilot SITL fdm/control plugin {-->
+    {{ generic.ardupilot_plugin_macro(
+      fdm_addr = fdm_addr,
+      fdm_port_in = spawner_args['ardupilot_config']['fdm_port_in'],
+      imu_name = imu_name,
+      channels = channels,
+      servo_min = servo_min,
+      servo_max = servo_max,
+      p_gain = p_gain,
+      cmd_max = cmd_max,
+      cmd_min = cmd_min)
+    }}
+    <!--}-->
+
+  {%- endif -%}
+
+{%- endmacro -%}
+{# <!--}--> #}
+
 
 {# ======================= rangefinder sensors ====================== #}
 {# ==== Garmin ==== #}

@@ -36,6 +36,31 @@
   {%- set rolling_moment_coefficient = '1.0e-6' -%} {# N*m / (m/s^2) rolling moment caused by dragging propellers through the air during forward flight #}
   {# <!--}--> #}
 
+  {# ArduPilot backend constants (only used with --use-ardupilot) {--> #}
+  {# Per-blade LiftDrag area, sized so that 4x(2 blades) produce hover #}
+  {# thrust at ~0.47 of the velocity range (the MRS motor_constant design #}
+  {# point): lift/blade = cla*a0 * 0.5*rho*(omega*2/3*prop_radius)^2 * area #}
+  {%- set ap_blade_area = 0.00175 -%} {# [m^2] per blade #}
+  {# pwm range of the ArduPilotPlugin control channels, must match the #}
+  {# MOT_PWM_MIN/MOT_PWM_MAX of the SITL parameters (config/ardupilot) #}
+  {%- set ap_servo_min = 1100 -%}
+  {%- set ap_servo_max = 1900 -%}
+  {# Velocity PID: discrete-time stable on the MRS 200 Hz physics grid, #}
+  {# p_gain * step_dt / prop_izz ~ 0.4 << 1 (the iris 0.20 Nyquist-oscillates #}
+  {# here, do not copy it). Torque cap must cover spin-up + damping load. #}
+  {%- set ap_p_gain = 0.02 -%} {# [N*m per rad/s of velocity error] #}
+  {%- set ap_cmd_max = 2.5 -%} {# [N*m] #}
+  {%- set ap_cmd_min = -2.5 -%} {# [N*m] #}
+  {# pwm -> target joint velocity multiplier = max_rot_velocity (rad/s at #}
+  {# full pwm); negative for CW propellers (negative joint velocity) #}
+  {%- set ap_channels = [
+    {'channel': 0, 'motor_number': 0, 'multiplier': max_rot_velocity},
+    {'channel': 1, 'motor_number': 1, 'multiplier': max_rot_velocity},
+    {'channel': 2, 'motor_number': 2, 'multiplier': -max_rot_velocity},
+    {'channel': 3, 'motor_number': 3, 'multiplier': -max_rot_velocity},
+    ] -%}
+  {# <!--}--> #}
+
   {# Inertia constants {--> #}
   {%- set inertia_body_radius = 0.25 -%} {# [m] #}
   {%- set inertia_body_height = 0.05 -%} {# [m] #}
@@ -678,26 +703,58 @@
     }
     ]
     -%}
-    {{ components.propellers_macro(
-      prop_list = prop_list,
-      rotor_velocity_slowdown_sim = rotor_velocity_slowdown_sim,
-      motor_constant = motor_constant,
-      moment_constant = moment_constant,
-      parent = root,
-      mass = mass_prop,
-      radius = prop_radius,
-      time_constant_up = time_constant_up,
-      time_constant_down = time_constant_down,
-      max_rot_velocity = max_rot_velocity,
-      rotor_drag_coefficient = rotor_drag_coefficient,
-      rolling_moment_coefficient = rolling_moment_coefficient,
-      meshes_z_offset = motor_mesh_z_offset,
-      prop_ixx = prop_ixx,
-      prop_ixy = prop_ixy,
-      prop_ixz = prop_ixz,
-      prop_iyy = prop_iyy,
-      prop_iyz = prop_iyz,
-      prop_izz = prop_izz,
+    {%- if 'use-ardupilot' in spawner_args.keys() -%}
+      {{ components.ardupilot_propellers_macro(
+        prop_list = prop_list,
+        parent = root,
+        mass = mass_prop,
+        radius = prop_radius,
+        blade_area = ap_blade_area,
+        meshes_z_offset = motor_mesh_z_offset,
+        prop_ixx = prop_ixx,
+        prop_ixy = prop_ixy,
+        prop_ixz = prop_ixz,
+        prop_iyy = prop_iyy,
+        prop_iyz = prop_iyz,
+        prop_izz = prop_izz,
+        spawner_args = spawner_args)
+      }}
+    {%- else -%}
+      {{ components.propellers_macro(
+        prop_list = prop_list,
+        rotor_velocity_slowdown_sim = rotor_velocity_slowdown_sim,
+        motor_constant = motor_constant,
+        moment_constant = moment_constant,
+        parent = root,
+        mass = mass_prop,
+        radius = prop_radius,
+        time_constant_up = time_constant_up,
+        time_constant_down = time_constant_down,
+        max_rot_velocity = max_rot_velocity,
+        rotor_drag_coefficient = rotor_drag_coefficient,
+        rolling_moment_coefficient = rolling_moment_coefficient,
+        meshes_z_offset = motor_mesh_z_offset,
+        prop_ixx = prop_ixx,
+        prop_ixy = prop_ixy,
+        prop_ixz = prop_ixz,
+        prop_iyy = prop_iyy,
+        prop_iyz = prop_iyz,
+        prop_izz = prop_izz,
+        spawner_args = spawner_args)
+      }}
+    {%- endif -%}
+    {# <!--}--> #}
+
+    {# ArduPilot SITL backend plugin (emitted only with --use-ardupilot) {--> #}
+    {{ components.use_ardupilot_macro(
+      imu_name = 'base_link::imu_sensor',
+      channels = ap_channels,
+      servo_min = ap_servo_min,
+      servo_max = ap_servo_max,
+      p_gain = ap_p_gain,
+      cmd_max = ap_cmd_max,
+      cmd_min = ap_cmd_min,
+      fdm_addr = '127.0.0.1',
       spawner_args = spawner_args)
     }}
     {# <!--}--> #}

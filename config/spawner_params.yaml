@@ -13,7 +13,22 @@ mrs_drone_spawner:
       suffix: '.sdf.jinja'
 
     firmware_launch_delay: 10.0 # [s] after spawn, wait before launching px4 firmware
-    
+
+    # Configuration of the ArduPilot SITL backend, used when a robot is
+    # spawned with the '--use-ardupilot' keyword
+    ardupilot_config:
+      binary_path: '' # path to the arducopter SITL binary; resolved from $ARDUPILOT_HOME (or ~/ardupilot) if empty
+      defaults_file: '' # ArduPilot parameter defaults; <package>/config/ardupilot/mrs_copter_defaults.parm if empty
+      # Simulated world home "lat,lon,alt_amsl,heading_deg", has to match the
+      # world_origin expected by the MRS system (see tmux world_config.yaml)
+      home: '47.397743,8.545594,340,0'
+      stream_for_qgc: true
+      firmware_launch_delay: 10.0 # [s] after spawn, wait before launching the SITL firmware
+      # port bases, offset by 10*UAV_ID for each robot (ArduPilot multi-instance convention)
+      # NOTE: the MAVROS link uses the SITL's GCS TCP server (5760 + 10*UAV_ID)
+      fdm_base_port: 9002 # SITL JSON backend (servo packets -> ArduPilotPlugin)
+      qgc_base_port: 14560 # optional UDP GCS link for QGroundControl
+
     extra_resource_paths: []
 
     tf_static_publisher:

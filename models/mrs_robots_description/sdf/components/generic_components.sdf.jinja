@@ -576,6 +576,200 @@ limitations under the License.
 {%- endmacro -%}
 <!--}-->
 
+{# ardupilot_prop_macro {--> #}
+{# Propeller for the ArduPilot SITL backend.                                #}
+{# Driven by the ArduPilotPlugin VELOCITY force PID (no                     #}
+{# MrsMulticopterMotorModel!); aerodynamics come from two opposed per-blade #}
+{# LiftDrag plugins with the center of pressure at 2/3 of the blade radius. #}
+{#                                                                           #}
+{# LiftDrag gates force production on the local airflow direction: lift is  #}
+{# only produced when the blade sweep velocity has a positive component     #}
+{# along <forward>. CW propellers spin with a negative joint velocity, so   #}
+{# their <forward> has to point the other way than on CCW propellers        #}
+{# (mirror rule: forward = spin_sign * (joint_axis x cp), the same          #}
+{# convention as the reference iris_with_ardupilot model).                  #}
+{#                                                                           #}
+{# The small joint damping/friction settles the undriven propeller exactly   #}
+{# to zero at idle (prevents the discrete-time velocity-PID limit cycle    #}
+{# that destabilized the SITL attitude estimation at spawn), while staying  #}
+{# negligible w.r.t. the PID torque cap at flight speed (~2% at 400 rad/s). #}
+{# Increasing them starves the PID: the max reachable velocity roughly      #}
+{# degrades by the factor p_gain / (p_gain + damping).                      #}
+{%- macro ardupilot_prop_macro(direction, parent, mass, radius, motor_number, color, mesh_file_1, mesh_file_2, meshes_z_offset, mesh_scale, x, y, z, blade_area, ixx, ixy, ixz, iyy, iyz, izz) -%}
+  {%- set cp_distance = 2.0 / 3.0 * radius -%}
+  {%- if direction == 'cw' -%}
+    {%- set forward_blade_a = '0 -1 0' -%}
+    {%- set forward_blade_b = '0 1 0' -%}
+  {%- else -%}
+    {%- set forward_blade_a = '0 1 0' -%}
+    {%- set forward_blade_b = '0 -1 0' -%}
+  {%- endif -%}
+  <link name="prop_{{ motor_number }}_link">
+    <pose>{{ x }} {{ y }} {{ z }} 0 0 0</pose>
+    <inertial>
+      <mass>{{ mass }}</mass>
+      <inertia>
+        <ixx>{{ ixx }}</ixx>
+        <ixy>{{ ixy }}</ixy>
+        <ixz>{{ ixz }}</ixz>
+        <iyy>{{ iyy }}</iyy>
+        <iyz>{{ iyz }}</iyz>
+        <izz>{{ izz }}</izz>
+      </inertia>
+    </inertial>
+    {{ visual_mesh_textured_macro("prop_" ~ motor_number ~ "_first", mesh_file_1, mesh_scale, 0, 0, 0, 0, 0, 0) }}
+    {{ visual_mesh_macro("prop_" ~ motor_number ~ "_second", mesh_file_2, mesh_scale, color, 0, 0, meshes_z_offset, 0, 0, 0) }}
+    {{ collision_cylinder_macro(
+      name = "prop_" ~ motor_number ~ "_link",
+      collision_length = 2 * radius,
+      collision_radius = 0.01,
+      x = 0,
+      y = 0,
+      z = 0,
+      roll = 0,
+      pitch = math.radians(90),
+      yaw = 0)
+    }}
+  </link>
+  <!-- Aerodynamics of the two opposed propeller blades -->
+  <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+    <a0>0.3</a0>
+    <alpha_stall>1.4</alpha_stall>
+    <cla>4.2500</cla>
+    <cda>0.10</cda>
+    <cma>0.0</cma>
+    <cla_stall>-0.025</cla_stall>
+    <cda_stall>0.0</cda_stall>
+    <cma_stall>0.0</cma_stall>
+    <area>{{ blade_area }}</area>
+    <air_density>1.2041</air_density>
+    <cp>{{ cp_distance }} 0 0</cp>
+    <forward>{{ forward_blade_a }}</forward>
+    <upward>0 0 1</upward>
+    <link_name>prop_{{ motor_number }}_link</link_name>
+  </plugin>
+  <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+    <a0>0.3</a0>
+    <alpha_stall>1.4</alpha_stall>
+    <cla>4.2500</cla>
+    <cda>0.10</cda>
+    <cma>0.0</cma>
+    <cla_stall>-0.025</cla_stall>
+    <cda_stall>0.0</cda_stall>
+    <cma_stall>0.0</cma_stall>
+    <area>{{ blade_area }}</area>
+    <air_density>1.2041</air_density>
+    <cp>-{{ cp_distance }} 0 0</cp>
+    <forward>{{ forward_blade_b }}</forward>
+    <upward>0 0 1</upward>
+    <link_name>prop_{{ motor_number }}_link</link_name>
+  </plugin>
+  <!-- Allows applying external joint force, e.g. for manual rotor probes -->
+  <plugin filename="gz-sim-apply-joint-force-system" name="gz::sim::systems::ApplyJointForce">
+    <joint_name>prop_{{ motor_number }}_joint</joint_name>
+  </plugin>
+  <joint name="prop_{{ motor_number }}_joint" type="revolute">
+    <parent>{{ parent }}</parent>
+    <child>prop_{{ motor_number }}_link</child>
+    <axis>
+      <xyz>0 0 1</xyz>
+      <limit>
+        <lower>-1e+16</lower>
+        <upper>1e+16</upper>
+      </limit>
+      <dynamics>
+        <damping>0.002</damping>
+        <friction>0.001</friction>
+        <spring_reference>0</spring_reference>
+        <spring_stiffness>0</spring_stiffness>
+      </dynamics>
+    </axis>
+  </joint>
+{%- endmacro -%}
+{# <!--}--> #}
+
+{# ardupilot_control_channel_macro {--> #}
+{# One <channel> of the ArduPilotPlugin: maps pwm [servo_min, servo_max] to  #}
+{# the target velocity multiplier * (pwm - servo_min)/(servo_max-servo_min), #}
+{# tracked by a force PID with a torque cap of cmd_max. The p_gain together  #}
+{# with the physics step time and the propeller inertia forms a discrete     #}
+{# time control loop which has to satisfy p_gain * step_dt / Izz << 1,       #}
+{# otherwise the propeller oscillates at the Nyquist frequency (this broke   #}
+{# the idle attitude behavior with the iris p_gain at 200 Hz physics).       #}
+{%- macro ardupilot_control_channel_macro(channel, motor_number, multiplier, servo_min, servo_max, p_gain, cmd_max, cmd_min) -%}
+      <control channel="{{ channel }}">
+        <jointName>prop_{{ motor_number }}_joint</jointName>
+        <useForce>1</useForce>
+        <multiplier>{{ multiplier }}</multiplier>
+        <offset>0</offset>
+        <servo_min>{{ servo_min }}</servo_min>
+        <servo_max>{{ servo_max }}</servo_max>
+        <type>VELOCITY</type>
+        <p_gain>{{ p_gain }}</p_gain>
+        <i_gain>0</i_gain>
+        <d_gain>0</d_gain>
+        <i_max>0</i_max>
+        <i_min>0</i_min>
+        <cmd_max>{{ cmd_max }}</cmd_max>
+        <cmd_min>{{ cmd_min }}</cmd_min>
+        <controlVelocitySlowdownSim>1</controlVelocitySlowdownSim>
+      </control>
+{%- endmacro -%}
+{# <!--}--> #}
+
+{# ardupilot_plugin_macro {--> #}
+{# The ArduPilotPlugin SDF block: talks servo-packet JSON fdm with the SITL  #}
+{# instance over UDP fdm_port_in (9002 + 10*uav_id) and applies the motor    #}
+{# outputs to the propeller joints. Emits a JointStatePublisher used for     #}
+{# propeller velocity probing. Joint/sensor names are model-relative and     #}
+{# unscoped (resolved by JointByName/entitiesFromScopedName against the      #}
+{# model entity), which keeps them valid for the dynamically named MRS       #}
+{# models at every spawn.                                                    #}
+{%- macro ardupilot_plugin_macro(fdm_port_in, imu_name, channels, servo_min, servo_max, p_gain, cmd_max, cmd_min, fdm_addr) -%}
+    <plugin name="ArduPilotPlugin" filename="ArduPilotPlugin">
+
+      <!-- Port settings: fdm_port_in must match the SITL JSON backend servo
+           destination (9002 + 10*instance, injected by the drone spawner) -->
+      <fdm_addr>{{ fdm_addr }}</fdm_addr>
+      <fdm_port_in>{{ fdm_port_in }}</fdm_port_in>
+      <connectionTimeoutMaxCount>5</connectionTimeoutMaxCount>
+      <!-- lock_step 0: the plugin answers the JSON state at its own rate,
+           more robust during the SITL/Gazebo startup race than lock_step 1 -->
+      <lock_step>0</lock_step>
+      <no_time_sync>1</no_time_sync>
+      <have_32_channels>0</have_32_channels>
+
+      <!-- Frame transformations required by ArduPilot: model and gazebo from
+           XYZ to XY-Z (NED) coordinates -->
+      <modelXYZToAirplaneXForwardZDown degrees="true">0 0 0 180 0 0</modelXYZToAirplaneXForwardZDown>
+      <gazeboXYZToNED degrees="true">0 0 0 180 0 90</gazeboXYZToNED>
+
+      <!-- Sensors: model-relative scoped sensor name -->
+      <imuName>{{ imu_name }}</imuName>
+
+      <!-- Motor control channels: the channel index is the MAVLink servo index,
+           ArduCopter Quad X maps 1:1 onto the MRS x500 propeller order -->
+      {%- for ch in channels %}
+      {{ ardupilot_control_channel_macro(
+        channel = ch.channel,
+        motor_number = ch.motor_number,
+        multiplier = ch.multiplier,
+        servo_min = servo_min,
+        servo_max = servo_max,
+        p_gain = p_gain,
+        cmd_max = cmd_max,
+        cmd_min = cmd_min)
+      }}
+      {%- endfor %}
+
+    </plugin>
+
+    <!-- Joint states of the propellers, used for rotor velocity probing -->
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+    </plugin>
+{%- endmacro -%}
+<!--}-->
+
 {# ========================== gazebo plugins ========================= #}
 
 {# gps_sensor_macro {--> #}

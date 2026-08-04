@@ -10,6 +10,17 @@ class Px4MavlinkConfig:
     firmware_launch_delay: float = 0.0
 
 
+@dataclass
+class ArduPilotSitlConfig:
+    binary_path: str = ''
+    defaults_file: str = ''
+    home: str = ''
+    stream_for_qgc: int = 0
+    firmware_launch_delay: float = 0.0
+    fdm_base_port: int = 9002
+    qgc_base_port: int = 14560
+
+
 class GazeboSensors(StrEnum):
     CAMERA = "camera"
     LIDAR = "gpu_lidar"

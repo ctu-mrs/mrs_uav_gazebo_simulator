@@ -15,11 +15,12 @@ import tempfile
 from ament_index_python.packages import get_package_share_directory
 from ros_gz_interfaces.srv import SpawnEntity, DeleteEntity
 
-from mrs_uav_gazebo_simulator.utils.spawner_types import Px4MavlinkConfig
+from mrs_uav_gazebo_simulator.utils.spawner_types import Px4MavlinkConfig, ArduPilotSitlConfig
 from mrs_uav_gazebo_simulator.utils.spawner_exceptions import *
 from mrs_uav_gazebo_simulator.core.jinja_template_manager import JinjaTemplateManager
 from mrs_uav_gazebo_simulator.core.ros_gz_bridge_manager import RosGzBridgeManager
 from mrs_uav_gazebo_simulator.core.px4_mavlink_manager import Px4MavlinkManager
+from mrs_uav_gazebo_simulator.core.ardupilot_sitl_manager import ArduPilotSitlManager
 from mrs_uav_gazebo_simulator.core.user_input_manager import UserInputManager
 from mrs_uav_gazebo_simulator.core.sdf_to_tf_publisher import SdfTfPublisherSingleton
 from mrs_msgs.srv import String as StringSrv
@@ -85,6 +86,10 @@ class MrsDroneSpawner(Node):
                                                       gazebo_simulator_path=gazebo_simulator_path,
                                                       px4_mavlink_config=self._px4_mavlink_config,
                                                       jinja_templates=self._jinja_templates)
+        self._ardupilot_sitl_manager = ArduPilotSitlManager(ros_node=self,
+                                                            gazebo_simulator_path=gazebo_simulator_path,
+                                                            ardupilot_config=self._ardupilot_sitl_config,
+                                                            jinja_templates=self._jinja_templates)
 
         self._user_input_manager = UserInputManager(ros_node=self,
                                                     jinja_templates=self._jinja_templates,
@@ -131,6 +136,14 @@ class MrsDroneSpawner(Node):
 
         self.declare_parameter('firmware_launch_delay', 0.0)
 
+        self.declare_parameter('ardupilot_config.binary_path', '')
+        self.declare_parameter('ardupilot_config.defaults_file', '')
+        self.declare_parameter('ardupilot_config.home', '47.397743,8.545594,340,0')
+        self.declare_parameter('ardupilot_config.stream_for_qgc', True)
+        self.declare_parameter('ardupilot_config.firmware_launch_delay', 0.0)
+        self.declare_parameter('ardupilot_config.fdm_base_port', 9002)
+        self.declare_parameter('ardupilot_config.qgc_base_port', 14560)
+
         self.declare_parameter('extra_resource_paths', [""])
 
         self.declare_parameter('tf_static_publisher.base_frame', "fcu")
@@ -143,6 +156,17 @@ class MrsDroneSpawner(Node):
             self._px4_mavlink_config.vehicle_base_port = self.get_parameter('mavlink_config.vehicle_base_port').value
             self._px4_mavlink_config.stream_for_qgc = int(self.get_parameter('mavlink_config.stream_for_qgc').value)
             self._px4_mavlink_config.firmware_launch_delay = float(self.get_parameter('firmware_launch_delay').value)
+
+            self._ardupilot_sitl_config = ArduPilotSitlConfig()
+            self._ardupilot_sitl_config.binary_path = self.get_parameter('ardupilot_config.binary_path').value
+            self._ardupilot_sitl_config.defaults_file = self.get_parameter('ardupilot_config.defaults_file').value
+            self._ardupilot_sitl_config.home = self.get_parameter('ardupilot_config.home').value
+            self._ardupilot_sitl_config.stream_for_qgc = int(
+                self.get_parameter('ardupilot_config.stream_for_qgc').value)
+            self._ardupilot_sitl_config.firmware_launch_delay = float(
+                self.get_parameter('ardupilot_config.firmware_launch_delay').value)
+            self._ardupilot_sitl_config.fdm_base_port = self.get_parameter('ardupilot_config.fdm_base_port').value
+            self._ardupilot_sitl_config.qgc_base_port = self.get_parameter('ardupilot_config.qgc_base_port').value
 
             self._default_robot_name = self.get_parameter('gazebo_models.default_robot_name').value
             self._model_spacing = self.get_parameter('gazebo_models.spacing').value
@@ -247,8 +271,12 @@ class MrsDroneSpawner(Node):
                 if ros_gz_bridge_config != "":
                     ros_gz_bridge_process = self._ros_gz_manager.launch_uav_ros_gz_bridge(
                         robot_params['name'], ros_gz_bridge_config, sensor_topics)
-                mavros_process = self._px4_mavlink_manager.launch_mavros(robot_params)
-                firmware_process = self._px4_mavlink_manager.launch_px4_firmware(robot_params)
+                if robot_params['firmware'] == 'ardupilot':
+                    mavros_process = self._ardupilot_sitl_manager.launch_mavros(robot_params)
+                    firmware_process = self._ardupilot_sitl_manager.launch_sitl(robot_params)
+                else:
+                    mavros_process = self._px4_mavlink_manager.launch_mavros(robot_params)
+                    firmware_process = self._px4_mavlink_manager.launch_px4_firmware(robot_params)
 
             except Exception as e:
                 self.get_logger().error(f'Failed during spawn sequence for {robot_params["name"]}: {e}')
@@ -421,6 +449,13 @@ class MrsDroneSpawner(Node):
         del robot_params['spawn_poses']
 
         robot_params['mavlink_config'] = self._px4_mavlink_manager.get_mavlink_config_for_robot(ID)
+
+        # select the firmware backend for this robot
+        if ArduPilotSitlManager.SPAWNER_KEYWORD in params_dict:
+            robot_params['firmware'] = 'ardupilot'
+            robot_params['ardupilot_config'] = self._ardupilot_sitl_manager.get_ardupilot_config_for_robot(ID)
+        else:
+            robot_params['firmware'] = 'px4'
 
         return robot_params
 

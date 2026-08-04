@@ -23,6 +23,8 @@
   <depend>mrs_msgs</depend>
   <depend>mrs_uav_px4_api</depend>
   <depend>mrs_gazebo_common_resources</depend>
+  <exec_depend>ardupilot_gazebo</exec_depend>
+  <exec_depend>mrs_uav_ardupilot_api</exec_depend>
   
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
