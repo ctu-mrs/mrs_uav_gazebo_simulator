@@ -63,9 +63,8 @@ JOINT_DAMPING = 0.002            # N*m s/rad
 JOINT_FRICTION = 0.001           # N*m
 PROP_RADIUS = 0.1751
 CP = 2.0 / 3.0 * PROP_RADIUS     # center of pressure of one blade
-BLADE_AREA = 0.00175
-CL = 4.25 * 0.3                  # cla * a0, hover alpha regime
-RHO = 1.2041
+FORCE_CONSTANT = 0.000042        # N/(rad/s)^2 per rotor (ArduPilotPropeller plugin)
+MOMENT_CONSTANT = 0.06           # N*m/N reaction torque
 DRONE_MASS = 1.94 + 4 * 0.016076923076923075
 GRAV = 9.81
 FDM_PORT = 9002          # fdm_port_in of uav1 (9002 + 10*ID)
@@ -82,7 +81,9 @@ def expected_omega(pwm):
 
 
 def expected_total_lift(omega):
-    return 4 * 2 * CL * 0.5 * RHO * (omega * CP)**2 * BLADE_AREA
+    # parametric rotor model of the ArduPilotPropeller plugin:
+    # force = force_constant * omega^2 per rotor, 4 rotors
+    return 4 * FORCE_CONSTANT * omega**2
 
 
 # -----------------------------------------------------------------------------
@@ -302,8 +303,8 @@ def main():
         check(abs(m['yaw_rate']) < 0.05, 'idle: yaw rate ~0', m['yaw_rate'])
         check(9.4 < m['az'] < 10.2, 'idle: IMU az ~ +9.81 m/s^2', m['az'])
 
-        # --- phase 2: symmetric mid-throttle --------------------------------
-        pwm_mid = 1500
+        # --- phase 2: symmetric, firmly below hover --------------------------
+        pwm_mid = 1300
         print(f'Phase 2: symmetric mid-throttle (pwm = {pwm_mid} on all channels)')
         driver.set_all(pwm_mid)
         time.sleep(4)
@@ -322,23 +323,26 @@ def main():
         spread = max(abs(o) for o in om) / min(abs(o) for o in om)
         check(spread < 1.08, 'symmetric: all |omega| equal +/-8% (no CW/CCW asymmetry)',
               f'ratio {spread:.3f}')
-        az_drop = 9.81 - m['az']
-        lift_meas = az_drop * DRONE_MASS
+        # NOTE: lift MAGNITUDE cannot be inferred from az while on the ground
+        # (contact masks sub-hover thrust). At pwm 1300 the theory total is
+        # well below weight, so the vehicle must stay planted; force/torque
+        # magnitude & CW/CCW equality are measured on the rail harness:
+        # check_force_symmetry.py; the airborne force check is phase 4 here.
         lift_theory = expected_total_lift(w_expected)
-        measurements['symmetric']['lift_measured'] = lift_meas
-        measurements['symmetric']['lift_theory'] = lift_theory
-        check(abs(lift_meas - lift_theory) / lift_theory < 0.25,
-              'symmetric: measured lift matches LiftDrag theory +/-25% (force direction UP)',
-              f'{lift_meas:.1f} N vs theory {lift_theory:.1f} N')
-        check(m['az'] > 0.7, 'symmetric: vehicle produces less than hover thrust at pwm 1500 '
-              '(stays on the ground)', m['az'])
+        measurements['symmetric']['total_lift_theory'] = lift_theory
+        weight = DRONE_MASS * 9.81
+        check(lift_theory < weight,
+              f'symmetric: theory well below hover at pwm {pwm_mid} '
+              f'({lift_theory:.1f} N vs weight {weight:.1f} N)', round(lift_theory, 1))
+        check(9.55 < m['az'] < 10.05, 'symmetric: vehicle stays on the ground '
+              '(az ~ 9.81, no premature liftoff)', m['az'])
         check(abs(m['yaw_rate']) < 0.08, 'symmetric: yaw rate ~0 (reaction torques cancel)',
               m['yaw_rate'])
 
-        # --- phase 3: single-rotor equality ---------------------------------
-        pwm_one = 1400
-        print(f'Phase 3: per-rotor equality (one channel at {pwm_one}, rest at {SERVO_MIN})')
-        drops = []
+        # --- phase 3: single-rotor omega equality ---------------------------
+        pwm_one = 1300
+        print(f'Phase 3: per-rotor velocity equality (one channel at {pwm_one}, rest at {SERVO_MIN})')
+        omegas = []
         for k in range(4):
             driver.set_all(SERVO_MIN)
             time.sleep(1.5)
@@ -346,29 +350,41 @@ def main():
             time.sleep(2.5)
             m = measure(1.5, env)
             o = m['omega'].get(f'prop_{k}_joint', 0.0)
-            drop = 9.81 - m['az']
-            drops.append(drop)
-            measurements[f'single_prop_{k}'] = {'omega': o, 'az_drop': drop}
-            info(f'prop_{k}: omega {o:.0f} rad/s, az drop {drop:.2f} m/s^2')
+            omegas.append(o)
+            measurements[f'single_prop_{k}'] = {'omega': o}
+            info(f'prop_{k}: omega {o:.2f} rad/s (expected sign {"+" if k < 2 else "-"})')
             driver.set_pwm(k, SERVO_MIN)
 
-        mean_drop = sum(drops) / 4
-        check(all(d > 0.4 * mean_drop for d in drops),
-              'single-rotor: every propeller produces UPWARD lift (az drop positive)', drops)
-        check(all(abs(d - mean_drop) < 0.18 * mean_drop for d in drops),
-              'single-rotor: all four propellers produce equal lift +/-18% '
-              '(CW and CCW aerodynamics are truly mirroring)', drops)
+        expected_signs = [1, 1, -1, -1]
+        for k, o in enumerate(omegas):
+            check(expected_signs[k] * o > 0,
+                  f'single-rotor: prop_{k} spins the correct direction', round(o, 1))
+        mags = [abs(o) for o in omegas]
+        m_mean = sum(mags) / 4
+        check(all(abs(m_ - m_mean) / m_mean < 0.12 for m_ in mags),
+              'single-rotor: all propellers track the same |omega| +/-12%',
+              [round(x, 1) for x in mags])
 
-        # --- phase 4: saturated pwm lifts the vehicle -----------------------
-        pwm_max = 1700
-        print(f'Phase 4: high throttle (pwm = {pwm_max}), expecting liftoff')
+        # --- phase 4: liftoff + airborne force verification ------------------
+        pwm_max = 1600
+        print(f'Phase 4: liftoff (pwm = {pwm_max}), verifying thrust against theory')
         driver.set_all(pwm_max)
-        time.sleep(1.2)
-        m = measure(0.8, env)
+        time.sleep(1.5)
+        m = measure(1.0, env)
         measurements['saturated'] = m
-        info(f"omegas: {m['omega']}, az: {m['az']}")
-        check(m['az'] > 12.0, 'saturated: net upward acceleration (IMU reads az >> 9.81 '
-              'while climbing, i.e. thrust exceeds weight)', m['az'])
+        w_sat = sum(abs(m['omega'][f'prop_{k}_joint']) for k in range(4)) / 4
+        lift_sat = 4 * FORCE_CONSTANT * w_sat**2
+        weight = DRONE_MASS * 9.81
+        # airborne, level: proper acceleration az = lift/mass exactly
+        az_expected = lift_sat / DRONE_MASS
+        info(f"omegas: {m['omega']}, az: {m['az']:.2f} "
+             f"(expect ~{az_expected:.1f} = lift {lift_sat:.1f} N / {DRONE_MASS:.2f} kg)")
+        check(lift_sat > 1.3 * weight,
+              f'saturated: theory thrust {lift_sat:.0f} N well above weight', round(lift_sat, 1))
+        check(abs(m['az'] - az_expected) / az_expected < 0.25,
+              'saturated: airborne acceleration matches parametric thrust curve '
+              f'(az measured {m["az"]:.2f} vs theory {az_expected:.1f})', )
+        driver.set_all(SERVO_MIN)
         driver.set_all(SERVO_MIN)
         time.sleep(1)
 
