@@ -14,6 +14,16 @@ cd "$(dirname "$(readlink -f "$0")")"
 : > setpoint_attitude.log
 : > uav_state_probe.log
 
+: > status_capture.log
+# snapshot the mrs status pane every 0.4 s (heading/position display) for
+# the whole experiment - catches estimator hdg/attitude jumps raw
+( while true; do
+    echo "=== $(date +%T.%2N) ===" >> status_capture.log
+    tmux -L mrs capture-pane -p -t simulation:4.0 >> status_capture.log 2>/dev/null
+    sleep 0.4
+  done ) &
+CAP_PID=$!
+
 pkill -f takeoff_watch.py 2>/dev/null; sleep 0.5
 
 ( python3 takeoff_watch.py 75 &>/dev/null ) &
@@ -43,5 +53,5 @@ for i in $(seq 1 8); do
     mrs_msgs/msg/UavState --field header.stamp >> /dev/null 2>&1
 done
 
-kill $WATCH_PID $CMD_PID $SP_PID 2>/dev/null
+kill $CAP_PID $WATCH_PID $CMD_PID $SP_PID 2>/dev/null
 echo "=== experiment done; logs: takeoff_watch.log attitude_cmd.log setpoint_attitude.log uav_state_probe.log ==="
