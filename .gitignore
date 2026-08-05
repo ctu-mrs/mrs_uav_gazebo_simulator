@@ -34,3 +34,5 @@ env/
 # ========================
 .DS_Store
 Thumbs.db
+tests/ardupilot_sitl/.run/
+tests/ardupilot_sitl/last_rendered_x500_ardupilot.sdf

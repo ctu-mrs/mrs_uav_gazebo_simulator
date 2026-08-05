@@ -5,6 +5,25 @@ motor_params:
   a: 0.209415
   b: -0.023573
 
+model_params:
+
+  arm_length: 0.25 # [m]
+  body_height: 0.1 # [m]
+
+  propulsion:
+
+    # force [N] = force_constant * rpm^2
+    force_constant: 0.000042
+
+    # torque [Nm] = torque_constant * force [N]
+    torque_constant: 0.06
+
+    prop_radius: 0.15 # [m]
+
+    rpm:
+      min: 0 # [revolutions/minute]
+      max: 780 # [revolutions/minute]
+
 mrs_uav_managers:
 
   constraint_manager:
