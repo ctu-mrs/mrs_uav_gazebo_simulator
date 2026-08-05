@@ -102,12 +102,15 @@ def main():
         conn.mav.command_long_send(conn.target_system, conn.target_component,
                                    mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, 0,
                                    33, 200000, 0, 0, 0, 0, 0)   # GLOBAL_POSITION_INT 5 Hz
+        conn.mav.command_long_send(conn.target_system, conn.target_component,
+                                   mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, 0,
+                                   30, 100000, 0, 0, 0, 0, 0)   # ATTITUDE 10 Hz
         time.sleep(1)
 
         def pump(seconds, thrust=None, collect=False):
             t0 = time.time()
             last_cmd = 0
-            pwms, alts = [], []
+            pwms, alts, atts = [], [], []
             while time.time() - t0 < seconds:
                 now = time.time()
                 if now - last_cmd > 0.05:
@@ -115,7 +118,7 @@ def main():
                     if thrust is not None:
                         conn.mav.set_attitude_target_send(
                             0, conn.target_system, conn.target_component, 0,
-                            [1.0, 0.0, 0.0, 0.0], 0.0, 0.0, 0.0, thrust)
+                            att_target_quat, 0.0, 0.0, 0.0, thrust)
                     last_cmd = now
                 msg = conn.recv_match(blocking=False, timeout=0.02)
                 if msg is None:
@@ -125,14 +128,29 @@ def main():
                     pwms.append([msg.servo1_raw, msg.servo2_raw, msg.servo3_raw, msg.servo4_raw])
                 elif t == 'GLOBAL_POSITION_INT':
                     alts.append(msg.relative_alt / 1000.0)
+                elif t == 'ATTITUDE':
+                    atts.append((msg.roll, msg.pitch, msg.yaw, msg.yawspeed))
                 elif t == 'STATUSTEXT':
                     print(f'    [fcu] {msg.text}')
             mean_pwm = [sum(c) / len(c) for c in zip(*pwms)] if pwms else [0, 0, 0, 0]
-            return mean_pwm, (alts[-1] if alts else 0.0)
+            att = tuple(sum(x) / len(x) for x in zip(*atts)) if atts else (0, 0, 0, 0)
+            return mean_pwm, (alts[-1] if alts else 0.0), att
 
         # wait for EKF origin / GPS before arming (GUIDED needs it)
         print('  [info] waiting for position estimation (EKF origin)')
         pump(6)
+
+        # capture the current EKF heading: the MRS spawn (gz yaw 0, x-forward)
+        # is heading EAST in the NED frame (EKF yaw ~ pi/2). An identity-
+        # quaternion attitude target would command a 90 deg yaw maneuver and
+        # the yaw controller then allocates huge CW/CCW pwm splits - that was
+        # the "CW/CCW imbalance" mystery, not a motor problem. Hold the
+        # spawned heading instead.
+        _, _, att0 = pump(2)
+        hold_yaw = att0[2]
+        import math
+        att_target_quat = [math.cos(hold_yaw / 2), 0.0, 0.0, math.sin(hold_yaw / 2)]
+        print(f'  [info] holding spawned heading (EKF yaw {hold_yaw:.2f} rad)')
         conn.mav.command_long_send(conn.target_system, conn.target_component,
                                    mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0, 1, 4, 0, 0, 0, 0, 0)
         pump(1)
@@ -159,13 +177,18 @@ def main():
 
         liftoff_thrust = None
         for thrust in steps:
-            mean_pwm, alt = pump(2.2, thrust=thrust, collect=True)
+            mean_pwm, alt, att = pump(2.2, thrust=thrust, collect=True)
             om = phys.measure(1.0, env)
             row = {'thrust': thrust, 'pwm': [round(p, 1) for p in mean_pwm],
-                   'alt': round(alt, 2), 'omega': {k: round(v, 1) for k, v in om['omega'].items()}}
+                   'alt': round(alt, 2), 'omega': {k: round(v, 1) for k, v in om['omega'].items()},
+                   'sitl_att': {'roll': round(att[0], 3), 'pitch': round(att[1], 3),
+                                'yaw': round(att[2], 3), 'yawspeed': round(att[3], 4)},
+                   'gz_yaw_rate': om['yaw_rate']}
             records.append(row)
             print(f"  thrust={thrust:.2f} pwm={[round(p) for p in mean_pwm]} "
-                  f"alt={alt:.2f} om={[round(v) for v in om['omega'].values()]}")
+                  f"alt={alt:.2f} om={[round(v) for v in om['omega'].values()]} "
+                  f"sitl(roll={att[0]:.2f},pitch={att[1]:.2f},yaw={att[2]:.2f},yawrate={att[3]:.3f}) "
+                  f"gz_yawrate={om['yaw_rate']}")
             airborne = alt > 0.25
             if airborne and liftoff_thrust is None:
                 liftoff_thrust = thrust
