@@ -9,6 +9,10 @@
 # Run from a session pane: bash ./armed_takeoff_experiment.sh
 cd "$(dirname "$(readlink -f "$0")")"
 
+: > takeoff_watch.log
+: > attitude_cmd.log
+: > uav_state_probe.log
+
 pkill -f takeoff_watch.py 2>/dev/null; sleep 0.5
 
 ( python3 takeoff_watch.py 75 &>/dev/null ) &
