@@ -20,6 +20,9 @@
   
   
   
+  
+  
+  
 
   
   
@@ -891,13 +894,42 @@
     </surface>
   </collision>
   </link>
-  <!-- Parametric propeller thrust + reaction torque (MRS-consistent) -->
-  <plugin filename="ArduPilotPropeller" name="ArduPilotPropeller">
-    <jointName>prop_0_joint</jointName>
-    <linkName>prop_0_link</linkName>
-    <turningDirection>ccw</turningDirection>
-    <force_constant>4.2e-05</force_constant>
-    <moment_constant>0.06</moment_constant>
+  <!-- Aerodynamics of the two opposed propeller blades -->
+  <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+    <a0>0.3</a0>
+    <alpha_stall>1.4</alpha_stall>
+    <cla>4.2500</cla>
+    <cda>0.10</cda>
+    <cma>0.0</cma>
+    <cla_stall>-0.025</cla_stall>
+    <cda_stall>0.0</cda_stall>
+    <cma_stall>0.0</cma_stall>
+    <area>0.002</area>
+    <air_density>1.2041</air_density>
+    <cp>0.11673333333333333 0 0</cp>
+    <forward>0 1 0</forward>
+    <upward>0 0 1</upward>
+    <link_name>prop_0_link</link_name>
+  </plugin>
+  <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+    <a0>0.3</a0>
+    <alpha_stall>1.4</alpha_stall>
+    <cla>4.2500</cla>
+    <cda>0.10</cda>
+    <cma>0.0</cma>
+    <cla_stall>-0.025</cla_stall>
+    <cda_stall>0.0</cda_stall>
+    <cma_stall>0.0</cma_stall>
+    <area>0.002</area>
+    <air_density>1.2041</air_density>
+    <cp>-0.11673333333333333 0 0</cp>
+    <forward>0 -1 0</forward>
+    <upward>0 0 1</upward>
+    <link_name>prop_0_link</link_name>
+  </plugin>
+  <!-- Allows applying external joint force, e.g. for manual rotor probes -->
+  <plugin filename="gz-sim-apply-joint-force-system" name="gz::sim::systems::ApplyJointForce">
+    <joint_name>prop_0_joint</joint_name>
   </plugin>
   <joint name="prop_0_joint" type="revolute">
     <parent>base_link</parent>
@@ -975,13 +1007,42 @@
     </surface>
   </collision>
   </link>
-  <!-- Parametric propeller thrust + reaction torque (MRS-consistent) -->
-  <plugin filename="ArduPilotPropeller" name="ArduPilotPropeller">
-    <jointName>prop_1_joint</jointName>
-    <linkName>prop_1_link</linkName>
-    <turningDirection>ccw</turningDirection>
-    <force_constant>4.2e-05</force_constant>
-    <moment_constant>0.06</moment_constant>
+  <!-- Aerodynamics of the two opposed propeller blades -->
+  <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+    <a0>0.3</a0>
+    <alpha_stall>1.4</alpha_stall>
+    <cla>4.2500</cla>
+    <cda>0.10</cda>
+    <cma>0.0</cma>
+    <cla_stall>-0.025</cla_stall>
+    <cda_stall>0.0</cda_stall>
+    <cma_stall>0.0</cma_stall>
+    <area>0.002</area>
+    <air_density>1.2041</air_density>
+    <cp>0.11673333333333333 0 0</cp>
+    <forward>0 1 0</forward>
+    <upward>0 0 1</upward>
+    <link_name>prop_1_link</link_name>
+  </plugin>
+  <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+    <a0>0.3</a0>
+    <alpha_stall>1.4</alpha_stall>
+    <cla>4.2500</cla>
+    <cda>0.10</cda>
+    <cma>0.0</cma>
+    <cla_stall>-0.025</cla_stall>
+    <cda_stall>0.0</cda_stall>
+    <cma_stall>0.0</cma_stall>
+    <area>0.002</area>
+    <air_density>1.2041</air_density>
+    <cp>-0.11673333333333333 0 0</cp>
+    <forward>0 -1 0</forward>
+    <upward>0 0 1</upward>
+    <link_name>prop_1_link</link_name>
+  </plugin>
+  <!-- Allows applying external joint force, e.g. for manual rotor probes -->
+  <plugin filename="gz-sim-apply-joint-force-system" name="gz::sim::systems::ApplyJointForce">
+    <joint_name>prop_1_joint</joint_name>
   </plugin>
   <joint name="prop_1_joint" type="revolute">
     <parent>base_link</parent>
@@ -1059,13 +1120,42 @@
     </surface>
   </collision>
   </link>
-  <!-- Parametric propeller thrust + reaction torque (MRS-consistent) -->
-  <plugin filename="ArduPilotPropeller" name="ArduPilotPropeller">
-    <jointName>prop_2_joint</jointName>
-    <linkName>prop_2_link</linkName>
-    <turningDirection>cw</turningDirection>
-    <force_constant>4.2e-05</force_constant>
-    <moment_constant>0.06</moment_constant>
+  <!-- Aerodynamics of the two opposed propeller blades -->
+  <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+    <a0>0.3</a0>
+    <alpha_stall>1.4</alpha_stall>
+    <cla>4.2500</cla>
+    <cda>0.10</cda>
+    <cma>0.0</cma>
+    <cla_stall>-0.025</cla_stall>
+    <cda_stall>0.0</cda_stall>
+    <cma_stall>0.0</cma_stall>
+    <area>0.002</area>
+    <air_density>1.2041</air_density>
+    <cp>0.11673333333333333 0 0</cp>
+    <forward>0 -1 0</forward>
+    <upward>0 0 1</upward>
+    <link_name>prop_2_link</link_name>
+  </plugin>
+  <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+    <a0>0.3</a0>
+    <alpha_stall>1.4</alpha_stall>
+    <cla>4.2500</cla>
+    <cda>0.10</cda>
+    <cma>0.0</cma>
+    <cla_stall>-0.025</cla_stall>
+    <cda_stall>0.0</cda_stall>
+    <cma_stall>0.0</cma_stall>
+    <area>0.002</area>
+    <air_density>1.2041</air_density>
+    <cp>-0.11673333333333333 0 0</cp>
+    <forward>0 1 0</forward>
+    <upward>0 0 1</upward>
+    <link_name>prop_2_link</link_name>
+  </plugin>
+  <!-- Allows applying external joint force, e.g. for manual rotor probes -->
+  <plugin filename="gz-sim-apply-joint-force-system" name="gz::sim::systems::ApplyJointForce">
+    <joint_name>prop_2_joint</joint_name>
   </plugin>
   <joint name="prop_2_joint" type="revolute">
     <parent>base_link</parent>
@@ -1143,13 +1233,42 @@
     </surface>
   </collision>
   </link>
-  <!-- Parametric propeller thrust + reaction torque (MRS-consistent) -->
-  <plugin filename="ArduPilotPropeller" name="ArduPilotPropeller">
-    <jointName>prop_3_joint</jointName>
-    <linkName>prop_3_link</linkName>
-    <turningDirection>cw</turningDirection>
-    <force_constant>4.2e-05</force_constant>
-    <moment_constant>0.06</moment_constant>
+  <!-- Aerodynamics of the two opposed propeller blades -->
+  <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+    <a0>0.3</a0>
+    <alpha_stall>1.4</alpha_stall>
+    <cla>4.2500</cla>
+    <cda>0.10</cda>
+    <cma>0.0</cma>
+    <cla_stall>-0.025</cla_stall>
+    <cda_stall>0.0</cda_stall>
+    <cma_stall>0.0</cma_stall>
+    <area>0.002</area>
+    <air_density>1.2041</air_density>
+    <cp>0.11673333333333333 0 0</cp>
+    <forward>0 -1 0</forward>
+    <upward>0 0 1</upward>
+    <link_name>prop_3_link</link_name>
+  </plugin>
+  <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
+    <a0>0.3</a0>
+    <alpha_stall>1.4</alpha_stall>
+    <cla>4.2500</cla>
+    <cda>0.10</cda>
+    <cma>0.0</cma>
+    <cla_stall>-0.025</cla_stall>
+    <cda_stall>0.0</cda_stall>
+    <cma_stall>0.0</cma_stall>
+    <area>0.002</area>
+    <air_density>1.2041</air_density>
+    <cp>-0.11673333333333333 0 0</cp>
+    <forward>0 1 0</forward>
+    <upward>0 0 1</upward>
+    <link_name>prop_3_link</link_name>
+  </plugin>
+  <!-- Allows applying external joint force, e.g. for manual rotor probes -->
+  <plugin filename="gz-sim-apply-joint-force-system" name="gz::sim::systems::ApplyJointForce">
+    <joint_name>prop_3_joint</joint_name>
   </plugin>
   <joint name="prop_3_joint" type="revolute">
     <parent>base_link</parent>

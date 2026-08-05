@@ -161,7 +161,7 @@ limitations under the License.
 {# <!--}--> #}
 
 {# ardupilot_propellers_macro {--> #}
-{%- macro ardupilot_propellers_macro(prop_list, parent, mass, radius, blade_area, meshes_z_offset, prop_ixx, prop_ixy, prop_ixz, prop_iyy, prop_iyz, prop_izz, spawner_args) -%}
+{%- macro ardupilot_propellers_macro(prop_list, parent, mass, radius, force_constant, moment_constant, meshes_z_offset, prop_ixx, prop_ixy, prop_ixz, prop_iyy, prop_iyz, prop_izz, spawner_args) -%}
 
   <!-- Propellers (ArduPilot backend) {-->
   {%- for prop_params in prop_list -%}
@@ -181,7 +181,8 @@ limitations under the License.
         x = prop_params['x'],
         y = prop_params['y'],
         z = prop_params['z'],
-        blade_area = blade_area,
+        force_constant = force_constant,
+        moment_constant = moment_constant,
         ixx = prop_ixx,
         ixy = prop_ixy,
         ixz = prop_ixz,

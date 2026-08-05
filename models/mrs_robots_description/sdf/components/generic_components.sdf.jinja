@@ -579,31 +579,23 @@ limitations under the License.
 {# ardupilot_prop_macro {--> #}
 {# Propeller for the ArduPilot SITL backend.                                #}
 {# Driven by the ArduPilotPlugin VELOCITY force PID (no                     #}
-{# MrsMulticopterMotorModel!); aerodynamics come from two opposed per-blade #}
-{# LiftDrag plugins with the center of pressure at 2/3 of the blade radius. #}
+{# MrsMulticopterMotorModel!). Thrust and reaction torque come from the     #}
+{# parametric ArduPilotPropeller system (in ardupilot_gazebo):              #}
 {#                                                                           #}
-{# LiftDrag gates force production on the local airflow direction: lift is  #}
-{# only produced when the blade sweep velocity has a positive component     #}
-{# along <forward>. CW propellers spin with a negative joint velocity, so   #}
-{# their <forward> has to point the other way than on CCW propellers        #}
-{# (mirror rule: forward = spin_sign * (joint_axis x cp), the same          #}
-{# convention as the reference iris_with_ardupilot model).                  #}
+{#   F_z                     = force_constant * omega^2                      #}
+{#   tau_z(parent link)      = -spin_sign * moment_constant * F_z            #}
+{#                                                                           #}
+{# (Deterministic, physics-rate independent - unlike the gz LiftDrag        #}
+{# plugins used by the iris reference, which deliver only a few percent of  #}
+{# blade thrust at the 200 Hz physics rate of the MRS worlds because the    #}
+{# blade sweep velocity is under-sampled there; verified with the rail      #}
+{# force test in tests/ardupilot_sitl/check_force_symmetry.py.)             #}
 {#                                                                           #}
 {# The small joint damping/friction settles the undriven propeller exactly   #}
-{# to zero at idle (prevents the discrete-time velocity-PID limit cycle    #}
-{# that destabilized the SITL attitude estimation at spawn), while staying  #}
-{# negligible w.r.t. the PID torque cap at flight speed (~2% at 400 rad/s). #}
-{# Increasing them starves the PID: the max reachable velocity roughly      #}
-{# degrades by the factor p_gain / (p_gain + damping).                      #}
-{%- macro ardupilot_prop_macro(direction, parent, mass, radius, motor_number, color, mesh_file_1, mesh_file_2, meshes_z_offset, mesh_scale, x, y, z, blade_area, ixx, ixy, ixz, iyy, iyz, izz) -%}
-  {%- set cp_distance = 2.0 / 3.0 * radius -%}
-  {%- if direction == 'cw' -%}
-    {%- set forward_blade_a = '0 -1 0' -%}
-    {%- set forward_blade_b = '0 1 0' -%}
-  {%- else -%}
-    {%- set forward_blade_a = '0 1 0' -%}
-    {%- set forward_blade_b = '0 -1 0' -%}
-  {%- endif -%}
+{# to zero at idle, while staying negligible w.r.t. the PID torque cap at   #}
+{# flight speed. Keep them small: the max reachable velocity degrades by    #}
+{# roughly p_gain / (p_gain + damping).                                     #}
+{%- macro ardupilot_prop_macro(direction, parent, mass, radius, motor_number, color, mesh_file_1, mesh_file_2, meshes_z_offset, mesh_scale, x, y, z, force_constant, moment_constant, ixx, ixy, ixz, iyy, iyz, izz) -%}
   <link name="prop_{{ motor_number }}_link">
     <pose>{{ x }} {{ y }} {{ z }} 0 0 0</pose>
     <inertial>
@@ -631,42 +623,13 @@ limitations under the License.
       yaw = 0)
     }}
   </link>
-  <!-- Aerodynamics of the two opposed propeller blades -->
-  <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
-    <a0>0.3</a0>
-    <alpha_stall>1.4</alpha_stall>
-    <cla>4.2500</cla>
-    <cda>0.10</cda>
-    <cma>0.0</cma>
-    <cla_stall>-0.025</cla_stall>
-    <cda_stall>0.0</cda_stall>
-    <cma_stall>0.0</cma_stall>
-    <area>{{ blade_area }}</area>
-    <air_density>1.2041</air_density>
-    <cp>{{ cp_distance }} 0 0</cp>
-    <forward>{{ forward_blade_a }}</forward>
-    <upward>0 0 1</upward>
-    <link_name>prop_{{ motor_number }}_link</link_name>
-  </plugin>
-  <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
-    <a0>0.3</a0>
-    <alpha_stall>1.4</alpha_stall>
-    <cla>4.2500</cla>
-    <cda>0.10</cda>
-    <cma>0.0</cma>
-    <cla_stall>-0.025</cla_stall>
-    <cda_stall>0.0</cda_stall>
-    <cma_stall>0.0</cma_stall>
-    <area>{{ blade_area }}</area>
-    <air_density>1.2041</air_density>
-    <cp>-{{ cp_distance }} 0 0</cp>
-    <forward>{{ forward_blade_b }}</forward>
-    <upward>0 0 1</upward>
-    <link_name>prop_{{ motor_number }}_link</link_name>
-  </plugin>
-  <!-- Allows applying external joint force, e.g. for manual rotor probes -->
-  <plugin filename="gz-sim-apply-joint-force-system" name="gz::sim::systems::ApplyJointForce">
-    <joint_name>prop_{{ motor_number }}_joint</joint_name>
+  <!-- Parametric propeller thrust + reaction torque (MRS-consistent) -->
+  <plugin filename="ArduPilotPropeller" name="ArduPilotPropeller">
+    <jointName>prop_{{ motor_number }}_joint</jointName>
+    <linkName>prop_{{ motor_number }}_link</linkName>
+    <turningDirection>{{ direction }}</turningDirection>
+    <force_constant>{{ force_constant }}</force_constant>
+    <moment_constant>{{ moment_constant }}</moment_constant>
   </plugin>
   <joint name="prop_{{ motor_number }}_joint" type="revolute">
     <parent>{{ parent }}</parent>

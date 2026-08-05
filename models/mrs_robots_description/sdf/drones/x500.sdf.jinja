@@ -37,13 +37,11 @@
   {# <!--}--> #}
 
   {# ArduPilot backend constants (only used with --use-ardupilot) {--> #}
-  {# Per-blade LiftDrag area, sized so that 4x(2 blades) produce hover #}
-  {# thrust at ~0.47 of the velocity range (the MRS motor_constant design #}
-  {# point): lift/blade = cla*a0 * 0.5*rho*(omega*2/3*prop_radius)^2 * area #}
-  {# = 0.02091 * area * omega^2. With area=0.002 this is 4.2e-5*omega^2 per #}
-  {# rotor, EXACTLY the MRS x500 'force_constant 0.000042' (and the #}
-  {# MrsMulticopterMotorModel motor_constant) used everywhere else in MRS. #}
-  {%- set ap_blade_area = 0.002 -%} {# [m^2] per blade #}
+  {# Parametric rotor thrust: F = force_constant * omega^2. Values are the #}
+  {# MRS x500 'force_constant'/torque ratio used with the PX4 motor model, #}
+  {# so the ArduPilot backend produces exactly the same thrust curve. #}
+  {%- set ap_force_constant = 0.000042 -%} {# [N / (rad/s)^2] #}
+  {%- set ap_moment_constant = 0.06 -%}     {# [N*m / N] #}
   {# pwm range of the ArduPilotPlugin control channels, must match the #}
   {# MOT_PWM_MIN/MOT_PWM_MAX of the SITL parameters (config/ardupilot) #}
   {%- set ap_servo_min = 1100 -%}
@@ -712,7 +710,8 @@
         parent = root,
         mass = mass_prop,
         radius = prop_radius,
-        blade_area = ap_blade_area,
+        force_constant = ap_force_constant,
+        moment_constant = ap_moment_constant,
         meshes_z_offset = motor_mesh_z_offset,
         prop_ixx = prop_ixx,
         prop_ixy = prop_ixy,

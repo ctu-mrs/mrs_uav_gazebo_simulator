@@ -25,8 +25,8 @@ PACKAGE_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..'))
 MODELS_PATH = os.path.join(PACKAGE_DIR, 'models')
 
 PROP_RADIUS = 0.1751
-CP_DISTANCE = 2.0 / 3.0 * PROP_RADIUS
-BLADE_AREA = 0.002
+FORCE_CONSTANT = 0.000042
+MOMENT_CONSTANT = 0.06
 SERVO_MIN, SERVO_MAX = 1100, 1900
 MAX_ROT_VELOCITY = 780
 P_GAIN = 0.02
@@ -131,34 +131,31 @@ def check_ardupilot_variant():
         check(float(child_text(control, 'p_gain')) == P_GAIN,
               f'channel {i} p_gain {P_GAIN} (discrete-time stable at 200 Hz physics)')
 
-    # per-blade LiftDrag aerodynamics
-    liftdrags = plugins_of(root, 'gz-sim-lift-drag-system')
-    check(len(liftdrags) == 8, f'8 LiftDrag plugins, 2 blades per propeller (got {len(liftdrags)})')
+    # parametric propeller thrust plugins (replacing LiftDrag)
+    props = plugins_of(root, 'ArduPilotPropeller')
+    check(len(props) == 4, f'4 ArduPilotPropeller plugins, one per propeller (got {len(props)})')
 
-    expected = {
-        # motor: (direction, forward first blade (cp +x), forward second blade (cp -x))
-        0: ('ccw', '0 1 0', '0 -1 0'),
-        1: ('ccw', '0 1 0', '0 -1 0'),
-        2: ('cw', '0 -1 0', '0 1 0'),
-        3: ('cw', '0 -1 0', '0 1 0'),
-    }
-    by_link = {}
-    for ld in liftdrags:
-        by_link.setdefault(child_text(ld, 'link_name'), []).append(ld)
+    check(len(plugins_of(root, 'gz-sim-lift-drag-system')) == 0,
+          'no LiftDrag plugins (unsuitable at 200 Hz physics rate)')
+    check(len(plugins_of(root, 'gz-sim-apply-joint-force-system')) == 0,
+          'no ApplyJointForce systems (unused by the ArduPilot backend)')
+
+    expected_dirs = {0: 'ccw', 1: 'ccw', 2: 'cw', 3: 'cw'}
+    by_joint = {child_text(p, 'jointName'): p for p in props}
     for motor in range(4):
-        link = f'prop_{motor}_link'
-        blades = by_link.get(link, [])
-        direction, fwd_a, fwd_b = expected[motor]
-        check(len(blades) == 2, f'{link}: 2 LiftDrag blades ({direction})')
-        for blade, fwd in zip(blades, [fwd_a, fwd_b]):
-            cp = float(child_text(blade, 'cp').split()[0])
-            check(abs(abs(cp) - CP_DISTANCE) < 1e-9,
-                  f'{link}: blade cp at 2/3 radius ({CP_DISTANCE:.5f})')
-            check(child_text(blade, 'forward') == fwd,
-                  f'{link}: blade forward "{fwd}" mirrored for {direction}')
-            check(child_text(blade, 'upward') == '0 0 1', f'{link}: blade upward is model +z')
-            check(abs(float(child_text(blade, 'area')) - BLADE_AREA) < 1e-9,
-                  f'{link}: blade area {BLADE_AREA} (hover at ~0.47 throttle)')
+        key = f'prop_{motor}_joint'
+        p = by_joint.get(key)
+        check(p is not None, f'{key}: ArduPilotPropeller plugin present')
+        if p is None:
+            continue
+        check(child_text(p, 'linkName') == f'prop_{motor}_link',
+              f'{key}: drives prop_{motor}_link')
+        check(child_text(p, 'turningDirection') == expected_dirs[motor],
+              f'{key}: turningDirection {expected_dirs[motor]}')
+        check(abs(float(child_text(p, 'force_constant')) - FORCE_CONSTANT) < 1e-12,
+              f'{key}: force_constant {FORCE_CONSTANT} (MRS force curve)')
+        check(abs(float(child_text(p, 'moment_constant')) - MOMENT_CONSTANT) < 1e-12,
+              f'{key}: moment_constant {MOMENT_CONSTANT} (MRS reaction torque)')
 
     # joints: damping/friction that settle the idle props without starving the PID
     joints = [j for j in root.getElementsByTagName('joint') if j.getAttribute('name').startswith('prop_')]
@@ -167,13 +164,8 @@ def check_ardupilot_variant():
         check(child_text(joint, 'damping') == '0.002' and child_text(joint, 'friction') == '0.001',
               f'{joint.getAttribute("name")}: damping 0.002 / friction 0.001')
 
-    checks_misc = [
-        (len(plugins_of(root, 'gz-sim-apply-joint-force-system')) == 4, '4 ApplyJointForce systems'),
-        (len(plugins_of(root, 'gz-sim-joint-state-publisher-system')) == 1,
-         'JointStatePublisher present (prop velocity probing)'),
-    ]
-    for condition, message in checks_misc:
-        check(condition, message)
+    check(len(plugins_of(root, 'gz-sim-joint-state-publisher-system')) == 1,
+          'JointStatePublisher present (prop velocity probing)')
 
     print(f'  rendered SDF dumped to {dump_path}')
 

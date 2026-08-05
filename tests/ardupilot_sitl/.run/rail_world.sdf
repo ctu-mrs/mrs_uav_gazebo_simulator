@@ -1,46 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
-<sdf version="1.10">
-  
-  
-
-  
-
-  
-
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  <model name="uav1">
+<?xml version='1.0'?>
+<sdf version='1.10'>
+  <world name='default'>
+    <gravity>0 0 0</gravity>
+    <physics name='default_physics' type='ode'>
+      <max_step_size>0.005</max_step_size>
+      <real_time_update_rate>200.0></real_time_update_rate>
+    </physics>
+    <model name="uav1">
     <static>false</static>
 
     
@@ -1399,5 +1365,37 @@
 
     
 
-  </model>
+  
+  <link name="rail_link">
+    <inertial>
+      <mass>0.000001</mass>
+      <inertia>
+        <ixx>1e-9</ixx><ixy>0</ixy><ixz>0</ixz>
+        <iyy>1e-9</iyy><iyz>0</iyz><izz>1e-9</izz>
+      </inertia>
+    </inertial>
+    <visual name="rail_vis">
+      <geometry><box><size>0.01 0.01 0.01</size></box></geometry>
+    </visual>
+  </link>
+  <joint name="rail_prismatic" type="prismatic">
+    <parent>world</parent>
+    <child>rail_link</child>
+    <axis>
+      <xyz>0 0 1</xyz>
+      <limit><lower>-1e+16</lower><upper>1e+16</upper></limit>
+      <dynamics><spring_reference>0</spring_reference><spring_stiffness>0</spring_stiffness></dynamics>
+    </axis>
+  </joint>
+  <joint name="rail_revolute" type="revolute">
+    <parent>rail_link</parent>
+    <child>base_link</child>
+    <axis>
+      <xyz>0 0 1</xyz>
+      <limit><lower>-1e+16</lower><upper>1e+16</upper></limit>
+      <dynamics><spring_reference>0</spring_reference><spring_stiffness>0</spring_stiffness></dynamics>
+    </axis>
+  </joint>
+</model>
+  </world>
 </sdf>
