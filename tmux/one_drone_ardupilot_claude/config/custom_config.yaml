@@ -51,7 +51,11 @@ mrs_uav_managers:
 
       after_takeoff:
         controller: "Se3Controller"
-        tracker: "MpcTracker"
+        # MpcTracker and the ArduPilot SITL chain ring against each other:
+        # in every MRS takeoff the hover was clean right up to the
+        # LandoffTracker -> MpcTracker switch, then the lateral oscillation
+        # blew up. Keep LandoffTracker for now to isolate the hover.
+        tracker: "LandoffTracker"
 
     midair_activation:
 
