@@ -11,6 +11,7 @@ cd "$(dirname "$(readlink -f "$0")")"
 
 : > takeoff_watch.log
 : > attitude_cmd.log
+: > setpoint_attitude.log
 : > uav_state_probe.log
 
 pkill -f takeoff_watch.py 2>/dev/null; sleep 0.5
@@ -18,9 +19,15 @@ pkill -f takeoff_watch.py 2>/dev/null; sleep 0.5
 ( python3 takeoff_watch.py 75 &>/dev/null ) &
 WATCH_PID=$!
 
-( timeout 45 ros2 topic echo /uav1/hw_api/attitude_cmd \
+# what the MRS api actually forwards to the FCU (pre-MAVROS ENU frame)
+( timeout 45 ros2 topic echo /uav1/mavros/setpoint_raw/attitude \
+    2>/dev/null > setpoint_attitude.log ) &
+CMD_PID=( $( timeout 45 ros2 topic echo /uav1/hw_api/attitude_cmd \
     2>/dev/null > attitude_cmd.log ) &
-CMD_PID=$!
+  echo $! )
+SP_PID=( $( timeout 45 ros2 topic echo /uav1/mavros/setpoint_raw/attitude \
+    2>/dev/null > setpoint_attitude.log ) &
+  echo $! )
 
 sleep 2
 echo "=== running atomic_takeoff.sh ==="
@@ -35,5 +42,5 @@ for i in $(seq 1 8); do
     mrs_msgs/msg/UavState --field header.stamp >> /dev/null 2>&1
 done
 
-kill $WATCH_PID $CMD_PID 2>/dev/null
-echo "=== experiment done; logs: takeoff_watch.log attitude_cmd.log uav_state_probe.log ==="
+kill $WATCH_PID $CMD_PID $SP_PID 2>/dev/null
+echo "=== experiment done; logs: takeoff_watch.log attitude_cmd.log setpoint_attitude.log uav_state_probe.log ==="
