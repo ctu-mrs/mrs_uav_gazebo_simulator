@@ -19,6 +19,15 @@ FRAME_TYPE 1
 # (required by the mrs_uav_ardupilot_api attitude/thrust setpoints)
 GUID_OPTIONS 8
 
+# Yaw fusion: heading fusion at ALL times (EK3_MAG_CAL=2), never the 3-axis
+# mag fusion. With the copter default (3) the EKF performs a mid-air yaw
+# RESET when the mag field estimate converges (~8-11 s after liftoff here),
+# which every run maps into the same crash: yaw reference jumps ~2 rad,
+# the guided attitude loop slams the trim, the MRS outer loop follows a
+# rotated state estimate. The simulated compass is perfect, so heading
+# fusion is all that is needed and it is continuous at all times.
+EK3_MAG_CAL 2
+
 # Motor PWM range, matches the servo_min/servo_max range expected by the
 # ArduPilotPlugin control channels in the Gazebo model
 MOT_PWM_MIN 1100
