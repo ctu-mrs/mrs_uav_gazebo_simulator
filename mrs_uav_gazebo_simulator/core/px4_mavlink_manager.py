@@ -9,7 +9,7 @@ from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription, LaunchService
 from launch.actions import IncludeLaunchDescription, GroupAction
-from launch.launch_description_sources import AnyLaunchDescriptionSource
+from launch.launch_description_sources import AnyLaunchDescriptionSource, PythonLaunchDescriptionSource
 from launch_ros.actions import PushRosNamespace
 
 

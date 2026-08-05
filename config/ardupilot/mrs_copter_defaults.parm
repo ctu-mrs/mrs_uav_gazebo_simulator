@@ -42,7 +42,11 @@ MOT_THST_EXPO 0
 BATT_MONITOR 4
 
 # Offboard-style control hygiene (see mrs_uav_ardupilot_api README)
-DISARM_DELAY 0 # do not auto-disarm on landing detection
+# DISARM_DELAY must be > 0: with 0 the FCU auto-disarms the moment its land
+# detector latches during the MRS output-enable / spool-up race (seen live:
+# armed -> pwm 1184 -> auto-disarm 0.12 s later). 10 s is the ArduPilot
+# default and comfortably covers the MRS LandoffTracker spool-up.
+DISARM_DELAY 10 # auto-disarm 10 s after landing detection (AP default)
 FS_THR_ENABLE 0 # no radio in SITL, do not fight offboard control with throttle failsafe
 
 # The JSON FDM backend provides GPS, magnetometer and barometer data.

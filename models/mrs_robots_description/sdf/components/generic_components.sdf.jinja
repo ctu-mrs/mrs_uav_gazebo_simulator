@@ -885,10 +885,15 @@ limitations under the License.
                           angular_velocity_noise_mean_z, angular_velocity_noise_std_z, 
                           linear_acceleration_noise_mean_x, linear_acceleration_noise_std_x, 
                           linear_acceleration_noise_mean_y, linear_acceleration_noise_std_y, 
-                          linear_acceleration_noise_mean_z, linear_acceleration_noise_std_z) -%}
+                          linear_acceleration_noise_mean_z, linear_acceleration_noise_std_z,
+                          pose = None) -%}
 <sensor name="{{ name }}_sensor" type="imu">
   <always_on>1</always_on>
   <update_rate>{{ update_rate }}</update_rate>
+  {%- if pose is not none %}
+  <!-- Sensor mount orientation. e.g. "0 0 0 3.14159265 0 0" flips x->FRD -->
+  <pose>{{ pose }}</pose>
+  {%- endif %}
   <imu>
     <angular_velocity>
       <!-- 0.05 deg/s converted to rad/s -->

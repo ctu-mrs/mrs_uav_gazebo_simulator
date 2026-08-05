@@ -114,6 +114,19 @@ def check_ardupilot_variant():
           f'imuName is model-relative (got {child_text(ap, "imuName")})')
     check(child_text(ap, 'lock_step') == '0', 'lock_step is 0 (robust SITL/gazebo startup)')
 
+    # The IMU sensor must be mounted rotated 180 deg about x (FLU link -> FRD
+    # sensor frame), exactly like the stock ardupilot_gazebo iris. Without it
+    # the gz plugin forwards FLU gyro rates as FRD, inverting the SITL pitch
+    # and yaw rate feedback -> positive feedback flip right at liftoff thrust.
+    imu_sensors = [s for s in root.getElementsByTagName('sensor')
+                   if s.getAttribute('type') == 'imu']
+    check(len(imu_sensors) == 1, 'exactly one imu sensor in ardupilot variant')
+    imu_pose = imu_sensors[0].getElementsByTagName('pose')
+    check(len(imu_pose) == 1, 'imu sensor has an explicit mounting pose')
+    pose_nums = [float(x) for x in imu_pose[0].firstChild.nodeValue.split()]
+    check(pose_nums[3] == 3.14159265 and pose_nums[4] == 0.0 and pose_nums[5] == 0.0,
+          f'imu mounted 180 deg about x (FRD), got rpy={pose_nums[3:]}')
+
     # control channels
     controls = ap.getElementsByTagName('control')
     check(len(controls) == 4, f'4 control channels (got {len(controls)})')

@@ -638,6 +638,15 @@
 
       <!-- IMU {-->
       <!-- Noise modeled after IIM42653 -->
+      {# The ArduPilotPlugin forwards the raw gz IMU (accel+gyro) to SITL
+         assuming the aircraft (FRD) convention (see the comment in
+         ArduPilotPlugin.cc: "it is assumed that the imu orientation conforms
+         to the aircraft convention"). The base_link frame is FLU, so with
+         --use-ardupilot the sensor must be mounted rotated 180 deg about x,
+         exactly like the stock ardupilot_gazebo iris model. Without this,
+         the SITL pitch and yaw GYRO RATES have inverted sign w.r.t. what the
+         FCU expects, turning the attitude rate loops into positive feedback
+         (explosive pitch-up right at liftoff thrust, then crash-disarm). #}
       {{ generic.imu_pixhawk_sensor_macro(
         name = "imu",
         update_rate = 250,
@@ -652,7 +661,8 @@
         linear_acceleration_noise_mean_y = 0.0,
         linear_acceleration_noise_std_y = 0.00637,
         linear_acceleration_noise_mean_z = 0.0,
-        linear_acceleration_noise_std_z = 0.00686)
+        linear_acceleration_noise_std_z = 0.00686,
+        pose = '0 0 0 3.14159265 0 0' if 'use-ardupilot' in spawner_args.keys() else None)
       }}
       <!--}-->
 

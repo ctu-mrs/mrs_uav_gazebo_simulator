@@ -12,6 +12,7 @@ pre_window:
   - export PLATFORM_CONFIG=`ros2 pkg prefix mrs_uav_gazebo_simulator`/share/mrs_uav_gazebo_simulator/config/mrs_uav_system/$UAV_TYPE.yaml
   - export RMW_IMPLEMENTATION=rmw_zenoh_cpp
   - export USE_SIM_TIME="true"
+  - export UAV_MASS=3.0
 startup_window: status
 windows:
   - zenoh_router:

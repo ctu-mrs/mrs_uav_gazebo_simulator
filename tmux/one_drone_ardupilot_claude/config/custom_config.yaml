@@ -18,6 +18,24 @@ mrs_uav_managers:
     initial_state_estimator: "gps_baro" # will be used as the first state estimator
     agl_height_estimator: "" # only slightly filtered height for checking min height (not used in control feedback)
 
+  control_manager:
+
+    # ArduPilot SITL always publishes RC channels (ch5/ch8 = 1800), which would
+    # perpetually trigger the MRS RC safety features (escalating failsafe on
+    # ch8 >= threshold, rc joystick activation on ch7). There is no real RC in
+    # this headless setup, so disable both. This was the root cause of the
+    # "cannot toggle output ON, we landed in emergency" latch during takeoff.
+    rc_joystick:
+
+      enabled: false
+
+    safety:
+
+      escalating_failsafe:
+
+        rc:
+          enabled: false # can be triggered by RC button
+
   uav_manager:
 
     takeoff:
