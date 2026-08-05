@@ -591,10 +591,13 @@ limitations under the License.
 {# blade sweep velocity is under-sampled there; verified with the rail      #}
 {# force test in tests/ardupilot_sitl/check_force_symmetry.py.)             #}
 {#                                                                           #}
-{# The small joint damping/friction settles the undriven propeller exactly   #}
-{# to zero at idle, while staying negligible w.r.t. the PID torque cap at   #}
-{# flight speed. Keep them small: the max reachable velocity degrades by    #}
-{# roughly p_gain / (p_gain + damping).                                     #}
+{# Joint damping/friction are intentionally ZERO so that the velocity PID   #}
+{# tracks the commanded omega exactly at steady state. With any nonzero     #}
+{# damping, p-only velocity control droops ~p/(p+d) (~9 % here) and thrust, #}
+{# being quadratic in omega, falls ~18 % short of the MRS thrust curve; the #}
+{# MRS MPC then flies with a large vertical model error. The undriven      #}
+{# propeller still settles to zero (the PID drives it to cmd=0 at idle),   #}
+{# see tests/ardupilot_sitl/check_motor_physics.py.                        #}
 {%- macro ardupilot_prop_macro(direction, parent, mass, radius, motor_number, color, mesh_file_1, mesh_file_2, meshes_z_offset, mesh_scale, x, y, z, force_constant, moment_constant, ixx, ixy, ixz, iyy, iyz, izz) -%}
   <link name="prop_{{ motor_number }}_link">
     <pose>{{ x }} {{ y }} {{ z }} 0 0 0</pose>
@@ -641,8 +644,8 @@ limitations under the License.
         <upper>1e+16</upper>
       </limit>
       <dynamics>
-        <damping>0.002</damping>
-        <friction>0.001</friction>
+        <damping>0.0</damping>
+        <friction>0.0</friction>
         <spring_reference>0</spring_reference>
         <spring_stiffness>0</spring_stiffness>
       </dynamics>

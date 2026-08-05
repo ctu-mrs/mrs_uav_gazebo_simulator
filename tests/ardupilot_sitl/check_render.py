@@ -170,12 +170,13 @@ def check_ardupilot_variant():
         check(abs(float(child_text(p, 'moment_constant')) - MOMENT_CONSTANT) < 1e-12,
               f'{key}: moment_constant {MOMENT_CONSTANT} (MRS reaction torque)')
 
-    # joints: damping/friction that settle the idle props without starving the PID
+    # joints: damping/friction must be zero so the velocity PID tracks the
+    # commanded omega exactly (no steady-state droop -> thrust curve matches MRS)
     joints = [j for j in root.getElementsByTagName('joint') if j.getAttribute('name').startswith('prop_')]
     check(len(joints) == 4, '4 propeller joints')
     for joint in joints:
-        check(child_text(joint, 'damping') == '0.002' and child_text(joint, 'friction') == '0.001',
-              f'{joint.getAttribute("name")}: damping 0.002 / friction 0.001')
+        check(child_text(joint, 'damping') == '0.0' and child_text(joint, 'friction') == '0.0',
+              f'{joint.getAttribute("name")}: damping/friction zero (no PID droop)')
 
     check(len(plugins_of(root, 'gz-sim-joint-state-publisher-system')) == 1,
           'JointStatePublisher present (prop velocity probing)')

@@ -245,7 +245,7 @@ def main():
         driver.set_all(phys.SERVO_MIN)
         oms = [abs(om['omega'][f'prop_{k}_joint']) for k in range(4)]
         om_mean = sum(oms) / 4
-        f_meas = MASS * az
+        f_meas = -MASS * az  # FRD IMU: z down; upward force reads az < 0
         f_theory = 4 * rotor_force_theory(om_mean)
         records['symmetric'] = dict(omegas=om['omega'], az=az, yaw_slope=slope,
                                     force_meas=f_meas, force_theory=f_theory)
@@ -260,7 +260,7 @@ def main():
         pwm_one = 1550
         print(f'Phase 2: per-rotor singles (pwm = {pwm_one} on one channel)')
         forces, torques, signs = [], [], []
-        expected_sign = [ -1, -1, 1, 1]  # CCW props react -z, CW react +z
+        expected_sign = [ 1, 1, -1, -1]  # FRD gyro: z down; CCW props react +z_FRD, CW react -z_FRD
         for k in range(4):
             time.sleep(1.5)
             driver.set_pwm(k, pwm_one)
@@ -269,7 +269,7 @@ def main():
             az, slope = stats_for(3)
             driver.set_pwm(k, phys.SERVO_MIN)
             o = om['omega'][f'prop_{k}_joint']
-            f_k = MASS * az
+            f_k = -MASS * az  # FRD: upward force reads negative az
             tau_k = IZZ_TOTAL * slope
             forces.append(f_k)
             torques.append(tau_k)
@@ -289,7 +289,7 @@ def main():
               [round(t, 4) for t in torques])
         check(signs == expected_sign,
               'per-rotor: reaction torque sign matches spin direction '
-              '(CCW->-z, CW->+z)', signs)
+              '(CCW->+z_FRD, CW->-z_FRD)', signs)
 
         # ---- phase 3: CCW pair vs CW pair ----
         pwm_pair = 1550
@@ -302,7 +302,7 @@ def main():
             om = phys.measure(1.0, env)
             az, slope = stats_for(3)
             driver.set_all(phys.SERVO_MIN)
-            pair[name] = dict(az=az, force=MASS * az, yaw_slope=slope,
+            pair[name] = dict(az=az, force=-MASS * az, yaw_slope=slope,
                               torque=IZZ_TOTAL * slope)
             records[name] = pair[name]
             print(f'  {name}: az={az:.2f} F={MASS*az:.2f}N slope={slope:.4f}')

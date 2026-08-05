@@ -22,12 +22,13 @@ WATCH_PID=$!
 # what the MRS api actually forwards to the FCU (pre-MAVROS ENU frame)
 ( timeout 45 ros2 topic echo /uav1/mavros/setpoint_raw/attitude \
     2>/dev/null > setpoint_attitude.log ) &
-CMD_PID=( $( timeout 45 ros2 topic echo /uav1/hw_api/attitude_cmd \
-    2>/dev/null > attitude_cmd.log ) &
-  echo $! )
-SP_PID=( $( timeout 45 ros2 topic echo /uav1/mavros/setpoint_raw/attitude \
-    2>/dev/null > setpoint_attitude.log ) &
-  echo $! )
+timeout 45 ros2 topic echo /uav1/hw_api/attitude_cmd \
+    2>/dev/null > attitude_cmd.log &
+CMD_PID=$!
+
+timeout 45 ros2 topic echo /uav1/mavros/setpoint_raw/attitude \
+    2>/dev/null > setpoint_attitude.log &
+SP_PID=$!
 
 sleep 2
 echo "=== running atomic_takeoff.sh ==="

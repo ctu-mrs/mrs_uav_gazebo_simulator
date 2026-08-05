@@ -59,8 +59,10 @@ from check_render import render_x500  # noqa: E402
 SERVO_MIN, SERVO_MAX = 1100, 1900
 MULTIPLIER = 780.0               # rad/s at full pwm (max_rot_velocity)
 P_GAIN = 0.02                    # N*m per rad/s
-JOINT_DAMPING = 0.002            # N*m s/rad
-JOINT_FRICTION = 0.001           # N*m
+# damping/friction are zero so the velocity PID tracks the commanded omega
+# exactly (no droop -> thrust matches the MRS curve; see the template comment)
+JOINT_DAMPING = 0.0              # N*m s/rad
+JOINT_FRICTION = 0.0             # N*m
 PROP_RADIUS = 0.1751
 CP = 2.0 / 3.0 * PROP_RADIUS     # center of pressure of one blade
 FORCE_CONSTANT = 0.000042        # N/(rad/s)^2 per rotor (ArduPilotPropeller plugin)
@@ -71,7 +73,8 @@ FDM_PORT = 9002          # fdm_port_in of uav1 (9002 + 10*ID)
 UAV_NAME = 'uav1'
 WORLD = 'default'
 
-# joint velocity equilibrium of the force PID under damping+friction load:
+# joint velocity equilibrium of the force PID under damping+friction load
+# (zero load -> omega == cmd exactly):
 #   p_gain*(cmd - omega) = damping*omega + friction  (+ small blade drag)
 
 
@@ -301,7 +304,10 @@ def main():
         check(all(abs(v) < 5.0 for v in m['omega'].values()) and len(m['omega']) == 4,
               'idle: all propeller joints settle to ~0 rad/s (no PID limit cycle)', m['omega'])
         check(abs(m['yaw_rate']) < 0.05, 'idle: yaw rate ~0', m['yaw_rate'])
-        check(9.4 < m['az'] < 10.2, 'idle: IMU az ~ +9.81 m/s^2', m['az'])
+        # the IMU is mounted FRD (180 deg roll about x): its z axis points
+        # DOWN, so the support reaction on the ground reads az ~ -9.81 and
+        # an upward flight acceleration reads negative as well.
+        check(-10.2 < m['az'] < -9.4, 'idle: IMU az ~ -9.81 m/s^2 (FRD mount)', m['az'])
 
         # --- phase 2: symmetric, firmly below hover --------------------------
         pwm_mid = 1300
@@ -334,8 +340,8 @@ def main():
         check(lift_theory < weight,
               f'symmetric: theory well below hover at pwm {pwm_mid} '
               f'({lift_theory:.1f} N vs weight {weight:.1f} N)', round(lift_theory, 1))
-        check(9.55 < m['az'] < 10.05, 'symmetric: vehicle stays on the ground '
-              '(az ~ 9.81, no premature liftoff)', m['az'])
+        check(-10.05 < m['az'] < -9.55, 'symmetric: vehicle stays on the ground '
+              '(az ~ -9.81 FRD, no premature liftoff)', m['az'])
         check(abs(m['yaw_rate']) < 0.08, 'symmetric: yaw rate ~0 (reaction torques cancel)',
               m['yaw_rate'])
 
@@ -375,13 +381,14 @@ def main():
         w_sat = sum(abs(m['omega'][f'prop_{k}_joint']) for k in range(4)) / 4
         lift_sat = 4 * FORCE_CONSTANT * w_sat**2
         weight = DRONE_MASS * 9.81
-        # airborne, level: proper acceleration az = lift/mass exactly
-        az_expected = lift_sat / DRONE_MASS
+        # airborne, level: proper acceleration magnitude = lift/mass; with the
+        # FRD-mounted IMU the z axis points down, so upward lift reads negative.
+        az_expected = -(lift_sat / DRONE_MASS)
         info(f"omegas: {m['omega']}, az: {m['az']:.2f} "
-             f"(expect ~{az_expected:.1f} = lift {lift_sat:.1f} N / {DRONE_MASS:.2f} kg)")
+             f"(expect ~{az_expected:.1f} = -(lift {lift_sat:.1f} N / {DRONE_MASS:.2f} kg))")
         check(lift_sat > 1.3 * weight,
               f'saturated: theory thrust {lift_sat:.0f} N well above weight', round(lift_sat, 1))
-        check(abs(m['az'] - az_expected) / az_expected < 0.25,
+        check(abs(m['az'] - az_expected) / abs(az_expected) < 0.25,
               'saturated: airborne acceleration matches parametric thrust curve '
               f'(az measured {m["az"]:.2f} vs theory {az_expected:.1f})', )
         driver.set_all(SERVO_MIN)
