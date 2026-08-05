@@ -40,8 +40,13 @@ mrs_uav_managers:
 
     takeoff:
 
+      # MpcController is unstable against the ArduPilot SITL sensory chain
+      # (measured: vertical overshoot past the 2 m target to 5.4 m with a
+      # throttle sawtooth, then lateral blow-up). The plain geometric
+      # Se3Controller is far less model/lag sensitive and also what MRS uses
+      # after every takeoff, so use it for the whole maneuver.
       during_takeoff:
-        controller: "MpcController"
+        controller: "Se3Controller"
         tracker: "LandoffTracker"
 
       after_takeoff:
