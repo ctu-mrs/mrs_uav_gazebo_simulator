@@ -28,7 +28,7 @@ windows:
       panes:
         - ros2 launch mrs_uav_gazebo_simulator simulation.launch.py gz_headless:=true gz_verbose:=true
         - |
-          waitForGazebo; sleep 5; ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE --use-ardupilot --pos 0 0 0.3 0'}"
+          waitForGazebo; sleep 5; ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE --use-ardupilot --enable-ground-truth --pos 0 0 0.3 0'}"
   - ardupilot_api:
       layout: tiled
       panes:

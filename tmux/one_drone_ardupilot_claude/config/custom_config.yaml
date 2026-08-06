@@ -7,15 +7,15 @@ mrs_uav_managers:
 
   estimation_manager:
 
-    # loaded state estimator plugins
+    # DEBUG VARIANT: ground-truth estimator. Feeding the MRS control loop with
+    # exact simulator state isolates the feedback chain: if the takeoff is
+    # stable here but unstable with gps_baro, the AP's estimation path
+    # (EKF upstream data vs MRS fusion) is the destabilizer, not control.
     state_estimators: [
-      "gps_baro"
-      # NOTE: the "gps_garmin" estimator additionally requires a rangefinder
-      # distance sensor input. The garmin rangefinder is not yet forwarded to
-      # ArduPilot SITL, so it is disabled here.
+      "ground_truth"
     ]
 
-    initial_state_estimator: "gps_baro" # will be used as the first state estimator
+    initial_state_estimator: "ground_truth" # will be used as the first state estimator
     agl_height_estimator: "" # only slightly filtered height for checking min height (not used in control feedback)
 
   control_manager:
