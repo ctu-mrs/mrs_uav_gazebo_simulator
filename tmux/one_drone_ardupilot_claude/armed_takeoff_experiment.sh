@@ -13,6 +13,7 @@ cd "$(dirname "$(readlink -f "$0")")"
 : > attitude_cmd.log
 : > setpoint_attitude.log
 : > uav_state_probe.log
+: > uav_state_stream.log
 
 : > status_capture.log
 # snapshot the mrs status pane every 0.4 s (heading/position display) for
@@ -40,6 +41,11 @@ timeout 45 ros2 topic echo /uav1/mavros/setpoint_raw/attitude \
     2>/dev/null > setpoint_attitude.log &
 SP_PID=$!
 
+# continuous MRS state estimate (pose+velocity as the control loop sees it)
+timeout 45 ros2 topic echo /uav1/estimation_manager/uav_state \
+    2>/dev/null > uav_state_stream.log &
+US_PID=$!
+
 sleep 2
 echo "=== running atomic_takeoff.sh ==="
 bash ./atomic_takeoff.sh
@@ -53,5 +59,5 @@ for i in $(seq 1 8); do
     mrs_msgs/msg/UavState --field header.stamp >> /dev/null 2>&1
 done
 
-kill $CAP_PID $WATCH_PID $CMD_PID $SP_PID 2>/dev/null
+kill $CAP_PID $WATCH_PID $CMD_PID $SP_PID $US_PID 2>/dev/null
 echo "=== experiment done; logs: takeoff_watch.log attitude_cmd.log setpoint_attitude.log uav_state_probe.log ==="
