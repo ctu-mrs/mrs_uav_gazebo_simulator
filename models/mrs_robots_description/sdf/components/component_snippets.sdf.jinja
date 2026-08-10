@@ -255,6 +255,16 @@ limitations under the License.
   {{ realsense_camera_top.realsense_rgbd_single_plugin_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 #}
+{# ======================= UVDAR Sensors ====================== #}
+{%- import "mrs_robots_description/sdf/components/uvdar/uv_devices.sdf.jinja" as uv_leds -%}
+{%- macro uv_leds_macro(parent_link, x1, x2, y1, y2, z, spawner_args) -%}
+  {{ uv_leds.uv_leds_macro(parent_link, x1, x2, y1, y2, z, spawner_args) }}
+{%- endmacro -%}
+
+{%- import "mrs_robots_description/sdf/components/uvdar/uv_devices.sdf.jinja" as uv_cameras -%}
+{%- macro dual_uv_cameras_macro(parent_link, x1, y1, z1, roll1, pitch1, yaw1, x2, y2, z2, roll2, pitch2, yaw2, mount, spawner_args) -%}
+  {{ uv_cameras.dual_uv_cameras_macro(parent_link, x1, y1, z1, roll1, pitch1, yaw1, x2, y2, z2, roll2, pitch2, yaw2, mount, spawner_args) }}
+{%- endmacro -%}
 
 {%- import "mrs_robots_description/sdf/components/camera/realsense/realsense_rgb_plus_depth.sdf.jinja" as realsense_macros -%}
 {%- macro realsense_front_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) -%}

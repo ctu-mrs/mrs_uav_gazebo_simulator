@@ -735,6 +735,37 @@
     }}
     {# <!--}--> #}
 
+
+    {# UV leds {--> #}
+    {{ components.uv_leds_macro(
+      parent_link = root,
+      x1 = 0.2017755,
+      x2 = 0.1947045,
+      y1 = 0.1947045,
+      y2 = 0.2017755,
+      z = 0.0,
+      spawner_args = spawner_args)
+    }}
+
+    {{ components.dual_uv_cameras_macro(
+            parent_link = root,
+            x1 = 0.039,
+            y1 = 0.1175,
+            z1 = 0.089,
+            roll1 = 0,
+            pitch1 = 0,
+            yaw1 = math.radians(70),
+            x2 = 0.039,
+            y2 = -0.1175,
+            z2 = 0.089,
+            roll2 = 0,
+            pitch2 = 0,
+            yaw2 = -math.radians(70),
+            mount = uvdar_mount,
+            spawner_args = spawner_args)
+     }}
+    {# <!--}--> #}
+
     {# ========================== LIDAR sensors ========================= #}
 
     {# Ouster {--> #}

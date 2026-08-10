@@ -1,0 +1,95 @@
+<?xml version="1.0"? encoding="utf-8">
+{%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
+{%- import 'mrs_robots_description/sdf/components/uvdar/led.sdf.jinja' as led -%}
+{%- import 'mrs_robots_description/sdf/components/uvdar/cam.sdf.jinja' as cam -%}
+
+{# dual_uv_cameras_macro {--> #}
+{%- macro dual_uv_cameras_macro(parent_link, x1, y1, z1, roll1, pitch1, yaw1, x2, y2, z2, roll2, pitch2, yaw2, mount, spawner_args) -%}
+    {%- set spawner_keyword = 'enable-dual-uv-cameras' -%}
+
+    {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+    {{ cam.dual_uv_cameras_macro(
+            parent_link = parent_link,
+            x1 = 0.039,
+            y1 = 0.1175,
+            z1 = 0.089,
+            roll1 = 0,
+            pitch1 = 0,
+            yaw1 = math.radians(70),
+            x2 = 0.039,
+            y2 = -0.1175,
+            z2 = 0.089,
+            roll2 = 0,
+            pitch2 = 0,
+            yaw2 = -math.radians(70),
+            mount = mount,
+            spawner_args = spawner_args)
+     }}            
+{%- endif -%}
+{%- endmacro -%}
+
+{# uv_leds_macro #}
+{%- macro uv_leds_macro(parent_link, x1, x2, y1, y2, z, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-uv-leds' -%}
+  {%- set spawner_description = 'Add UV LEDs to the vehicle. Requires param "signal_id" to be set. Legacy params "left_id" and "right_id" may replace "signal_id" (for backwards compatibility)' -%}
+  {%- set spawner_default_args = {'signal_id': none, 'left_id': none, 'right_id': none} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {# setup led signals {--> #}
+    {%- if spawner_args[spawner_keyword]['signal_id'] is not none and spawner_args[spawner_keyword]['signal_id'] | length > 3 -%}
+
+      {%- set led1 = spawner_args[spawner_keyword]['signal_id'][0] -%}
+      {%- set led2 = spawner_args[spawner_keyword]['signal_id'][1] -%}
+      {%- set led4 = spawner_args[spawner_keyword]['signal_id'][3] -%}
+      {%- set led3 = spawner_args[spawner_keyword]['signal_id'][2] -%}
+
+    {%- elif spawner_args[spawner_keyword]['left_id'] is not none and spawner_args[spawner_keyword]['right_id'] is not none -%}
+
+      {%- set led1 = spawner_args[spawner_keyword]['left_id'] -%}
+      {%- set led2 = spawner_args[spawner_keyword]['right_id'] -%}
+      {%- set led3 = spawner_args[spawner_keyword]['left_id'] -%}
+      {%- set led4 = spawner_args[spawner_keyword]['right_id'] -%}
+
+    {%- endif -%}
+    {# <!--}--> #}
+
+    {%- if led1 is not none and led2 is not none and led3 is not none and led4 is not none -%}
+
+      {# -- leds configuration -- (id, signal_id, x, y, z, roll, pitch, yaw) #}
+      {%- set uv_leds_macro_parameters = [(1, led3,  x1,  y1, z, 0.0, math.radians(90),  0.0),
+                                          (2, led3,  x2,  y2, z, 0.0, math.radians(90),  math.radians(90)),
+                                          (3, led1,  x2, -y2, z, 0.0, math.radians(90), -math.radians(90)),
+                                          (4, led1,  x1, -y1, z, 0.0, math.radians(90),  0.0),
+                                          (5, led2, -x2,  y2, z, 0.0, math.radians(90),  math.radians(90)),
+                                          (6, led2, -x1,  y1, z, 0.0, math.radians(90),  math.radians(180)),
+                                          (7, led4, -x1, -y1, z, 0.0, math.radians(90), -math.radians(180)),
+                                          (8, led4, -x2, -y2, z, 0.0, math.radians(90), -math.radians(90))] -%}
+
+      <!-- UV LEDs {-->
+      {%- for id_, signal_id_, x_, y_, z_, roll_, pitch_, yaw_ in uv_leds_macro_parameters -%}
+        <!-- LED {{ id_ }} {-->
+        {{ led.uvled_macro(
+          parent_link = parent_link,
+          device_id = spawner_args['name'] + '_' + id_ | string(),
+          signal_id = signal_id_,
+          x = x_,
+          y = y_,
+          z = z_,
+          roll = roll_,
+          pitch = pitch_,
+          yaw = yaw_)
+        }}
+        <!--}-->
+      {%- endfor -%}
+      <!--}-->
+
+    {%- endif -%}
+
+  {%- endif -%}
+{%- endmacro -%}
+
