@@ -3,10 +3,10 @@
 # Loaded per SITL instance with --defaults. MAVLink sysid is set per instance
 # with the --sysid command line option.
 
-# The MRS Gazebo worlds run physics at 200 Hz (max_step_size 0.005), so the
-# FDM JSON (and the gyro samples it carries) arrives at ~200 Hz. The default
-# 400 Hz main loop would reject that as "Gyro rate too slow" (PreArm failure)
-# and report "Main loop slow", so run the SITL scheduler at 100 Hz.
+# The ArduPilot SITL world (grass_plane_ardupilot.sdf) runs the engine at
+# 1 kHz (max_step_size 0.001) with lock_step, so the FDM JSON and gyro samples
+# arrive at 1 kHz. The full 400 Hz SITL scheduler therefore runs cleanly
+# without "Gyro rate too slow" / "Main loop slow" PreArm failures.
 SCHED_LOOP_RATE 400
 
 # Vehicle frame: Quad, X motor layout. The MRS x500 template propeller

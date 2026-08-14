@@ -699,8 +699,9 @@ limitations under the License.
       <fdm_addr>{{ fdm_addr }}</fdm_addr>
       <fdm_port_in>{{ fdm_port_in }}</fdm_port_in>
       <connectionTimeoutMaxCount>5</connectionTimeoutMaxCount>
-      <!-- lock_step 0: the plugin answers the JSON state at its own rate,
-           more robust during the SITL/Gazebo startup race than lock_step 1 -->
+      <!-- lock_step 1 + no_time_sync 0: the plugin is time-stepped with the
+           engine (1 kHz in grass_plane_ardupilot.sdf), giving SITL a
+           deterministic coupled sensor/JSON stream at its 400 Hz loop rate -->
       <lock_step>1</lock_step>
       <no_time_sync>0</no_time_sync>
       <have_32_channels>0</have_32_channels>
