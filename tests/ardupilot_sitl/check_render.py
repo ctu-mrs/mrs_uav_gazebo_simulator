@@ -112,7 +112,14 @@ def check_ardupilot_variant():
           f'fdm_port_in matches SITL JSON backend port 9002+10*ID (got {child_text(ap, "fdm_port_in")})')
     check(child_text(ap, 'imuName') == 'base_link::imu_sensor',
           f'imuName is model-relative (got {child_text(ap, "imuName")})')
-    check(child_text(ap, 'lock_step') == '0', 'lock_step is 0 (robust SITL/gazebo startup)')
+    # lock_step=1 + no_time_sync=0 makes the plugin time-step with the engine.
+    # The working ArduPilot+MRS SITL config runs the engine at 1 kHz
+    # (grass_plane_ardupilot.sdf max_step_size 0.001) with SCHED_LOOP_RATE=400,
+    # which requires lock_step to keep the SITL deterministically coupled.
+    check(child_text(ap, 'lock_step') == '1', 'lock_step is 1 (engine time-synced with SITL)')
+    no_time_sync = ap.getElementsByTagName('no_time_sync')
+    if no_time_sync:
+        check(child_text(ap, 'no_time_sync') == '0', 'no_time_sync is 0 (time sync enabled)')
 
     # The IMU sensor must be mounted rotated 180 deg about x (FLU link -> FRD
     # sensor frame), exactly like the stock ardupilot_gazebo iris. Without it

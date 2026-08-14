@@ -40,3 +40,75 @@ mrs_uav_managers:
         controller: "MpcController"
         tracker: "MpcTracker"
 
+
+  control_manager:
+
+    safety:
+
+      # safety measures that trigger when the absolute tilt is larger than certain threshold
+      # -> will be overriden by rc_emergency_handoff=true
+      tilt_limit:
+
+        eland:
+          enabled: true
+          limit: 75.0 # [deg]
+
+        disarm:
+          enabled: true
+          limit: 90.0 # [deg]
+
+      # disarming safety measure which triggers with large tilt (orientation) error that is sustained over the set timeout threshold
+      # -> 20 degress tilt error is unusual during normal flight and almost exclusively happen with ESC / motor / propeller failure.
+      #    With such failures, it is often safer to disarm the UAV at that moment than having it fight the error without all its actuators.
+      # -> will be overriden by rc_emergency_handoff=true
+      tilt_error_disarm:
+        enabled: true
+        timeout: 0.5 # [s] # for how long the error has to be present to disarm
+        error_threshold: 20.0 # [deg]
+
+      # safety measures that trigger when yaw control error grows over pre-set threshold
+      # -> our SO(3) geometric tracking control might not converge with yaw error over 90 degrees
+      # -> will be overriden by rc_emergency_handoff=true
+      yaw_error_eland:
+        enabled: true
+        limit: 90.0 # [deg]
+
+      # after not receiving odometry for more than this, the failsafe landing will trigger
+      # will be overriden for ACCELERATION+ output mode
+      odometry_max_missing_time: 0.1 # [s]
+
+      # trigger eland when the odometry corrections are too unreliable
+      # - should be false when using custom odometry source without available innovation values
+      # - the innovation limit is set per-controller in the controllers.yaml file
+      odometry_innovation_eland:
+        enabled: true
+
+      # won't start the system when the hover throttle (based on nominal mass and the motor params) is out of bounds
+      hover_throttle_range_check:
+        enabled: true
+        min: 0.2 # [%/100]
+        max: 0.7 # [%/100]
+
+      # emergency landing (still feedback)
+      eland:
+
+        controller: "EmergencyController"
+
+        # Making those numbers smaller than "factor: 0.5, timeout: 2.0" can result in premature
+        # landing detection, especially in the case of wild eland with weird initial conditions.
+        # It might be safe with just the normal landing though.
+        cutoff_mass_factor:  0.5 # how much lighter does the drone appear to be?
+        cutoff_timeout:  2.0 # [s] how long does the throttle has to be below the mass factor
+
+        disarm: true
+        timer_rate: 10 # [Hz]
+
+      escalating_failsafe:
+
+        service:
+          enabled: true # can be called by a service
+
+        rc:
+          enabled: false # can be triggered by RC button
+          channel_number: 7 # [-],  activation RC channel
+          threshold: 0.5 # [%/100]

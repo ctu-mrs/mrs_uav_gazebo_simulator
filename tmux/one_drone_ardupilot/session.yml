@@ -12,7 +12,6 @@ pre_window:
   - export PLATFORM_CONFIG=`ros2 pkg prefix mrs_uav_gazebo_simulator`/share/mrs_uav_gazebo_simulator/config/mrs_uav_system/$UAV_TYPE.yaml
   - export RMW_IMPLEMENTATION=rmw_zenoh_cpp
   - export USE_SIM_TIME="true"
-  - export UAV_MASS=3.0
 startup_window: status
 windows:
   - zenoh_router:
@@ -22,7 +21,9 @@ windows:
   - gazebo:
       layout: tiled
       panes:
-        - ros2 launch mrs_uav_gazebo_simulator simulation.launch.py gz_headless:=false gz_verbose:=true
+        # ArduPilot SITL world: physics at 1 kHz (max_step_size 0.001) to match
+        # the 400 Hz SITL loop in lock_step, installed by mrs_gazebo_common_resources.
+        - ros2 launch mrs_uav_gazebo_simulator simulation.launch.py gz_headless:=false gz_verbose:=true world_file:="$(ros2 pkg prefix --share mrs_gazebo_common_resources)/worlds/grass_plane_ardupilot.sdf"
         - |
           waitForGazebo; sleep 5; ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE --use-ardupilot --pos 0 0 0.3 0'}"
   - ardupilot_api:

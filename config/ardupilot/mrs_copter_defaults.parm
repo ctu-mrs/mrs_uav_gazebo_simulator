@@ -7,7 +7,7 @@
 # FDM JSON (and the gyro samples it carries) arrives at ~200 Hz. The default
 # 400 Hz main loop would reject that as "Gyro rate too slow" (PreArm failure)
 # and report "Main loop slow", so run the SITL scheduler at 100 Hz.
-SCHED_LOOP_RATE 100
+SCHED_LOOP_RATE 400
 
 # Vehicle frame: Quad, X motor layout. The MRS x500 template propeller
 # order matches the ArduCopter Quad X motor order

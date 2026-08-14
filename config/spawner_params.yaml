@@ -22,7 +22,7 @@ mrs_drone_spawner:
       # Simulated world home "lat,lon,alt_amsl,heading_deg", has to match the
       # world_origin expected by the MRS system (see tmux world_config.yaml)
       home: '47.397743,8.545594,340,0'
-      stream_for_qgc: true
+      stream_for_qgc: false
       firmware_launch_delay: 10.0 # [s] after spawn, wait before launching the SITL firmware
       # port bases, offset by 10*UAV_ID for each robot (ArduPilot multi-instance convention)
       # NOTE: the MAVROS link uses the SITL's GCS TCP server (5760 + 10*UAV_ID)
