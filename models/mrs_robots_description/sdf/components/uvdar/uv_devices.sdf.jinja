@@ -93,3 +93,46 @@
   {%- endif -%}
 {%- endmacro -%}
 
+
+{# uv_leds_beacon_macro {--> #}
+{%- macro uv_leds_beacon_macro(parent_link, x1, x2, y1, y2, z, spawner_args) -%}
+
+  {%- set spawner_keyword = 'enable-uv-leds-beacon' -%}
+  {%- set spawner_description = 'Add UV LED beacon to the top of the vehicle. Requires param "signal_id" to be set.' -%}
+  {%- set spawner_default_args = {'signal_id': none} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {%- if spawner_args[spawner_keyword]['signal_id'] is not none -%}
+
+      {# -- leds configuration -- (id, signal_id, x, y, z, roll, pitch, yaw) #}
+      {%- set uv_leds_macro_parameters = [('b1', spawner_args[spawner_keyword]['signal_id'],  x1,  y1, z, 0.0, math.radians(90), 0.0),
+                                          ('b2', spawner_args[spawner_keyword]['signal_id'],  x2,  y2, z, 0.0, math.radians(90), math.radians(90)),
+                                          ('b3', spawner_args[spawner_keyword]['signal_id'], -x1, -y1, z, 0.0, math.radians(90), math.radians(180)),
+                                          ('b4', spawner_args[spawner_keyword]['signal_id'], -x2, -y2, z, 0.0, math.radians(90), math.radians(270))] -%}
+
+      <!-- UV LED beacon {-->
+      {%- for id_, signal_id_, x_, y_, z_, roll_, pitch_, yaw_ in uv_leds_macro_parameters -%}
+        <!-- Beacon LED {{ id_ }} {-->
+        {{ led.uvled_macro(
+          parent_link = parent_link,
+          device_id = spawner_args['name'] + '_' + id_ | string(),
+          signal_id = signal_id_,
+          x = x_,
+          y = y_,
+          z = z_,
+          roll = roll_,
+          pitch = pitch_,
+          yaw = yaw_)
+        }}
+        <!--}-->
+      {%- endfor -%}
+      <!--}-->
+
+    {%- endif -%}
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}

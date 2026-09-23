@@ -747,6 +747,17 @@
       spawner_args = spawner_args)
     }}
 
+    {# 4 LEDs 1 cm around the centre, on top of the vehicle, aimed +x, +y, -x, -y #}
+    {{ components.uv_leds_beacon_macro(
+      parent_link = root,
+      x1 = 0.01,
+      x2 = 0.0,
+      y1 = 0.0,
+      y2 = 0.01,
+      z = 0.125,
+      spawner_args = spawner_args)
+    }}
+
     {{ components.dual_uv_cameras_macro(
             parent_link = root,
             x1 = 0.039,
