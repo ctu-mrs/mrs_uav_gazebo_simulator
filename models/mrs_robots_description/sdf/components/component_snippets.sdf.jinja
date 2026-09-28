@@ -268,8 +268,8 @@ limitations under the License.
 {%- endmacro -%}
 
 {%- import "mrs_robots_description/sdf/components/uvdar/uv_devices.sdf.jinja" as uv_leds_beacon -%}
-{%- macro uv_leds_beacon_macro(parent_link, x1, x2, y1, y2, z, spawner_args) -%}
-  {{ uv_leds_beacon.uv_leds_beacon_macro(parent_link, x1, x2, y1, y2, z, spawner_args) }}
+{%- macro uv_leds_beacon_macro(parent_link, radius, z, yaw_offset, spawner_args) -%}
+  {{ uv_leds_beacon.uv_leds_beacon_macro(parent_link, radius, z, yaw_offset, spawner_args) }}
 {%- endmacro -%}
 
 {%- import "mrs_robots_description/sdf/components/uvdar/uv_devices.sdf.jinja" as uv_cameras -%}
