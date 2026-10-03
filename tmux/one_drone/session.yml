@@ -43,7 +43,7 @@ windows:
   - autostart:
       layout: tiled
       panes:
-        - ros2 launch mrs_uav_autostart automatic_start.launch.py custom_config:=./config/automatic_start.yaml
+        - ros2 launch mrs_uav_autostart automatic_start.launch.py custom_config:=./config/custom_config.yaml
   - takeoff:
       layout: tiled
       panes:
