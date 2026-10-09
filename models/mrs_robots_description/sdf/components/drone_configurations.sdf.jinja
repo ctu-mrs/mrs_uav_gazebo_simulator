@@ -4,6 +4,10 @@
 {%- import 'mrs_robots_description/sdf/components/component_snippets.sdf.jinja' as components -%}
 {%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
 
+{#
+  This file provides reusable Jinja macros for selecting drone configurations
+  (e.g., motor and propeller setups) via command-line arguments.
+#}
 
 {# ========================================================== #}
 {#                 Components using spawner API               #}
@@ -14,7 +18,7 @@
 
     {%- set spawner_keyword = 'prop-config' -%}
     {%- set spawner_description = 'Select the motors-propellers configuration used on the drone' -%}
-    {%- set spawner_default_args = {'config': 'madm6c06_320_22x66'} -%}
+    {%- set spawner_default_args = {'config': 'mad5008_400_18x61'} -%}
 
     {{ generic.handle_spawner_args(
         spawner_keyword,
