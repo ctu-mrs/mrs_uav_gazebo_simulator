@@ -8,7 +8,7 @@ tmux_options: -f /etc/ctu-mrs/tmux.conf
 pre_window:
   - export UAV_NAME=uav1
   - export RUN_TYPE=simulation
-  - export UAV_TYPE=x500
+  - export UAV_TYPE=robocore
   - export PLATFORM_CONFIG=`ros2 pkg prefix mrs_uav_gazebo_simulator`/share/mrs_uav_gazebo_simulator/config/mrs_uav_system/$UAV_TYPE.yaml
   - export RMW_IMPLEMENTATION=rmw_zenoh_cpp
   - export USE_SIM_TIME="true"

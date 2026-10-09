@@ -1,0 +1,74 @@
+<?xml version="1.0"? encoding="utf-8">
+<sdf version="1.10">
+
+{%- import 'mrs_robots_description/sdf/components/component_snippets.sdf.jinja' as components -%}
+{%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
+
+
+{# ========================================================== #}
+{#                 Components using spawner API               #}
+{# ========================================================== #}
+
+{# select_prop_config {--> #}
+{%- macro select_prop_config(prop_configs, spawner_args, output) -%}
+
+    {%- set spawner_keyword = 'prop-config' -%}
+    {%- set spawner_description = 'Select the motors-propellers configuration used on the drone' -%}
+    {%- set spawner_default_args = {'config': 'madm6c06_320_22x66'} -%}
+
+    {{ generic.handle_spawner_args(
+        spawner_keyword,
+        spawner_default_args,
+        spawner_args)
+    }}
+
+    {%- set selected_config = spawner_args[spawner_keyword]['config'] -%}
+    {%- set output.selected = prop_configs[selected_config] -%}
+
+{%- endmacro -%}
+
+{# prop_config_macro {--> #}
+{%- macro prop_config_macro(selected_config, prop_list, rotor_velocity_slowdown_sim, time_constant_up, time_constant_down, motor_mesh_z_offset, parent_link, spawner_args) -%}
+
+    {%- set config = selected_config -%}
+
+    {%- set mass_prop = config['mass_prop'] -%}
+    {%- set prop_radius = config['prop_radius'] -%}
+    {%- set prop_height = config['prop_height'] -%}
+    {%- set max_rot_velocity = config['max_rot_velocity'] -%}
+    {%- set motor_constant = config['motor_constant'] -%}
+    {%- set moment_constant = config['moment_constant'] -%}
+    {%- set rotor_drag_coefficient = config['rotor_drag_coefficient'] -%}
+    {%- set rolling_moment_coefficient = config['rolling_moment_coefficient'] -%}
+
+    {%- set prop_ixx = mass_prop * ( 3 * prop_radius * prop_radius + prop_height * prop_height) / 12 -%}
+    {%- set prop_ixy = 0 -%}
+    {%- set prop_ixz = 0 -%}
+    {%- set prop_iyy = mass_prop * ( 3 * prop_radius * prop_radius + prop_height * prop_height) / 12  -%}
+    {%- set prop_iyz = 0 -%}
+    {%- set prop_izz = (mass_prop * prop_radius * prop_radius) / 2 -%}
+
+    {{ components.propellers_macro(
+      prop_list = prop_list,
+      rotor_velocity_slowdown_sim = rotor_velocity_slowdown_sim,
+      motor_constant = motor_constant,
+      moment_constant = moment_constant,
+      parent = parent_link,
+      mass = mass_prop,
+      radius = prop_radius,
+      time_constant_up = time_constant_up,
+      time_constant_down = time_constant_down,
+      max_rot_velocity = max_rot_velocity,
+      rotor_drag_coefficient = rotor_drag_coefficient,
+      rolling_moment_coefficient = rolling_moment_coefficient,
+      meshes_z_offset = motor_mesh_z_offset,
+      prop_ixx = prop_ixx,
+      prop_ixy = prop_ixy,
+      prop_ixz = prop_ixz,
+      prop_iyy = prop_iyy,
+      prop_iyz = prop_iyz,
+      prop_izz = prop_izz,
+      spawner_args = spawner_args)
+    }}
+
+{%- endmacro -%}
