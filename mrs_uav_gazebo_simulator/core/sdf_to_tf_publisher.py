@@ -66,7 +66,8 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
             # direct base_frame -> sensor transform instead of a redundant base_frame -> link -> sensor chain.
             if self._is_standalone_sensor_link(data):
                 self._register_direct_sensor_transform(sensor_data=sensors[0],
-                                                       pose_str=data[LinkToSensorData.LINK_POSE_STR])
+                                                       pose_str=data[LinkToSensorData.LINK_POSE_STR],
+                                                       parent_frame=data[LinkToSensorData.TF_PARENT_FRAME])
                 continue
 
             if not self._register_sensor_link_transform(link_name=link_name, data=data):
@@ -103,7 +104,7 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
 
     # #{ _register_sensor_link_transform(self, link_name, data)
     def _register_sensor_link_transform(self, link_name, data):
-        # Publish transform of the sensor link with respect to the base frame
+        # Publish transform of the sensor link with respect to the base frame (or the link's tf_parent_frame)
         pose_Base_SensorLink_str = data[LinkToSensorData.LINK_POSE_STR]
         if pose_Base_SensorLink_str is None or (pose_Base_SensorLink_str == ""):
             return False
@@ -111,21 +112,21 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
 
         self._transformations.append({
             TfData.CHILD_FRAME: self._append_namespace(link_name),
-            TfData.PARENT_FRAME: self._append_namespace(self._base_frame),
+            TfData.PARENT_FRAME: self._append_namespace(data[LinkToSensorData.TF_PARENT_FRAME]),
             TfData.TF_MATRIX: T_Base_SensorLink
         })
         return True
 
     # #}
 
-    # #{ _register_direct_sensor_transform(self, sensor_data, pose_str)
-    def _register_direct_sensor_transform(self, sensor_data, pose_str):
-        # Publish transform of a standalone sensor directly with respect to the base frame
+    # #{ _register_direct_sensor_transform(self, sensor_data, pose_str, parent_frame)
+    def _register_direct_sensor_transform(self, sensor_data, pose_str, parent_frame):
+        # Publish transform of a standalone sensor directly with respect to the base frame (or the link's tf_parent_frame)
         T_Base_Sensor = self._get_transform_from_string_pose(pose_str)
 
         self._transformations.append({
             TfData.CHILD_FRAME: self._append_namespace(sensor_data[SensorLinkData.SENSOR_NAME]),
-            TfData.PARENT_FRAME: self._append_namespace(self._base_frame),
+            TfData.PARENT_FRAME: self._append_namespace(parent_frame),
             TfData.TF_MATRIX: T_Base_Sensor
         })
 
@@ -218,6 +219,9 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
                 link_sensor_name = link.get("name")
                 link_sensor_pose_elem = link.find('pose')
                 link_sensor_pose_str = link_sensor_pose_elem.text if link_sensor_pose_elem is not None else None
+                # Links on moving joints (e.g. a servo gimbal) are attached to a frame published by their plugin,
+                # in that case the link pose is relative to <tf_parent_frame> instead of the base frame.
+                link_tf_parent_frame = link.findtext('tf_parent_frame') or self._base_frame
 
                 sensors_within_link = []
                 for sensor in sensors:
@@ -250,6 +254,7 @@ class SdfTfPublisherSingleton(metaclass=SingletonMeta):
 
                 link_to_sensors[link_sensor_name] = {
                     LinkToSensorData.LINK_POSE_STR: link_sensor_pose_str,
+                    LinkToSensorData.TF_PARENT_FRAME: link_tf_parent_frame,
                     LinkToSensorData.SENSORS: sensors_within_link,
                 }
         return link_to_sensors
