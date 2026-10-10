@@ -1,0 +1,246 @@
+<?xml version="1.0"? encoding="utf-8">
+{%- import 'mrs_robots_description/sdf/components/generic_components.sdf.jinja' as generic -%}
+
+{# ================================================================================= #}
+{# ------------------------------- Servo Camera Macro ------------------------------ #}
+{# ================================================================================= #}
+
+{# The camera sits on a chain of revolute joints parent_link -> yaw -> roll -> pitch, driven by the       #}
+{# ServoCameraPlugin from mrs_gazebo_common_resources. The plugin also publishes the TF of the chain,     #}
+{# relative to the robot's fcu frame, so the gimbal has to be attached to the root link of the vehicle.   #}
+{# (x, y, z) is the position of the first joint w.r.t. parent_link, the *_offset_* arguments are the      #}
+{# translations of the following joints w.r.t. the previous one. The joints have no rotational offset.     #}
+{# The yaw axis is locked by default (min_yaw = max_yaw = 0), set its limits to make the gimbal 3-axis.    #}
+
+{# servo_camera_macro {-->#}
+{%- macro servo_camera_macro(parent_link, x, y, z, mount, spawner_args,
+                             roll_offset_x = 0.0, roll_offset_y = 0.0, roll_offset_z = 0.0,
+                             pitch_offset_x = 0.0, pitch_offset_y = 0.0, pitch_offset_z = 0.0,
+                             min_yaw = 0.0, max_yaw = 0.0, max_yaw_rate = 1.0, compensate_tilt_yaw = false,
+                             min_roll = -0.5, max_roll = 0.5, max_roll_rate = 1.0, compensate_tilt_roll = true,
+                             min_pitch = -1.57, max_pitch = 1.57, max_pitch_rate = 1.0, compensate_tilt_pitch = true,
+                             yaw_link_mesh_file = '', roll_link_mesh_file = '', pitch_link_mesh_file = '', mesh_scale = '1 1 1') -%}
+
+  {%- set spawner_keyword = 'enable-servo-camera' -%}
+  {%- set spawner_description = 'Add a camera on a virtual servo gimbal to the vehicle [1280x720 @ 30hz], orientation controlled over ROS' -%}
+  {%- set spawner_default_args = {'update_rate': 30, 'horizontal_fov': 1.5, 'width': 1280, 'height': 720, 'noise': 0.007, 'servo_rate': 30} -%}
+
+  {%- if spawner_keyword in spawner_args.keys() -%}
+    {{ generic.handle_spawner_args(spawner_keyword, spawner_default_args, spawner_args) }}
+
+    {# setup local variables {--> #}
+    {%- set uav_name = spawner_args['name'] -%}
+    {%- set camera_name = 'servo_camera' -%}
+    {%- set yaw_link_name = camera_name + '_yaw' -%}
+    {%- set roll_link_name = camera_name + '_roll' -%}
+    {%- set pitch_link_name = camera_name + '_pitch' -%}
+    {%- set camera_link_name = camera_name -%}
+    {%- set camera_gz_frame_id = uav_name + '/' + camera_name + '/color_optical' -%}
+
+    {# -- ROS and Gazebo Topics -- #}
+    {%- set root_sdf_topic = uav_name + '/' + camera_name -%}
+    {%- set camera_sdf_topic = root_sdf_topic + '/image_raw' -%}
+    {%- set gz_camera_info_topic = root_sdf_topic + '/camera_info' -%}
+    {%- set ros_camera_info_topic = root_sdf_topic + '/camera_info' -%}
+    {# <!--}--> #}
+
+    <!-- Servo camera {-->
+
+    <!-- yaw {-->
+    <link name="{{ yaw_link_name }}">
+      <pose relative_to="{{ yaw_link_name }}_joint">0 0 0 0 0 0</pose>
+      {{ generic.zero_inertial_macro() }}
+      {{ servo_link_visual_macro(yaw_link_name, yaw_link_mesh_file, mesh_scale) }}
+    </link>
+
+    <joint name="{{ yaw_link_name }}_joint" type="revolute">
+      <parent>{{ parent_link }}</parent>
+      <child>{{ yaw_link_name }}</child>
+      <pose relative_to="{{ parent_link }}">{{ x }} {{ y }} {{ z }} 0 0 0</pose>
+      {{ servo_joint_axis_macro('0 0 1', min_yaw, max_yaw) }}
+    </joint>
+    <!--}-->
+
+    <!-- roll {-->
+    <link name="{{ roll_link_name }}">
+      <pose relative_to="{{ roll_link_name }}_joint">0 0 0 0 0 0</pose>
+      {{ generic.zero_inertial_macro() }}
+      {{ servo_link_visual_macro(roll_link_name, roll_link_mesh_file, mesh_scale) }}
+    </link>
+
+    <joint name="{{ roll_link_name }}_joint" type="revolute">
+      <parent>{{ yaw_link_name }}</parent>
+      <child>{{ roll_link_name }}</child>
+      <pose relative_to="{{ yaw_link_name }}">{{ roll_offset_x }} {{ roll_offset_y }} {{ roll_offset_z }} 0 0 0</pose>
+      {{ servo_joint_axis_macro('1 0 0', min_roll, max_roll) }}
+    </joint>
+    <!--}-->
+
+    <!-- pitch {-->
+    <link name="{{ pitch_link_name }}">
+      <pose relative_to="{{ pitch_link_name }}_joint">0 0 0 0 0 0</pose>
+      {{ generic.zero_inertial_macro() }}
+      {{ servo_link_visual_macro(pitch_link_name, pitch_link_mesh_file, mesh_scale) }}
+    </link>
+
+    <joint name="{{ pitch_link_name }}_joint" type="revolute">
+      <parent>{{ roll_link_name }}</parent>
+      <child>{{ pitch_link_name }}</child>
+      <pose relative_to="{{ roll_link_name }}">{{ pitch_offset_x }} {{ pitch_offset_y }} {{ pitch_offset_z }} 0 0 0</pose>
+      {{ servo_joint_axis_macro('0 1 0', min_pitch, max_pitch) }}
+    </joint>
+    <!--}-->
+
+    <!-- camera {-->
+    <link name="{{ camera_link_name }}">
+      <pose relative_to="{{ pitch_link_name }}">0 0 0 0 0 0</pose>
+      {# the pitch link is published by the servo plugin, not by the static TF publisher #}
+      <tf_parent_frame>{{ pitch_link_name }}</tf_parent_frame>
+      {{ generic.zero_inertial_macro() }}
+
+      {{ generic.gazebo_rgb_camera_macro(
+        camera_name = camera_name,
+        camera_gz_frame_id = camera_gz_frame_id,
+        camera_topic_name = camera_sdf_topic,
+        gz_camera_info_topic = gz_camera_info_topic,
+        ros_camera_info_topic = ros_camera_info_topic,
+        ros_color_image_topic = camera_sdf_topic,
+        frame_rate = spawner_args[spawner_keyword]['update_rate'],
+        horizontal_fov = spawner_args[spawner_keyword]['horizontal_fov'],
+        image_width = spawner_args[spawner_keyword]['width'],
+        image_height = spawner_args[spawner_keyword]['height'],
+        min_distance = 0.02,
+        max_distance = 100,
+        noise_mean = 0.0,
+        noise_stddev = spawner_args[spawner_keyword]['noise'],
+        x_offset = 0,
+        y_offset = 0,
+        z_offset = 0,
+        roll_offset = 0,
+        pitch_offset = 0,
+        yaw_offset = 0)
+      }}
+    </link>
+
+    <link name="{{ camera_gz_frame_id }}">
+      {{ generic.zero_inertial_macro() }}
+      <pose relative_to="{{ camera_link_name }}">0 0 0 {{ -math.radians(90) }} 0 {{ -math.radians(90) }}</pose>
+    </link>
+
+    <joint name="{{ camera_link_name }}_joint" type="fixed">
+      <parent>{{ pitch_link_name }}</parent>
+      <child>{{ camera_link_name }}</child>
+    </joint>
+
+    <joint name="{{ camera_gz_frame_id }}_joint" type="fixed">
+      <parent>{{ camera_link_name }}</parent>
+      <child>{{ camera_gz_frame_id }}</child>
+    </joint>
+    <!--}-->
+
+    <!-- servo plugin {-->
+    <plugin filename="MrsGazeboCommonResources_ServoCameraPlugin" name="gz::sim::systems::ServoCameraPlugin">
+      <parent_frame_name>{{ uav_name }}/fcu</parent_frame_name>
+      <update_rate>{{ spawner_args[spawner_keyword]['servo_rate'] }}</update_rate>
+      <setpoint_rate>1</setpoint_rate>
+      <yaw>
+        <joint_name>{{ yaw_link_name }}_joint</joint_name>
+        <parent_link>{{ parent_link }}</parent_link>
+        <frame_name>{{ uav_name }}/{{ yaw_link_name }}</frame_name>
+        <min_angle>{{ min_yaw }}</min_angle>
+        <max_angle>{{ max_yaw }}</max_angle>
+        <max_rate>{{ max_yaw_rate }}</max_rate>
+        <compensate_tilt>{{ compensate_tilt_yaw | lower }}</compensate_tilt>
+        <offset_x>{{ x }}</offset_x>
+        <offset_y>{{ y }}</offset_y>
+        <offset_z>{{ z }}</offset_z>
+      </yaw>
+      <roll>
+        <joint_name>{{ roll_link_name }}_joint</joint_name>
+        <parent_link>{{ yaw_link_name }}</parent_link>
+        <frame_name>{{ uav_name }}/{{ roll_link_name }}</frame_name>
+        <min_angle>{{ min_roll }}</min_angle>
+        <max_angle>{{ max_roll }}</max_angle>
+        <max_rate>{{ max_roll_rate }}</max_rate>
+        <compensate_tilt>{{ compensate_tilt_roll | lower }}</compensate_tilt>
+        <offset_x>{{ roll_offset_x }}</offset_x>
+        <offset_y>{{ roll_offset_y }}</offset_y>
+        <offset_z>{{ roll_offset_z }}</offset_z>
+      </roll>
+      <pitch>
+        <joint_name>{{ pitch_link_name }}_joint</joint_name>
+        <parent_link>{{ roll_link_name }}</parent_link>
+        <frame_name>{{ uav_name }}/{{ pitch_link_name }}</frame_name>
+        <min_angle>{{ min_pitch }}</min_angle>
+        <max_angle>{{ max_pitch }}</max_angle>
+        <max_rate>{{ max_pitch_rate }}</max_rate>
+        <compensate_tilt>{{ compensate_tilt_pitch | lower }}</compensate_tilt>
+        <offset_x>{{ pitch_offset_x }}</offset_x>
+        <offset_y>{{ pitch_offset_y }}</offset_y>
+        <offset_z>{{ pitch_offset_z }}</offset_z>
+      </pitch>
+    </plugin>
+    <!--}-->
+
+    <!--}-->
+
+    <!-- mount {-->
+    {{ mount if mount }}
+    <!--}-->
+
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}
+
+{# ----------------------------------- Helpers ------------------------------------- #}
+
+{# servo_link_visual_macro {-->#}
+{%- macro servo_link_visual_macro(link_name, mesh_file, mesh_scale) -%}
+  {%- if mesh_file == '' -%}
+    {{ generic.visual_colored_box_macro(
+      name = link_name,
+      size_x = 0.01,
+      size_y = 0.01,
+      size_z = 0.01,
+      color = 'Black',
+      x = 0,
+      y = 0,
+      z = 0,
+      roll = 0,
+      pitch = 0,
+      yaw = 0)
+    }}
+  {%- else -%}
+    {{ generic.visual_mesh_macro(
+      name = link_name,
+      mesh_file = mesh_file,
+      mesh_scale = mesh_scale,
+      color = 'Black',
+      x = 0,
+      y = 0,
+      z = 0,
+      roll = 0,
+      pitch = 0,
+      yaw = 0)
+    }}
+  {%- endif -%}
+{%- endmacro -%}
+{# <!--}--> #}
+
+{# servo_joint_axis_macro {-->#}
+{%- macro servo_joint_axis_macro(xyz, lower, upper) -%}
+  <axis>
+    <xyz>{{ xyz }}</xyz>
+    <limit>
+      <lower>{{ lower }}</lower>
+      <upper>{{ upper }}</upper>
+      <effort>1</effort>
+      <velocity>10</velocity>
+    </limit>
+    <dynamics>
+      <damping>0.0</damping>
+      <friction>0.0</friction>
+    </dynamics>
+  </axis>
+{%- endmacro -%}
+{# <!--}--> #}

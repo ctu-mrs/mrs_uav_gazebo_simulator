@@ -938,6 +938,18 @@
 
     {# <!--}--> #}
 
+    {# Servo camera {--> #}
+    {%- set servo_camera = components.servo_camera_macro(
+      parent_link = root,
+      x = 0.1,
+      y = 0.0,
+      z = -0.06,
+      mount = none,
+      spawner_args = spawner_args)
+    -%}
+    {{ servo_camera }}
+    {# <!--}--> #}
+
     {# ====================== conditional components ==================== #}
 
     {# lidar mount / gps antenna visuals {--> #}
