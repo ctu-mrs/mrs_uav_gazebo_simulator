@@ -199,6 +199,9 @@ class MrsDroneSpawner(Node):
             self.get_logger().error('Template did not render, spawn failed.')
             return
 
+        suffix = robot_params.get('px4_model_suffix')
+        robot_params['px4_sim_model'] = f"{robot_params['model']}_{suffix}" if suffix else robot_params['model']
+
         self._sdf_to_tf_publisher.generate_sensor_tfs(sdf_content)
 
         filename = f'mrs_drone_spawner_{name}.sdf'

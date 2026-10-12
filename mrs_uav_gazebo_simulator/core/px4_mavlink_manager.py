@@ -93,9 +93,11 @@ class Px4MavlinkManager():
             self._ros_node.get_logger().error(f'Could not start PX4 firmware for {name}. ROMFS folder not found')
             raise CouldNotLaunch('ROMFS folder not found')
 
+        px4_sim_model = robot_params.get('px4_sim_model', robot_params['model'])
+
         launch_arguments = {
             'ID': str(robot_params['ID']),
-            'PX4_SIM_MODEL': str(robot_params['model']),
+            'PX4_SIM_MODEL': px4_sim_model,
             'ROMFS_PATH': str(romfs_path),
             'CONNECT_TO_QGC': str(self._px4_mavlink_config.stream_for_qgc)
         }
