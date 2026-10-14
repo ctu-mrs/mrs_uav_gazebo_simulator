@@ -197,8 +197,11 @@ class MrsDroneSpawner(Node):
 
         if sdf_content is None:
             self.get_logger().error('Template did not render, spawn failed.')
+            self._user_input_manager.assigned_ids.discard(robot_params['ID'])
             return
 
+        # Set by drone_configurations.sdf.jinja (select_prop_config) while rendering: the PX4 airframe
+        # of a model with several configurations is <ID>_<model>_<config>, see ROMFS/.../airframes.
         suffix = robot_params.get('px4_model_suffix')
         robot_params['px4_sim_model'] = f"{robot_params['model']}_{suffix}" if suffix else robot_params['model']
 

@@ -16,15 +16,16 @@ This package provides UAV model definitions for the Gazebo simulator and a custo
 > :warning: **The following platforms have been ported to ROS2.**
 > Only default pixhawk sensors and a garmin rangefinder are currently available.
 
-| Model         | Spawn argument | Simulation                       |
-|---------------|----------------|----------------------------------|
-| Holybro x500  | `--x500`       | ![](.fig/x500_simulation.jpg)    |
-| DJI f450      | `--f450`       | ![](.fig/f450_simulation.jpg)    |
-| DJI f330      | `--f330`       | ![](.fig/f330_simulation.jpg)    |
-| DJI f550      | `--f550`       | ![](.fig/f550_simulation.jpg)    |
-| F4F RoboFly   | `--robofly`    | ![](.fig/robofly_simulation.jpg) |
-| T-Drones m690 | `--m690`       | ![](.fig/m690_simulation.jpg)    |
-| Tarot t650    | `--t650`       | ![](.fig/t650_simulation.jpg)    |
+| Model         | Spawn argument                              | Simulation                       |
+|---------------|---------------------------------------------|----------------------------------|
+| Holybro x500  | `--x500`                                    | ![](.fig/x500_simulation.jpg)    |
+| DJI f450      | `--f450`                                    | ![](.fig/f450_simulation.jpg)    |
+| DJI f330      | `--f330`                                    | ![](.fig/f330_simulation.jpg)    |
+| DJI f550      | `--f550`                                    | ![](.fig/f550_simulation.jpg)    |
+| F4F RoboFly   | `--robofly`                                 | ![](.fig/robofly_simulation.jpg) |
+| T-Drones m690 | `--m690`                                    | ![](.fig/m690_simulation.jpg)    |
+| Tarot t650    | `--t650`                                    | ![](.fig/t650_simulation.jpg)    |
+| Robocore      | `--robocore --prop-config config:=<CONFIG>` | ![](.fig/robocore_simulation.jpg)|
 <!-- | NAKI II       | `--naki` | ![](.fig/naki_simulation.jpg) | -->
 
 
@@ -99,6 +100,25 @@ Multiple vehicles may be spawned with one service call:
 ```bash
 ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "value: 1 2 3 4 5 --t650 --enable-bluefox-camera --enable-rangefinder"
 ```
+
+#### Models with several motor/propeller configurations
+
+Some models (e.g. `robocore`) come in several motor/propeller configurations, selected with
+`--prop-config config:=<CONFIG>` (the `config:=` key is required). Without it the template default is used (only in the spawner).
+
+```bash
+ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "value: 1 --robocore --prop-config config:=mad5008_400_18x61 --enable-rangefinder"
+```
+
+Each configuration `<CONFIG>` needs three files, all named after `<model>_<CONFIG>`:
+
+* the entry in `prop_configs` of the model template (`models/mrs_robots_description/sdf/drones/<model>.sdf.jinja`),
+* the PX4 airframe `<ID>_<model>_<CONFIG>` (`ROMFS/px4fmu_common/init.d-posix/airframes/`), with an ID no other airframe uses,
+* the MRS platform config `<model>_<CONFIG>.yaml` (`config/mrs_uav_system/`): set `UAV_CONFIG` in the tmux session so that `PLATFORM_CONFIG` points to it (see `tmux/one_drone/session.yml`).
+
+Notice: if the model has more than one configuration the corresponding config file will have `<model>_<CONFIG>`.yaml.
+Therefore, one must modify all the session scripts to account for it or the simulation will fail.
+e.g. You can fill UAV_CONFIG in session.yml for the simulation of interest.
 
 The default parameters of some components may be reconfigured by adding `param:=value` after the component keyword. Multiple params may be used at the same time:
 ```bash

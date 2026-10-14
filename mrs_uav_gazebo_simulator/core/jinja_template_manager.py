@@ -117,7 +117,11 @@ class JinjaTemplateManager():
             f'Rendering model "{model_name}" using template {template_wrapper.jinja_template.filename}')
 
         context = template_wrapper.jinja_template.new_context(params)
-        rendered_template = template_wrapper.jinja_template.render(context)
+        try:
+            rendered_template = template_wrapper.jinja_template.render(context)
+        except jinja2.TemplateError as e:
+            self._ros_node.get_logger().error(f'Cannot render model "{model_name}": {e}')
+            return
         try:
             root = xml.dom.minidom.parseString(rendered_template)
         except Exception as e:

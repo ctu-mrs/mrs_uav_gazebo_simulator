@@ -14,11 +14,11 @@
 {# ========================================================== #}
 
 {# select_prop_config {--> #}
-{%- macro select_prop_config(prop_configs, spawner_args, output) -%}
+{%- macro select_prop_config(prop_configs, spawner_args, default_config, output) -%}
 
     {%- set spawner_keyword = 'prop-config' -%}
     {%- set spawner_description = 'Select the motors-propellers configuration used on the drone' -%}
-    {%- set spawner_default_args = {'config': 'mad5012_340_22x66'} -%}
+    {%- set spawner_default_args = {'config': 'default'} -%}
 
     {{ generic.handle_spawner_args(
         spawner_keyword,
@@ -27,7 +27,11 @@
     }}
 
     {%- set selected_config = spawner_args[spawner_keyword]['config'] -%}
+    {%- if selected_config == 'default' -%}
+      {%- set selected_config = default_config -%}
+    {%- endif -%}
     {%- set output.selected = prop_configs[selected_config] -%}
+    {#- Read by mrs_drone_spawner after rendering to pick the PX4 airframe <ID>_<model>_<config> -#}
     {%- set _ = spawner_args.update({'px4_model_suffix': selected_config}) -%}
 
 {%- endmacro -%}
