@@ -9,11 +9,10 @@
   {# ================================================================== #}
 
   {# Robot parameters and arguments {--> #}
-  {%- set mass = 0.8 -%} {# [kg] #}
-  {%- set prop_mass = 0.002 -%} {# [kg] #}
+  {%- set mass = 0.78 -%} {# [kg] #}
+  {%- set prop_mass = 0.005 -%} {# [kg] #}
   {%- set body_radius = 0.15 -%} {# [m] #}
   {%- set body_height = 0.1 -%} {# [m] #}
-  {%- set mass_prop = 0.005 -%} {# [kg] #}
   {%- set prop_radius = 0.0635 -%} {# [m] #}
   {%- set prop_height = 0.01 -%} {# [m] #}
   {%- set prop_offset_top = 0.021 -%} {# [m] #}
@@ -22,12 +21,12 @@
   {# <!--}--> #}
 
   {# Motor constants {--> #}
-  {%- set rotor_velocity_slowdown_sim = 20 -%} {# slowdown ratio, only affects simulation visuals #}
-  {%- set motor_constant = '6.7e-6' -%} {# [N / (rad/s)^2], compute from max desired thurst at max power #}
-  {%- set moment_constant = 0.017 -%} {# [m] ratio between rolling/pitching moment and yawing moment, increase for faster yaw #}
-  {%- set time_constant_up = 0.0125 -%} {# [s] how fast props gain speed when throttle goes up #}
-  {%- set time_constant_down = 0.025 -%} {# [s] how fast props lose speed when throttle goes down #}
-  {%- set max_rot_velocity = 2300 -%} {# [rad/s] max real propeller rotation velocity #}
+  {%- set rotor_velocity_slowdown_sim = 40 -%} {# slowdown ratio, only affects simulation visuals #}
+  {%- set motor_constant = '1.1e-6' -%} {# [N / (rad/s)^2], compute from max desired thurst at max power #}
+  {%- set moment_constant = 0.0517 -%} {# [m] ratio between rolling/pitching moment and yawing moment, increase for faster yaw #}
+  {%- set time_constant_up = 0.006 -%} {# [s] how fast props gain speed when throttle goes up #}
+  {%- set time_constant_down = 0.01 -%} {# [s] how fast props lose speed when throttle goes down #}
+  {%- set max_rot_velocity = 4200 -%} {# [rad/s] max real propeller rotation velocity #}
 
   {# this should only affect agile drones #}
   {%- set rotor_drag_coefficient = '1.0e-4' -%} {# N / (m/s)^2 how much thrust is lost due to air drag #}
@@ -219,7 +218,7 @@
       motor_constant = motor_constant,
       moment_constant = moment_constant,
       parent = root,
-      mass = mass_prop,
+      mass = prop_mass,
       radius = prop_radius,
       time_constant_up = time_constant_up,
       time_constant_down = time_constant_down,
