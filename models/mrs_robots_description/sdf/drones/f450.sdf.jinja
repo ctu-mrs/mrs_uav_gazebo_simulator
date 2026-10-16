@@ -31,11 +31,11 @@
 
   {# Motor constants {--> #}
   {%- set rotor_velocity_slowdown_sim = 15 -%} {# slowdown ratio, only affects simulation visuals #}
-  {%- set motor_constant = '1.05e-5' -%} {# [N / (rad/s)^2], computed for hover thurst at ~0.56 throttle #}
-  {%- set moment_constant = 0.06 -%} {# [m] ratio between rolling/pitching moment and yawing moment, increase for faster yaw #}
+  {%- set motor_constant = '1.1e-5' -%} {# [N / (rad/s)^2], computed for hover thurst at ~0.56 throttle #}
+  {%- set moment_constant = 0.062 -%} {# [m] ratio between rolling/pitching moment and yawing moment, increase for faster yaw #}
   {%- set time_constant_up = 0.0125 -%} {# [s] how fast props gain speed when throttle goes up #}
   {%- set time_constant_down = 0.025 -%} {# [s] how fast props lose speed when throttle goes down #}
-  {%- set max_rot_velocity = 1100 -%} {# [rad/s] max real propeller rotation velocity #}
+  {%- set max_rot_velocity = 1200 -%} {# [rad/s] max real propeller rotation velocity #}
 
   {# this should only affect agile drones #}
   {%- set rotor_drag_coefficient = '1.0e-4' -%} {# N / (m/s)^2 how much thrust is lost due to air drag #}

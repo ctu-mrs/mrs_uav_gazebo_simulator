@@ -2,8 +2,8 @@ uav_mass: 1.7
 
 motor_params:
   n_motors: 4
-  a:  0.37119
-  b: -0.17647
+  a: 0.77522
+  b: -1.2348
 
 # these model parameters can be used when
 # - 'control group', and/or

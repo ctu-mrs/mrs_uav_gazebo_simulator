@@ -62,6 +62,12 @@ param set-default CA_ROTOR3_PZ -0.057
 param set-default CA_ROTOR3_CT 1.0
 param set-default CA_ROTOR3_KM -0.06
 
+param set-default MPC_THR_HOVER 0.51
+param set-default MC_ROLLRATE_K 0.5
+param set-default MC_ROLL_P 3.0
+param set-default MC_PITCHRATE_K 0.5
+param set-default MC_PITCH_P 3.0
+
 param set-default SIM_GZ_EC_FUNC1 101
 param set-default SIM_GZ_EC_FUNC2 102
 param set-default SIM_GZ_EC_FUNC3 103
