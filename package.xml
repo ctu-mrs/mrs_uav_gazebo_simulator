@@ -18,7 +18,6 @@
   <depend>python3-jinja2</depend>
   <depend>ros_gz</depend>
   <depend>px4</depend>
-  <depend>mavros</depend>
   <depend>std_msgs</depend>
   <depend>mrs_msgs</depend>
   <depend>mrs_uav_px4_api</depend>

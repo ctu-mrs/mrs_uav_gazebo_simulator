@@ -19,58 +19,12 @@ class Px4MavlinkManager():
                  jinja_templates: dict):
         self._ros_node = ros_node
 
-        px4_api_path = get_package_share_directory('mrs_uav_px4_api')
-        self._mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch.py')
         self._px4_fimrware_launch_path = os.path.join(gazebo_simulator_path, 'launch',
                                                       'run_simulation_firmware.launch.py')
 
         self._px4_mavlink_config = px4_mavlink_config
 
         self._jinja_templates = jinja_templates
-
-    # #}
-
-    # #{ launch_mavros(self, robot_params)
-    def launch_mavros(self, robot_params):
-        name = robot_params['name']
-        self._ros_node.get_logger().info(f'Launching mavros for {name}')
-
-        launch_arguments = {
-            'uav_name': name,
-            # frame_namespace intentionally not overridden: mavros.launch.py defaults it to
-            # "<uav_name>/mavros", matching the frame IDs baked into mavros_px4_config.yaml.
-            'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
-            'gcs_url': '', # do not connect to QGC using mavros, we create a dedicated mavlink stream instead
-            'tgt_system': str(robot_params['ID'] + 1),
-            'use_sim_time': 'true',
-            # PX4 SITL's Gazebo bridge reports the simulated Garmin's mount orientation as
-            # ROTATION_CUSTOM (it doesn't match any of the fixed front/down/left references
-            # GZBridge checks against) - mavros silently drops range readings that don't
-            # match this exactly.
-            'garmin_id': '0',
-            'garmin_orientation': 'CUSTOM',
-        }
-
-        ld = LaunchDescription([
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(self._mavros_launch_path),
-                launch_arguments=launch_arguments.items(),
-            )
-        ])
-
-        self._ros_node.get_logger().info(f'launch_arguments: {launch_arguments}')
-        launch_service = LaunchService(debug=False)
-        launch_service.include_launch_description(ld)
-        mavros_process = multiprocessing.Process(target=launch_service.run)
-
-        try:
-            mavros_process.start()
-        except Exception as e:
-            self._ros_node.get_logger().error(f'Could not start mavros for {name}. Node failed to launch: {e}')
-            raise CouldNotLaunch('Mavros failed to launch')
-
-        self._ros_node.get_logger().info(f'Mavros for {name} launched')
-        return mavros_process
 
     # #}
 
@@ -139,7 +93,6 @@ class Px4MavlinkManager():
         mavlink_config['udp_offboard_port_local'] = udp_offboard_port_local
         mavlink_config['udp_qgc_port_remote'] = udp_qgc_port_remote
         mavlink_config['udp_qgc_port_local'] = udp_qgc_port_local
-        mavlink_config['fcu_url'] = f'udp://127.0.0.1:{udp_offboard_port_remote}@127.0.0.1:{udp_offboard_port_local}'
 
         return mavlink_config
 

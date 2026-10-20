@@ -72,7 +72,7 @@ The `mrs_drone_spawner` will perform the following tasks:
 
 * Add optional components (sensors, plugins...) based on the user input
 
-* Run PX4 SITL and Mavros, and ensure that all ports are correctly linked with the Gazebo simulator
+* Run PX4 SITL, and ensure that all ports are correctly linked with the Gazebo simulator
 
 * Remove all subprocesses on exit
 
