@@ -67,13 +67,15 @@ param set-default SIM_GZ_EC_FUNC2 102
 param set-default SIM_GZ_EC_FUNC3 103
 param set-default SIM_GZ_EC_FUNC4 104
 
-# use the full available throttle range 0 - 1000
+# use the full available throttle range 1 - 1000
 # the simulated ESC signal is cropped to integers :(
 # this throttle mapping gives the highest signal resolution
-param set-default SIM_GZ_EC_MIN1 0
-param set-default SIM_GZ_EC_MIN2 0
-param set-default SIM_GZ_EC_MIN3 0
-param set-default SIM_GZ_EC_MIN4 0
+# min 1, not 0: PX4 counts a simulated ESC as armed only if its output is > 0, near-zero thrust at armed idle
+# rounds to 0 and the ESC arming check (FD_ESCS_EN) disarms the UAV right after arming
+param set-default SIM_GZ_EC_MIN1 1
+param set-default SIM_GZ_EC_MIN2 1
+param set-default SIM_GZ_EC_MIN3 1
+param set-default SIM_GZ_EC_MIN4 1
 
 param set-default SIM_GZ_EC_MAX1 1000
 param set-default SIM_GZ_EC_MAX2 1000
