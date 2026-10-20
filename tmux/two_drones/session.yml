@@ -58,6 +58,10 @@ windows:
       panes:
         - export UAV_NAME=uav1; waitForCore; waitForAutomaticStart; armAndOffboard
         - export UAV_NAME=uav2; waitForCore; waitForAutomaticStart; armAndOffboard
+  - tf_connector:
+      layout: tiled
+      panes:
+        - ros2 launch mrs_tf_connector tf_connector.launch.py custom_config:=./config/tf_connector.yaml
   - rviz:
       layout: tiled
       panes:
