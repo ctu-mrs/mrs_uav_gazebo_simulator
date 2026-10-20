@@ -102,6 +102,11 @@
 
   {%- set mass = selected_prop_config['base_link_mass'] -%} 
 
+  {# Sensors positions {--> #}
+  {%- set garmin_offset_y= -0.09 -%} {# [m] #}
+  {%- set garmin_offset_x = -0.024 -%} {# [m] #}
+  {%- set garmin_offset_z = -0.029 -%} {# [m] #}
+
   {# Inertia constants {--> #}
   {%- set inertia_body_radius = 0.25 -%} {# [m] #}
   {%- set inertia_body_height = 0.05 -%} {# [m] #}
@@ -122,6 +127,7 @@
   {%- set bottom_board_mesh_file = 'model://mrs_robots_description/meshes/robocore_meshes/robocore_body_bottom.dae' -%}
   {%- set arm_3d_print_mesh_file = 'model://mrs_robots_description/meshes/robocore_meshes/robocore_arm.dae' -%}
   {%- set leg_3d_print_mesh_file = 'model://mrs_robots_description/meshes/robocore_meshes/robocore_legs.dae' -%}
+  {%- set antenna_mesh_file = 'model://mrs_robots_description/meshes/robocore_meshes/robocore_gps_antenna.dae' -%}
   {# <!--}--> #}
 
   {# Motors and props {--> #}
@@ -131,18 +137,12 @@
 
   {# Sensors and computers {--> #}
   {%- set pixhawk6c_mesh_file = 'model://mrs_robots_description/meshes/x500v2/pixhawk6c_mesh_file.stl' -%}
-  {%- set gps_mount_mesh_file = 'model://mrs_robots_description/meshes/x500v2/gps_mount_mesh_file.stl' -%}
   {%- set nuc_board_mesh_file = 'model://mrs_robots_description/meshes/x500v2/nuc_board_mesh_file.stl' -%}
-  {%- set nuc_cooler_mesh_file = 'model://mrs_robots_description/meshes/x500v2/nuc_cooler_mesh_file.stl' -%}
   {# <!--}--> #}
 
   {# Mounts {--> #}
   {%- set battery_mesh_file = 'model://mrs_robots_description/meshes/x500v2/battery_mesh_file.stl' -%}
   {%- set battery_mount_mesh_file = 'model://mrs_robots_description/meshes/x500v2/battery_mount_mesh_file.stl' -%}
-  {%- set nuc_hex_posts_mesh_file = 'model://mrs_robots_description/meshes/x500v2/nuc_hex_posts_mesh_file.stl' -%}
-  {%- set gps_module_mesh_file = 'model://mrs_robots_description/meshes/x500v2/gps_module_mesh_file.stl' -%}
-  {%- set garmin_mount_mesh_file = 'model://mrs_robots_description/meshes/x500v2/garmin_mount_mesh_file.stl' -%}
-
   {# <!--}--> #}
 
   {# <!--}--> #}
@@ -270,30 +270,6 @@
         pitch = 0,
         yaw = math.radians(90))
       }}
-      {{ generic.visual_mesh_macro(
-        name = 'nuc_cooler',
-        mesh_file = nuc_cooler_mesh_file,
-        mesh_scale = mesh_scale,
-        color = 'Grey',
-        x = 0,
-        y = 0,
-        z = 0,
-        roll = 0,
-        pitch = 0,
-        yaw = math.radians(90))
-      }}
-      {{ generic.visual_mesh_macro(
-        name = 'nuc_hex_posts',
-        mesh_file = nuc_hex_posts_mesh_file,
-        mesh_scale = mesh_scale,
-        color = 'Grey',
-        x = 0,
-        y = 0,
-        z = 0,
-        roll = 0,
-        pitch = 0,
-        yaw = math.radians(90))
-      }}
       <!--}-->
 
       <!-- Pixhawk {-->
@@ -393,28 +369,13 @@
       }}
       <!--}-->
 
-      {# GPS antenna and mount {--> #}
+      {# GPS antenna {--> #}
       {%- set gps_visuals -%}
-      <!-- GPS mount {-->
-      {{ generic.visual_link_macro(
-        name = 'gps_mount',
-        mesh_file = gps_mount_mesh_file,
-        mesh_scale = mesh_scale,
-        color = 'Grey',
-        x = 0,
-        y = 0,
-        z = 0,
-        roll = 0,
-        pitch = 0,
-        yaw = math.radians(90),
-        parent_link = root)
-      }}
-      <!--}-->
 
       <!-- GPS antenna {-->
       {{ generic.visual_link_macro(
         name = 'gps_module',
-        mesh_file = gps_module_mesh_file,
+        mesh_file = antenna_mesh_file,
         mesh_scale = mesh_scale,
         color = 'Black',
         x = 0,
@@ -428,25 +389,6 @@
       <!--}-->
       {%- endset -%}
       {# <!--}--> #}
-
-      {# component mounts and holders (these must be passed as args into components, or must be called) {--> #}
-
-      {# garmin down mount {--> #}
-      {%- set garmin_down_mount -%}
-        {{ generic.visual_link_macro(
-          name = 'garmin_mount',
-          mesh_file = garmin_mount_mesh_file,
-          mesh_scale = mesh_scale,
-          color = 'Black',
-          x = 0,
-          y = 0,
-          z = -0.001,
-          roll = 0,
-          pitch = 0,
-          yaw = math.radians(90),
-          parent_link = root)
-        }}
-      {%- endset -%}
       {# <!--}--> #}
 
     <!--}-->
@@ -623,13 +565,13 @@
     {# Garmin down {--> #}
     {{ components.garmin_down_macro(
       parent_link = root,
-      x = 0.0,
-      y = 0.0625,
-      z = -0.009,
+      x = garmin_offset_x,
+      y = garmin_offset_y,
+      z = garmin_offset_z,
       roll = 0,
       pitch = math.radians(90),
-      yaw = math.radians(-90),
-      mount = garmin_down_mount,
+      yaw = math.radians(90),
+      mount = none,
       spawner_args = spawner_args)
     }}
     {# <!--}--> #}
