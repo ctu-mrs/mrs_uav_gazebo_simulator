@@ -12,7 +12,7 @@ mrs_drone_spawner:
       save_rendered_sdf: true
       suffix: '.sdf.jinja'
 
-    firmware_launch_delay: 10.0 # [s] after spawn, wait before launching px4 firmware
+    firmware_launch_delay: 0.0 # [s] after spawn, wait before launching px4 firmware
     
     extra_resource_paths: []
 

@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+# apply the UDP buffer size right away, fails harmlessly in containers without access to them
+if [ "$1" = "configure" ]; then
+  sysctl -q -p /etc/sysctl.d/60-mrs-uav-gazebo-simulator.conf || true
+fi
+
+#DEBHELPER#
+
+exit 0
