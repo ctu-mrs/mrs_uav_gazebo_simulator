@@ -48,7 +48,7 @@ windows:
   - takeoff:
       layout: tiled
       panes:
-        - waitForCore; sleep 10; ./takeoff.sh
+        - waitForCore; waitForAutomaticStart; armAndOffboard
   - rviz:
       layout: tiled
       panes:
@@ -56,4 +56,4 @@ windows:
   - layout:
       layout: tiled
       panes:
-        - waitForCore; sleep 2; ~/.i3/layout_manager.sh ./layout.json
+        - waitForCore; applyI3Layout ./layout.json 'RViz$'

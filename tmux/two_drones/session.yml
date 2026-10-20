@@ -32,14 +32,12 @@ windows:
       layout: tiled
       panes:
         - export UAV_NAME=uav1;
-          waitForHwApi; sleep 10;
           ros2 launch mrs_uav_core core.launch.py
           platform_config:=$PLATFORM_CONFIG
           world_config:=./config/world_config.yaml
           custom_config:=./config/custom_config.yaml
           network_config:=./config/network_config.yaml
         - export UAV_NAME=uav2;
-          waitForHwApi; sleep 10;
           ros2 launch mrs_uav_core core.launch.py
           platform_config:=$PLATFORM_CONFIG
           world_config:=./config/world_config.yaml
@@ -58,8 +56,8 @@ windows:
   - takeoff:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; waitForCore; sleep 10; ./takeoff.sh
-        - export UAV_NAME=uav2; waitForCore; sleep 10; ./takeoff.sh
+        - export UAV_NAME=uav1; waitForCore; waitForAutomaticStart; armAndOffboard
+        - export UAV_NAME=uav2; waitForCore; waitForAutomaticStart; armAndOffboard
   - rviz:
       layout: tiled
       panes:
@@ -67,4 +65,4 @@ windows:
   - layout:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; waitForCore; sleep 2; ~/.i3/layout_manager.sh ./layout.json
+        - export UAV_NAME=uav1; waitForCore; applyI3Layout ./layout.json 'RViz$'
