@@ -24,7 +24,7 @@ windows:
       panes:
         - ros2 launch mrs_uav_gazebo_simulator simulation.launch.py gz_headless:=false gz_verbose:=true world_file:=$WORLD_FILE
         - |
-          waitForGazebo; sleep 30; ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE --enable-rangefinder --enable-ouster model:=OS0-64 horizontal_samples:=256 update_rate:=10 --pos 0 0 0.5 0'}"
+          waitForGazebo; ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "{value: '1 --$UAV_TYPE --enable-rangefinder --enable-ouster model:=OS0-64 horizontal_samples:=256 update_rate:=10 --pos 0 0 0.5 0'}"
   - px4_api:
       layout: tiled
       panes:
