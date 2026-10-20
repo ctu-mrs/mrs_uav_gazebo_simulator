@@ -31,7 +31,7 @@ glob_running_processes = []
 # #{ exit_handler()
 def exit_handler():
     '''
-    Kill all subprocesses started by the spawner to prevent orphaned processes (mainly px4 and mavros)
+    Kill all subprocesses started by the spawner to prevent orphaned processes (mainly px4)
     '''
     print('[INFO] [MrsDroneSpawner]: Exit requested')
 
@@ -239,7 +239,6 @@ class MrsDroneSpawner(Node):
 
             ros_gz_bridge_process = None
             firmware_process = None
-            mavros_process = None
 
             ros_gz_bridge_config, sensor_topics = self._ros_gz_manager.generate_uav_ros_gz_config(robot_params)
 
@@ -247,7 +246,6 @@ class MrsDroneSpawner(Node):
                 if ros_gz_bridge_config != "":
                     ros_gz_bridge_process = self._ros_gz_manager.launch_uav_ros_gz_bridge(
                         robot_params['name'], ros_gz_bridge_config, sensor_topics)
-                mavros_process = self._px4_mavlink_manager.launch_mavros(robot_params)
                 firmware_process = self._px4_mavlink_manager.launch_px4_firmware(robot_params)
 
             except Exception as e:
@@ -255,8 +253,6 @@ class MrsDroneSpawner(Node):
                 self.delete_gazebo_model(robot_params['name'])
                 if firmware_process and firmware_process.is_alive():
                     firmware_process.terminate()
-                if mavros_process and mavros_process.is_alive():
-                    mavros_process.terminate()
                 if ros_gz_bridge_process and ros_gz_bridge_process.is_alive():
                     ros_gz_bridge_process.terminate()
                 self._user_input_manager.assigned_ids.remove(robot_params['ID'])
@@ -264,7 +260,6 @@ class MrsDroneSpawner(Node):
                 return
 
             glob_running_processes.append(firmware_process)
-            glob_running_processes.append(mavros_process)
             if ros_gz_bridge_process is not None:
                 glob_running_processes.append(ros_gz_bridge_process)
 

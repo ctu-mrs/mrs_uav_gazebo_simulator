@@ -11,7 +11,7 @@ class NoValidIDGiven(RuntimeError):
 
 
 class CouldNotLaunch(RuntimeError):
-    """Raised when a subprocess (like PX4 or MAVROS) fails to start."""
+    """Raised when a subprocess (like PX4) fails to start."""
     pass
 
 
