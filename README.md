@@ -44,6 +44,8 @@ Use one of the prepared Tmuxinator sessions in [`roscd mrs_uav_gazebo_simulator/
 <!-- - [one_drone_realsense](./tmux/one_drone_realsense) -->
 <!-- - [three_drones](./tmux/three_drones) -->
 
+The sessions use helper commands from [mrs_uav_shell_additions](https://github.com/ctu-mrs/mrs_uav_shell_additions) (`waitForAutomaticStart`, `armAndOffboard`, `killTmuxSession`, `applyI3Layout`), which need `mrs-uav-shell-additions` >= 2.0.6.
+
 ### UDP buffer size
 
 The deb package installs [`/etc/sysctl.d/60-mrs-uav-gazebo-simulator.conf`](./sysctl.d/60-mrs-uav-gazebo-simulator.conf), which raises the default UDP receive buffer to 8 MB.
