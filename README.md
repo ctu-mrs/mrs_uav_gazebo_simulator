@@ -44,6 +44,21 @@ Use one of the prepared Tmuxinator sessions in [`roscd mrs_uav_gazebo_simulator/
 <!-- - [one_drone_realsense](./tmux/one_drone_realsense) -->
 <!-- - [three_drones](./tmux/three_drones) -->
 
+The sessions use helper commands from [mrs_uav_shell_additions](https://github.com/ctu-mrs/mrs_uav_shell_additions) (`waitForAutomaticStart`, `armAndOffboard`, `killTmuxSession`, `applyI3Layout`), which need `mrs-uav-shell-additions` >= 2.0.6.
+
+### UDP buffer size
+
+The deb package installs [`/etc/sysctl.d/60-mrs-uav-gazebo-simulator.conf`](./sysctl.d/60-mrs-uav-gazebo-simulator.conf), which raises the default UDP receive buffer to 8 MB.
+With the system default (208 KB), the burst of gz-transport discovery messages when drones are spawned overflows it, and the dropped messages leave some subscriptions without data for good: PX4 then misses e.g. its barometer or GNSS, or the motors never get commands ([gazebosim/gz-transport#985](https://github.com/gazebosim/gz-transport/issues/985)).
+When building this package from source, install the file manually:
+
+```bash
+sudo cp sysctl.d/60-mrs-uav-gazebo-simulator.conf /etc/sysctl.d/
+sudo sysctl --system
+```
+
+In a container (e.g., Apptainer, Docker), `/proc/sys` is read-only, install the file on the host instead.
+
 ## Using the MRS drone spawner in your simulations
 
 The drone models are dynamically created in runtime using the [MRS drone spawner](https://ctu-mrs.github.io/docs/simulations/gazebo/drone_spawner). The UAV platforms can be additionally equipped by adding [components](models/mrs_robots_description/sdf/component_snippets.sdf.jinja) (rangefinders, LiDARs, cameras, plugins etc.).
@@ -72,7 +87,7 @@ The `mrs_drone_spawner` will perform the following tasks:
 
 * Add optional components (sensors, plugins...) based on the user input
 
-* Run PX4 SITL and Mavros, and ensure that all ports are correctly linked with the Gazebo simulator
+* Run PX4 SITL, and ensure that all ports are correctly linked with the Gazebo simulator
 
 * Remove all subprocesses on exit
 

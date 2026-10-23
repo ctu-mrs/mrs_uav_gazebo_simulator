@@ -18,11 +18,13 @@
   <depend>python3-jinja2</depend>
   <depend>ros_gz</depend>
   <depend>px4</depend>
-  <depend>mavros</depend>
   <depend>std_msgs</depend>
   <depend>mrs_msgs</depend>
   <depend>mrs_uav_px4_api</depend>
   <depend>mrs_gazebo_common_resources</depend>
+
+  <!-- the two_drones tmux session connects the UAV TF trees with it -->
+  <exec_depend>mrs_tf_connector</exec_depend>
   
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

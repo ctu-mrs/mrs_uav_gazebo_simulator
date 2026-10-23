@@ -31,7 +31,7 @@ glob_running_processes = []
 # #{ exit_handler()
 def exit_handler():
     '''
-    Kill all subprocesses started by the spawner to prevent orphaned processes (mainly px4 and mavros)
+    Kill all subprocesses started by the spawner to prevent orphaned processes (mainly px4)
     '''
     print('[INFO] [MrsDroneSpawner]: Exit requested')
 
@@ -109,6 +109,8 @@ class MrsDroneSpawner(Node):
         self._gazebo_spawn_future = None
         self._gazebo_delete_future = None
         self._gazebo_spawn_request_start_time = None
+        self._gazebo_spawn_request_name = None
+        self._gazebo_spawn_request_last_warning = None
 
         # SdfToTf Publisher
         self._sdf_to_tf_publisher = SdfTfPublisherSingleton(ros_node=self,
@@ -222,6 +224,9 @@ class MrsDroneSpawner(Node):
         request.entity_factory.pose.orientation.z = q_z
 
         self.get_logger().info(f'Requesting spawn for model {name}')
+        self._gazebo_spawn_request_start_time = time.time()
+        self._gazebo_spawn_request_name = name
+        self._gazebo_spawn_request_last_warning = self._gazebo_spawn_request_start_time
         self._gazebo_spawn_future = self._gazebo_spawn_proxy.call_async(request)
 
         self._gazebo_spawn_future.add_done_callback(
@@ -235,11 +240,11 @@ class MrsDroneSpawner(Node):
         try:
             response = future.result()
             if not response.success:
-                raise CouldNotSpawn(f'Call failed')
+                raise CouldNotSpawn('Gazebo refused to create the model '
+                                    '(e.g., invalid SDF or the name already exists), see the Gazebo output')
 
             ros_gz_bridge_process = None
             firmware_process = None
-            mavros_process = None
 
             ros_gz_bridge_config, sensor_topics = self._ros_gz_manager.generate_uav_ros_gz_config(robot_params)
 
@@ -247,7 +252,6 @@ class MrsDroneSpawner(Node):
                 if ros_gz_bridge_config != "":
                     ros_gz_bridge_process = self._ros_gz_manager.launch_uav_ros_gz_bridge(
                         robot_params['name'], ros_gz_bridge_config, sensor_topics)
-                mavros_process = self._px4_mavlink_manager.launch_mavros(robot_params)
                 firmware_process = self._px4_mavlink_manager.launch_px4_firmware(robot_params)
 
             except Exception as e:
@@ -255,8 +259,6 @@ class MrsDroneSpawner(Node):
                 self.delete_gazebo_model(robot_params['name'])
                 if firmware_process and firmware_process.is_alive():
                     firmware_process.terminate()
-                if mavros_process and mavros_process.is_alive():
-                    mavros_process.terminate()
                 if ros_gz_bridge_process and ros_gz_bridge_process.is_alive():
                     ros_gz_bridge_process.terminate()
                 self._user_input_manager.assigned_ids.remove(robot_params['ID'])
@@ -264,7 +266,6 @@ class MrsDroneSpawner(Node):
                 return
 
             glob_running_processes.append(firmware_process)
-            glob_running_processes.append(mavros_process)
             if ros_gz_bridge_process is not None:
                 glob_running_processes.append(ros_gz_bridge_process)
 
@@ -307,7 +308,7 @@ class MrsDroneSpawner(Node):
 
         except Exception as e:
             self.get_logger().error(f'Failed to delete model {name}. Error: {e}')
-            self._gazebo_spawn_future = None
+            self._gazebo_delete_future = None
 
     # #}
 
@@ -366,14 +367,16 @@ class MrsDroneSpawner(Node):
 
     # #{ callback_action_timer(self)
     def callback_action_timer(self):
-        # Check for an ongoing request and if it has timed out
-        if self._gazebo_spawn_future is not None and not self._gazebo_spawn_future.done(
-        ) and self._gazebo_spawn_request_start_time is not None:
-            if time.time() - self._gazebo_spawn_request_start_time > 5.0:
-                self.get_logger().error('Service call timed out!')
-                self._gazebo_spawn_future = None  # Reset state to allow a new request
-            else:
-                self.get_logger().warn('Previous gazebo_spawn service call is pending. Skipping this cycle.')
+        # One spawn request at a time. There is no timeout: Gazebo answers once its world is loaded, which can take
+        # long, dropping the request would lose the vehicle. Warn periodically instead, so that a stuck Gazebo is
+        # visible.
+        if self._gazebo_spawn_future is not None and not self._gazebo_spawn_future.done():
+            now = time.time()
+            if now - self._gazebo_spawn_request_last_warning > 10.0:
+                self.get_logger().warn(
+                    f'Gazebo has not created {self._gazebo_spawn_request_name} yet '
+                    f'({now - self._gazebo_spawn_request_start_time:.0f} s), is the Gazebo simulation running?')
+                self._gazebo_spawn_request_last_warning = now
             return
         with self._queue_mutex:
             if not self._vehicle_queue:
@@ -390,6 +393,11 @@ class MrsDroneSpawner(Node):
 
     # #{ callback_diagnostics_timer(self)
     def callback_diagnostics_timer(self):
+        # diagnostics announce that the spawner accepts spawn calls (waitForGazebo), which needs the ros_gz_bridge
+        # create_entity service
+        if not self._gazebo_spawn_proxy.service_is_ready():
+            return
+
         diagnostics = GazeboSpawnerDiagnostics()
         diagnostics.spawn_called = self._spawn_called
         diagnostics.processing = self._processing
