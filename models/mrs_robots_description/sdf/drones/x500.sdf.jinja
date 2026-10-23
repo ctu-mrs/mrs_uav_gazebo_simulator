@@ -29,7 +29,12 @@
   {%- set moment_constant = 0.06 -%} {# [m] ratio between rolling/pitching moment and yawing moment, increase for faster yaw #}
   {%- set time_constant_up = 0.0125 -%} {# [s] how fast props gain speed when throttle goes up #}
   {%- set time_constant_down = 0.025 -%} {# [s] how fast props lose speed when throttle goes down #}
-  {%- set max_rot_velocity = 780 -%} {# [rad/s] max real propeller rotation velocity #}
+  {%- set mrs_motor_a = 0.209415 -%} {# motor_params/a from config/mrs_uav_system/x500.yaml #}
+  {%- set mrs_motor_b = -0.023573 -%} {# motor_params/b from config/mrs_uav_system/x500.yaml #}
+  {%- set esc_min = 0.0 -%} {# SIM_GZ_EC_MIN / 1000 from the PX4 airframe 4001_x500, the plugin receives esc_min + (1 - esc_min) * throttle #}
+  {# rotor velocity = plugin_input * max_rot_velocity + rot_velocity_offset, chosen so that thrust = motor_constant * velocity^2 reproduces the MRS model throttle = a * sqrt(thrust) + b #}
+  {%- set max_rot_velocity = 1 / ((1 - esc_min) * mrs_motor_a * (motor_constant | float) ** 0.5) -%} {# [rad/s] #}
+  {%- set rot_velocity_offset = -esc_min * max_rot_velocity - mrs_motor_b / (mrs_motor_a * (motor_constant | float) ** 0.5) -%} {# [rad/s] #}
 
   {# this should only affect agile drones #}
   {%- set rotor_drag_coefficient = '1.0e-4' -%} {# N / (m/s)^2 how much thrust is lost due to air drag #}
@@ -689,6 +694,7 @@
       time_constant_up = time_constant_up,
       time_constant_down = time_constant_down,
       max_rot_velocity = max_rot_velocity,
+      rot_velocity_offset = rot_velocity_offset,
       rotor_drag_coefficient = rotor_drag_coefficient,
       rolling_moment_coefficient = rolling_moment_coefficient,
       meshes_z_offset = motor_mesh_z_offset,
