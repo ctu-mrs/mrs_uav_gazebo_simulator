@@ -32,8 +32,8 @@ param set-default BAT1_V_LOAD_DROP 0.4
 ## 1) CA_ROTOR*_P* params use the FRD coordinates (X+ is in front of the center of mass (CoM), Y+ is right of CoM, Z+ is below CoM)
 ## The index order does NOT match the jinja model
 
-## 2) CA_ROTOR*_CT is the max thrust of one rotor [N] = motor_constant * max_rot_velocity^2 from the jinja model
-## Keep CT*KM > 0.05, otherwise PX4 zeroes the yaw row of the effectiveness matrix (no yaw control)
+## 2) CA_ROTOR*_CT is intentionally left at the PX4 default, all rotors are identical so its value cancels out in the allocator
+## MPC_THR_HOVER should match the hover throttle of the MRS motor_params: a * sqrt(mass * g / rotor_count) + b
 
 ## 3) CA_ROTOR*_KM is the moment ratio between roll/pitch and yaw
 ## It should match the moment constant from the jinja model
@@ -41,25 +41,21 @@ param set-default BAT1_V_LOAD_DROP 0.4
 param set-default CA_ROTOR0_PX 0.245
 param set-default CA_ROTOR0_PY 0.26
 param set-default CA_ROTOR0_PZ -0.052
-param set-default CA_ROTOR0_CT 46.85
 param set-default CA_ROTOR0_KM 0.07
 
 param set-default CA_ROTOR1_PX -0.245
 param set-default CA_ROTOR1_PY -0.26
 param set-default CA_ROTOR1_PZ -0.052
-param set-default CA_ROTOR1_CT 46.85
 param set-default CA_ROTOR1_KM 0.07
 
 param set-default CA_ROTOR2_PX 0.245
 param set-default CA_ROTOR2_PY -0.26
 param set-default CA_ROTOR2_PZ -0.052
-param set-default CA_ROTOR2_CT 46.85
 param set-default CA_ROTOR2_KM -0.07
 
 param set-default CA_ROTOR3_PX -0.245
 param set-default CA_ROTOR3_PY 0.26
 param set-default CA_ROTOR3_PZ -0.052
-param set-default CA_ROTOR3_CT 46.85
 param set-default CA_ROTOR3_KM -0.07
 
 param set-default SIM_GZ_EC_FUNC1 101
@@ -79,3 +75,5 @@ param set-default SIM_GZ_EC_MAX1 1000
 param set-default SIM_GZ_EC_MAX2 1000
 param set-default SIM_GZ_EC_MAX3 1000
 param set-default SIM_GZ_EC_MAX4 1000
+
+param set-default MPC_THR_HOVER 0.34
