@@ -25,6 +25,8 @@
 
   <!-- the two_drones tmux session connects the UAV TF trees with it -->
   <exec_depend>mrs_tf_connector</exec_depend>
+
+  <exec_depend>python3-yaml</exec_depend>
   
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
