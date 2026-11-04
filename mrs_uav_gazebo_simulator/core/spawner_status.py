@@ -34,7 +34,7 @@ class SpawnerStatus:
     '''
     Per-vehicle state of the spawner, published as GazeboSpawnerStatus by the spawner node.
     spawning(), spawned() and failed() require queued() first (KeyError otherwise, a spawner bug).
-    Vehicle names are unique: the spawner names vehicles <prefix><ID> and frees an ID only when its spawn failed.
+    The spawner refuses a name that is_active(), so queued() replaces only a FAILED entry.
     '''
 
     # #{ __init__(self)
@@ -55,6 +55,14 @@ class SpawnerStatus:
         with self._mutex:
             self._vehicles.pop(name, None)
             self._vehicles[name] = vehicle
+
+    # #}
+
+    # #{ is_active(self, name)
+    def is_active(self, name: str) -> bool:
+        '''True if a vehicle with this name is queued, being spawned or spawned (a FAILED one can be respawned)'''
+        with self._mutex:
+            return name in self._vehicles and self._vehicles[name].state != GazeboSpawnerVehicle.STATE_FAILED
 
     # #}
 

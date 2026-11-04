@@ -84,6 +84,18 @@ def test_to_msg_is_a_copy():
     assert msg.vehicles[0].message == ''
 
 
+def test_is_active():
+    # a name in use blocks a second spawn under the same name, a FAILED one can be respawned
+    status = SpawnerStatus()
+    assert not status.is_active('uav1')
+    status.queued('uav1', FCU_URL, 2)
+    assert status.is_active('uav1')
+    status.spawned('uav1', 'cfg')
+    assert status.is_active('uav1')
+    status.failed('uav1', 'boom')
+    assert not status.is_active('uav1')
+
+
 def test_unknown_vehicle_raises():
     # spawning/spawned/failed require queued() first, a miss is a spawner bug
     with pytest.raises(KeyError):

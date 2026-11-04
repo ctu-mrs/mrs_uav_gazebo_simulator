@@ -93,6 +93,7 @@ class Px4MavlinkManager():
         mavlink_config['udp_offboard_port_local'] = udp_offboard_port_local
         mavlink_config['udp_qgc_port_remote'] = udp_qgc_port_remote
         mavlink_config['udp_qgc_port_local'] = udp_qgc_port_local
+        mavlink_config['fcu_url'] = f'udp://127.0.0.1:{udp_offboard_port_remote}@127.0.0.1:{udp_offboard_port_local}'
 
         return mavlink_config
 

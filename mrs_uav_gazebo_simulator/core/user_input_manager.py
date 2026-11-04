@@ -192,8 +192,8 @@ class UserInputManager():
                 else:
                     self._ros_node.get_logger().warn(f'Ignored ID {ID}: Not an integer')
                 continue
-            if ID < 0 or ID > 255:
-                self._ros_node.get_logger().warn(f'Ignored ID {ID}: Must be in range(0, 256)')
+            if ID < 0 or ID > 254:
+                self._ros_node.get_logger().warn(f'Ignored ID {ID}: Must be in range(0, 255)')
                 continue
             if ID in self.assigned_ids:
                 self._ros_node.get_logger().warn(f'Ignored ID {ID}: Already assigned')
@@ -236,13 +236,24 @@ class UserInputManager():
         else:
             input_dict['spawn_poses'] = self.get_randomized_spawn_poses(input_dict['ids'])
 
+        # --name gives the whole names, one per ID in the same order; the default name is <default_robot_name><ID>
         if 'name' in input_dict.keys():
-            for ID in input_dict['ids']:
-                input_dict['names'].append(str(input_dict['name'][0]) + str(ID))
+            assert input_dict['name'] is None or isinstance(input_dict['name'], list), \
+                f'--name expects names separated by spaces, got {input_dict["name"]}'
+            names = [str(name) for name in (input_dict['name'] or [])]
+            assert len(names) == len(input_dict['ids']), \
+                f'--name needs one name per vehicle ID, got names {names} for IDs {input_dict["ids"]}'
+            assert len(set(names)) == len(names), f'--name got the same name more than once: {names}'
+            input_dict['names'] = names
             del input_dict['name']
         else:
             for ID in input_dict['ids']:
                 input_dict['names'].append(str(self._default_robot_name) + str(ID))
+
+        # the name is the ROS namespace of the vehicle
+        for name in input_dict['names']:
+            assert re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', name), \
+                f'Invalid vehicle name "{name}": letters, digits and underscores, must not start with a digit'
 
         assert isinstance(input_dict['ids'], list) and len(input_dict['ids']) > 0, 'No vehicle ID assigned'
         assert input_dict['model'] is not None, 'Model not specified'
@@ -258,11 +269,11 @@ class UserInputManager():
     # #{ assign_free_id(self)
     def assign_free_id(self):
         '''
-        Assign an unused ID in range <0, 255>
+        Assign an unused ID in range <0, 254>
         :return: unused ID for a robot (int)
         :raise NoFreeIDAvailable: if max vehicle count has been reached
         '''
-        for i in range(0, 256):  # 255 is a hard limit of px4 sitl
+        for i in range(0, 255):  # PX4 SITL sets MAV_SYS_ID = ID + 1, which must fit 1..255
             if i not in self.assigned_ids:
                 self._ros_node.get_logger().info(f'Assigned free ID "{i}" to a robot')
                 return i
