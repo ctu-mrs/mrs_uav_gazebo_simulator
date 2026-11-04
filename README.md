@@ -121,4 +121,10 @@ ros2 service call /mrs_drone_spawner/spawn mrs_msgs/srv/String "value: 1 --x500 
 ```
 The list of components and their reconfigurable parameters can be displayed using the platform-specific help.
 
+Vehicle IDs are 0 to 254 (PX4 uses `ID + 1` as its MAVLink system ID). Vehicles are named `uav<ID>` (`gazebo_models.default_robot_name` + ID), or exactly as given with `--name <name>...` (one name per ID, in the same order); a name already in use is refused.
+
+### Spawner status
+
+The spawner publishes the latched topic `/mrs_drone_spawner/status` (`mrs_msgs/msg/GazeboSpawnerStatus`, reliable, transient local) on every change, first once it accepts spawn calls. It lists every vehicle with its state (queued, spawning, spawned, failed), the HW API outputs it provides (`platform_config`: `distance_sensor` with `--enable-rangefinder`, `ground_truth` with `--enable-ground-truth`) and its MAVLink connection (`mavlink_fcu_url`, `mavlink_system_id`). In simulation, `mrs_uav_px4_api`'s `api.launch.py` waits for its vehicle there and takes these from it (`spawner_status:=false` to disable).
+
 For more details, please refer to the [MRS drone spawner](https://ctu-mrs.github.io/docs/simulations/gazebo/drone_spawner) page.
