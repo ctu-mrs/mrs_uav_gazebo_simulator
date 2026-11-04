@@ -22,6 +22,12 @@ def generate_launch_description():
 
     declared_args = [
         DeclareLaunchArgument('ID', description='The unique ID for the UAV.'),
+        DeclareLaunchArgument('name', default_value=[TextSubstitution(text='uav'), LaunchConfiguration('ID')],
+                              description='Name of the vehicle: Gazebo model and ROS namespace.'),
+        DeclareLaunchArgument('working_dir', default_value=[TextSubstitution(text='/tmp/sitl_uav_'), LaunchConfiguration('ID')],
+                              description='PX4 working directory (parameters, dataman, logs).'),
+        DeclareLaunchArgument('vehicle_base_port', default_value='14000',
+                              description='MAVLink UDP port base, the vehicle uses 4 ports from vehicle_base_port + 4 * ID.'),
         DeclareLaunchArgument('PX4_SIM_MODEL', description='The PX4 simulation model (e.g., iris).'),
         DeclareLaunchArgument('PX4_ESTIMATOR', default_value='ekf2', description='The PX4 estimator to use.'),
         DeclareLaunchArgument('CONNECT_TO_QGC', default_value='0', description='Create a mavlink stream for QGroundControl.'),
@@ -50,7 +56,7 @@ def generate_launch_description():
             '-i',
             LaunchConfiguration('ID'),
             '-w',
-            [TextSubstitution(text='/tmp/sitl_uav_'), LaunchConfiguration('ID')]
+            LaunchConfiguration('working_dir')
         ],
         name=['sitl_uav_', LaunchConfiguration('ID')],
         output='screen'
@@ -58,13 +64,14 @@ def generate_launch_description():
 
     namespaced_group = GroupAction(
         actions=[
-            PushRosNamespace(namespace=['uav', LaunchConfiguration('ID')]),
+            PushRosNamespace(namespace=LaunchConfiguration('name')),
 
             # Set environment variables for the PX4 process
             SetEnvironmentVariable('PX4_SIM_MODEL', LaunchConfiguration('PX4_SIM_MODEL')),
             SetEnvironmentVariable('PX4_ESTIMATOR', LaunchConfiguration('PX4_ESTIMATOR')),
-            SetEnvironmentVariable('PX4_GZ_MODEL_NAME', [TextSubstitution(text='uav'), LaunchConfiguration('ID')]),
+            SetEnvironmentVariable('PX4_GZ_MODEL_NAME', LaunchConfiguration('name')),
             SetEnvironmentVariable('CONNECT_TO_QGC', LaunchConfiguration('CONNECT_TO_QGC')),
+            SetEnvironmentVariable('VEHICLE_BASE_PORT', LaunchConfiguration('vehicle_base_port')),
 
             # The process to run
             px4_sitl_process

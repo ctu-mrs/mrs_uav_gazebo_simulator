@@ -127,4 +127,6 @@ Vehicle IDs are 0 to 254 (PX4 uses `ID + 1` as its MAVLink system ID). Vehicles 
 
 The spawner publishes the latched topic `/mrs_drone_spawner/status` (`mrs_msgs/msg/GazeboSpawnerStatus`, reliable, transient local) on every change, first once it accepts spawn calls. It lists every vehicle with its state (queued, spawning, spawned, failed), the HW API outputs it provides (`platform_config`: `distance_sensor` with `--enable-rangefinder`, `ground_truth` with `--enable-ground-truth`) and its MAVLink connection (`mavlink_fcu_url`, `mavlink_system_id`). In simulation, `mrs_uav_px4_api`'s `api.launch.py` waits for its vehicle there and takes these from it (`spawner_status:=false` to disable).
 
+Each run writes its files into `/tmp/mrs_gazebo_simulator_<date>_<time>/`: the rendered SDF models, the ros_gz bridge configs, the platform configs and the PX4 working directories `px4_<name>/` (parameters, missions, ulogs), so every run starts PX4 from the default parameters. The MAVLink ports are `mavlink_config.vehicle_base_port` (default 14000, `config/spawner_params.yaml`) + 4 × ID, used by both the spawner and PX4.
+
 For more details, please refer to the [MRS drone spawner](https://ctu-mrs.github.io/docs/simulations/gazebo/drone_spawner) page.

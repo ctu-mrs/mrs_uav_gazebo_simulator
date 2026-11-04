@@ -86,7 +86,8 @@ class MrsDroneSpawner(Node):
         self._px4_mavlink_manager = Px4MavlinkManager(ros_node=self,
                                                       gazebo_simulator_path=gazebo_simulator_path,
                                                       px4_mavlink_config=self._px4_mavlink_config,
-                                                      jinja_templates=self._jinja_templates)
+                                                      jinja_templates=self._jinja_templates,
+                                                      tempfile_folder=self._tempfile_folder)
 
         self._user_input_manager = UserInputManager(ros_node=self,
                                                     jinja_templates=self._jinja_templates,

@@ -14,10 +14,11 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 class Px4MavlinkManager():
 
-    # #{ __init__(self, ros_node, gazebo_simulator_path, px4_mavlink_config, jinja_templates)
+    # #{ __init__(self, ros_node, gazebo_simulator_path, px4_mavlink_config, jinja_templates, tempfile_folder)
     def __init__(self, ros_node: Node, gazebo_simulator_path: str, px4_mavlink_config: Px4MavlinkConfig,
-                 jinja_templates: dict):
+                 jinja_templates: dict, tempfile_folder: str):
         self._ros_node = ros_node
+        self._tempfile_folder = tempfile_folder
 
         self._px4_fimrware_launch_path = os.path.join(gazebo_simulator_path, 'launch',
                                                       'run_simulation_firmware.launch.py')
@@ -47,8 +48,15 @@ class Px4MavlinkManager():
             self._ros_node.get_logger().error(f'Could not start PX4 firmware for {name}. ROMFS folder not found')
             raise CouldNotLaunch('ROMFS folder not found')
 
+        # per run: PX4 imports its parameters from the working directory at every start
+        working_dir = os.path.join(self._tempfile_folder, f'px4_{name}')
+        self._ros_node.get_logger().info(f'PX4 working directory for {name}: {working_dir}')
+
         launch_arguments = {
             'ID': str(robot_params['ID']),
+            'name': name,
+            'working_dir': working_dir,
+            'vehicle_base_port': str(self._px4_mavlink_config.vehicle_base_port),
             'PX4_SIM_MODEL': str(robot_params['model']),
             'ROMFS_PATH': str(romfs_path),
             'CONNECT_TO_QGC': str(self._px4_mavlink_config.stream_for_qgc)
