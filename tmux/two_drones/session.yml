@@ -26,8 +26,8 @@ windows:
   - px4_api:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; ros2 launch mrs_uav_px4_api api.launch.py
-        - export UAV_NAME=uav2; ros2 launch mrs_uav_px4_api api.launch.py
+        - export UAV_NAME=uav1; ros2 launch mrs_uav_px4_api api.launch.py platform_config:=$PLATFORM_CONFIG
+        - export UAV_NAME=uav2; ros2 launch mrs_uav_px4_api api.launch.py platform_config:=$PLATFORM_CONFIG
   - core:
       layout: tiled
       panes:
