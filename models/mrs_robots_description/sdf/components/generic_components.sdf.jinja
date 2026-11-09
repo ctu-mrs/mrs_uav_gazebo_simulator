@@ -459,7 +459,7 @@ limitations under the License.
 {# ========================= drone propellers ======================== #}
 
 {# motor_plugins_macro {--> #}
-{%- macro motor_plugins_macro(motor_number, direction, time_constant_up, time_constant_down, max_rot_velocity, motor_constant, moment_constant, rotor_drag_coefficient, rolling_moment_coefficient, rotor_velocity_slowdown_sim, robot_namespace) -%}
+{%- macro motor_plugins_macro(motor_number, direction, time_constant_up, time_constant_down, max_rot_velocity, motor_constant, moment_constant, rotor_drag_coefficient, rolling_moment_coefficient, rotor_velocity_slowdown_sim, robot_namespace, rot_velocity_offset = 0) -%}
   <!-- <plugin filename="gz-sim-multicopter-motor-model-system" name="gz::sim::systems::MulticopterMotorModel"> -->
   <plugin filename="MrsGazeboCommonResources_MulticopterMotorModel" name="gz::sim::systems::MrsMulticopterMotorModel">
     <jointName>prop_{{ motor_number }}_joint</jointName>
@@ -468,6 +468,7 @@ limitations under the License.
     <timeConstantUp>{{ time_constant_up }}</timeConstantUp>
     <timeConstantDown>{{ time_constant_down }}</timeConstantDown>
     <maxRotVelocity>{{ max_rot_velocity }}</maxRotVelocity>
+    <rotVelocityOffset>{{ rot_velocity_offset }}</rotVelocityOffset>
     <motorConstant>{{ motor_constant }}</motorConstant>
     <momentConstant>{{ moment_constant }}</momentConstant>
     <commandSubTopic>command/motor_speed</commandSubTopic>
@@ -482,7 +483,7 @@ limitations under the License.
 {# <!--}--> #}
 
 {# prop_macro {--> #}
-{%- macro prop_macro(direction, rotor_velocity_slowdown_sim, motor_constant, moment_constant, parent, mass, radius, time_constant_up, time_constant_down, max_rot_velocity, motor_number, rotor_drag_coefficient, rolling_moment_coefficient, color, mesh_file, mesh_scale, x, y, z, roll, pitch, yaw, ixx, ixy, ixz, iyy, iyz, izz, robot_namespace) -%}
+{%- macro prop_macro(direction, rotor_velocity_slowdown_sim, motor_constant, moment_constant, parent, mass, radius, time_constant_up, time_constant_down, max_rot_velocity, motor_number, rotor_drag_coefficient, rolling_moment_coefficient, color, mesh_file, mesh_scale, x, y, z, roll, pitch, yaw, ixx, ixy, ixz, iyy, iyz, izz, robot_namespace, rot_velocity_offset = 0) -%}
   <link name="prop_{{ motor_number }}_link">
     <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
     <inertial>
@@ -509,7 +510,7 @@ limitations under the License.
       yaw = 0)
     }}
   </link>
-  {{ motor_plugins_macro(motor_number, direction, time_constant_up, time_constant_down, max_rot_velocity, motor_constant, moment_constant, rotor_drag_coefficient, rolling_moment_coefficient, rotor_velocity_slowdown_sim, robot_namespace) }}
+  {{ motor_plugins_macro(motor_number, direction, time_constant_up, time_constant_down, max_rot_velocity, motor_constant, moment_constant, rotor_drag_coefficient, rolling_moment_coefficient, rotor_velocity_slowdown_sim, robot_namespace, rot_velocity_offset) }}
   <joint name="prop_{{ motor_number }}_joint" type="revolute">
     <parent>{{ parent }}</parent>
     <child>prop_{{ motor_number }}_link</child>
@@ -529,7 +530,7 @@ limitations under the License.
 {# <!--}--> #}
 
 {# prop_macro_2_meshes {--> #}
-{%- macro prop_macro_2_meshes(direction, rotor_velocity_slowdown_sim, motor_constant, moment_constant, parent, mass, radius, time_constant_up, time_constant_down, max_rot_velocity, motor_number, rotor_drag_coefficient, rolling_moment_coefficient, color, mesh_file_1, mesh_file_2, meshes_z_offset, mesh_scale, x, y, z, roll, pitch, yaw, ixx, ixy, ixz, iyy, iyz, izz, robot_namespace) -%}
+{%- macro prop_macro_2_meshes(direction, rotor_velocity_slowdown_sim, motor_constant, moment_constant, parent, mass, radius, time_constant_up, time_constant_down, max_rot_velocity, motor_number, rotor_drag_coefficient, rolling_moment_coefficient, color, mesh_file_1, mesh_file_2, meshes_z_offset, mesh_scale, x, y, z, roll, pitch, yaw, ixx, ixy, ixz, iyy, iyz, izz, robot_namespace, rot_velocity_offset = 0) -%}
   <link name="prop_{{ motor_number }}_link">
     <pose>{{ x }} {{ y }} {{ z }} {{ roll }} {{ pitch }} {{ yaw }}</pose>
     <inertial>
@@ -557,7 +558,7 @@ limitations under the License.
       yaw = 0)
     }}
   </link>
-  {{ motor_plugins_macro(motor_number, direction, time_constant_up, time_constant_down, max_rot_velocity, motor_constant, moment_constant, rotor_drag_coefficient, rolling_moment_coefficient, rotor_velocity_slowdown_sim, robot_namespace) }}
+  {{ motor_plugins_macro(motor_number, direction, time_constant_up, time_constant_down, max_rot_velocity, motor_constant, moment_constant, rotor_drag_coefficient, rolling_moment_coefficient, rotor_velocity_slowdown_sim, robot_namespace, rot_velocity_offset) }}
   <joint name="prop_{{ motor_number }}_joint" type="revolute">
     <parent>{{ parent }}</parent>
     <child>prop_{{ motor_number }}_link</child>

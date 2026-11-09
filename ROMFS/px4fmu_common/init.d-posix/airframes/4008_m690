@@ -1,0 +1,81 @@
+#!/bin/sh
+#
+# @name Holybro X500 SITL
+#
+# @type Quadcopter x
+#
+# @maintainer Petr Stibinger <stibipet@fel.cvut.cz>
+#
+
+. ${R}etc/init.d/rc.mc_defaults
+
+PX4_SIMULATOR=${PX4_SIMULATOR:=gz}
+
+param set-default SIM_GZ_EN 1
+
+param set-default MAV_TYPE 2
+
+param set-default CA_AIRFRAME 0
+param set-default CA_ROTOR_COUNT 4
+
+param set-default BAT1_N_CELLS 6
+param set-default BAT1_CAPACITY 22000
+param set-default BAT1_V_EMPTY 3.6
+param set-default BAT1_V_CHARGED 4.2
+param set-default BAT1_V_LOAD_DROP 0.4
+
+# NOTES:
+
+# The CA_ROTOR* parameters replaced the PX4 mixers
+# It is now simpler to configure new models, but keep in mind these points:
+
+## 1) CA_ROTOR*_P* params use the FRD coordinates (X+ is in front of the center of mass (CoM), Y+ is right of CoM, Z+ is below CoM)
+## The index order does NOT match the jinja model
+
+## 2) CA_ROTOR*_CT is intentionally left at the PX4 default, all rotors are identical so its value cancels out in the allocator
+## MPC_THR_HOVER should match the hover throttle of the MRS motor_params: a * sqrt(mass * g / rotor_count) + b
+
+## 3) CA_ROTOR*_KM is the moment ratio between roll/pitch and yaw
+## It should match the moment constant from the jinja model
+
+param set-default CA_ROTOR0_PX 0.245
+param set-default CA_ROTOR0_PY 0.26
+param set-default CA_ROTOR0_PZ -0.052
+param set-default CA_ROTOR0_KM 0.07
+
+param set-default CA_ROTOR1_PX -0.245
+param set-default CA_ROTOR1_PY -0.26
+param set-default CA_ROTOR1_PZ -0.052
+param set-default CA_ROTOR1_KM 0.07
+
+param set-default CA_ROTOR2_PX 0.245
+param set-default CA_ROTOR2_PY -0.26
+param set-default CA_ROTOR2_PZ -0.052
+param set-default CA_ROTOR2_KM -0.07
+
+param set-default CA_ROTOR3_PX -0.245
+param set-default CA_ROTOR3_PY 0.26
+param set-default CA_ROTOR3_PZ -0.052
+param set-default CA_ROTOR3_KM -0.07
+
+param set-default SIM_GZ_EC_FUNC1 101
+param set-default SIM_GZ_EC_FUNC2 102
+param set-default SIM_GZ_EC_FUNC3 103
+param set-default SIM_GZ_EC_FUNC4 104
+
+# use the full available throttle range 1 - 1000
+# the simulated ESC signal is cropped to integers :(
+# this throttle mapping gives the highest signal resolution
+# min 1, not 0: PX4 counts a simulated ESC as armed only if its output is > 0, near-zero thrust at armed idle
+# rounds to 0 and the ESC arming check (FD_ESCS_EN) disarms the UAV right after arming
+param set-default SIM_GZ_EC_MIN1 1
+param set-default SIM_GZ_EC_MIN2 1
+param set-default SIM_GZ_EC_MIN3 1
+param set-default SIM_GZ_EC_MIN4 1
+
+param set-default SIM_GZ_EC_MAX1 1000
+param set-default SIM_GZ_EC_MAX2 1000
+param set-default SIM_GZ_EC_MAX3 1000
+param set-default SIM_GZ_EC_MAX4 1000
+
+param set-default MPC_THR_HOVER 0.34
