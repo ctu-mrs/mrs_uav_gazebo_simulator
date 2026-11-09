@@ -14,63 +14,18 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 class Px4MavlinkManager():
 
-    # #{ __init__(self, ros_node, gazebo_simulator_path, px4_mavlink_config, jinja_templates)
+    # #{ __init__(self, ros_node, gazebo_simulator_path, px4_mavlink_config, jinja_templates, tempfile_folder)
     def __init__(self, ros_node: Node, gazebo_simulator_path: str, px4_mavlink_config: Px4MavlinkConfig,
-                 jinja_templates: dict):
+                 jinja_templates: dict, tempfile_folder: str):
         self._ros_node = ros_node
+        self._tempfile_folder = tempfile_folder
 
-        px4_api_path = get_package_share_directory('mrs_uav_px4_api')
-        self._mavros_launch_path = os.path.join(px4_api_path, 'launch', 'mavros.launch.py')
         self._px4_fimrware_launch_path = os.path.join(gazebo_simulator_path, 'launch',
                                                       'run_simulation_firmware.launch.py')
 
         self._px4_mavlink_config = px4_mavlink_config
 
         self._jinja_templates = jinja_templates
-
-    # #}
-
-    # #{ launch_mavros(self, robot_params)
-    def launch_mavros(self, robot_params):
-        name = robot_params['name']
-        self._ros_node.get_logger().info(f'Launching mavros for {name}')
-
-        launch_arguments = {
-            'uav_name': name,
-            # frame_namespace intentionally not overridden: mavros.launch.py defaults it to
-            # "<uav_name>/mavros", matching the frame IDs baked into mavros_px4_config.yaml.
-            'fcu_url': str(robot_params['mavlink_config']['fcu_url']),
-            'gcs_url': '', # do not connect to QGC using mavros, we create a dedicated mavlink stream instead
-            'tgt_system': str(robot_params['ID'] + 1),
-            'use_sim_time': 'true',
-            # PX4 SITL's Gazebo bridge reports the simulated Garmin's mount orientation as
-            # ROTATION_CUSTOM (it doesn't match any of the fixed front/down/left references
-            # GZBridge checks against) - mavros silently drops range readings that don't
-            # match this exactly.
-            'garmin_id': '0',
-            'garmin_orientation': 'CUSTOM',
-        }
-
-        ld = LaunchDescription([
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(self._mavros_launch_path),
-                launch_arguments=launch_arguments.items(),
-            )
-        ])
-
-        self._ros_node.get_logger().info(f'launch_arguments: {launch_arguments}')
-        launch_service = LaunchService(debug=False)
-        launch_service.include_launch_description(ld)
-        mavros_process = multiprocessing.Process(target=launch_service.run)
-
-        try:
-            mavros_process.start()
-        except Exception as e:
-            self._ros_node.get_logger().error(f'Could not start mavros for {name}. Node failed to launch: {e}')
-            raise CouldNotLaunch('Mavros failed to launch')
-
-        self._ros_node.get_logger().info(f'Mavros for {name} launched')
-        return mavros_process
 
     # #}
 
@@ -93,8 +48,15 @@ class Px4MavlinkManager():
             self._ros_node.get_logger().error(f'Could not start PX4 firmware for {name}. ROMFS folder not found')
             raise CouldNotLaunch('ROMFS folder not found')
 
+        # per run: PX4 imports its parameters from the working directory at every start
+        working_dir = os.path.join(self._tempfile_folder, f'px4_{name}')
+        self._ros_node.get_logger().info(f'PX4 working directory for {name}: {working_dir}')
+
         launch_arguments = {
             'ID': str(robot_params['ID']),
+            'name': name,
+            'working_dir': working_dir,
+            'vehicle_base_port': str(self._px4_mavlink_config.vehicle_base_port),
             'PX4_SIM_MODEL': str(robot_params['model']),
             'ROMFS_PATH': str(romfs_path),
             'CONNECT_TO_QGC': str(self._px4_mavlink_config.stream_for_qgc)

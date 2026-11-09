@@ -6,6 +6,7 @@ import math
 import os
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy
 import rclpy.exceptions
 import multiprocessing
 import time
@@ -22,8 +23,9 @@ from mrs_uav_gazebo_simulator.core.ros_gz_bridge_manager import RosGzBridgeManag
 from mrs_uav_gazebo_simulator.core.px4_mavlink_manager import Px4MavlinkManager
 from mrs_uav_gazebo_simulator.core.user_input_manager import UserInputManager
 from mrs_uav_gazebo_simulator.core.sdf_to_tf_publisher import SdfTfPublisherSingleton
+from mrs_uav_gazebo_simulator.core.spawner_status import SpawnerStatus, platform_config_yaml
 from mrs_msgs.srv import String as StringSrv
-from mrs_msgs.msg import GazeboSpawnerDiagnostics
+from mrs_msgs.msg import GazeboSpawnerStatus
 
 glob_running_processes = []
 
@@ -31,7 +33,7 @@ glob_running_processes = []
 # #{ exit_handler()
 def exit_handler():
     '''
-    Kill all subprocesses started by the spawner to prevent orphaned processes (mainly px4 and mavros)
+    Kill all subprocesses started by the spawner to prevent orphaned processes (mainly px4)
     '''
     print('[INFO] [MrsDroneSpawner]: Exit requested')
 
@@ -84,7 +86,8 @@ class MrsDroneSpawner(Node):
         self._px4_mavlink_manager = Px4MavlinkManager(ros_node=self,
                                                       gazebo_simulator_path=gazebo_simulator_path,
                                                       px4_mavlink_config=self._px4_mavlink_config,
-                                                      jinja_templates=self._jinja_templates)
+                                                      jinja_templates=self._jinja_templates,
+                                                      tempfile_folder=self._tempfile_folder)
 
         self._user_input_manager = UserInputManager(ros_node=self,
                                                     jinja_templates=self._jinja_templates,
@@ -93,22 +96,27 @@ class MrsDroneSpawner(Node):
 
         # Setup ROS 2 communications
         self._spawn_server = self.create_service(StringSrv, 'spawn', self.callback_spawn)
-        self._diagnostics_pub = self.create_publisher(GazeboSpawnerDiagnostics, 'diagnostics', 1)
-        self._diagnostics_timer = self.create_timer(0.1, self.callback_diagnostics_timer)
+        # latched: hw_api and autostart of a vehicle may start long after it was spawned
+        status_qos = QoSProfile(depth=1,
+                                reliability=ReliabilityPolicy.RELIABLE,
+                                durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        self._status_pub = self.create_publisher(GazeboSpawnerStatus, 'status', status_qos)
+        self._status_gate_timer = self.create_timer(1.0, self.callback_status_gate_timer)
         self._action_timer = self.create_timer(0.1, self.callback_action_timer)
 
         self._gazebo_spawn_proxy = self.create_client(SpawnEntity, 'create_entity')
         self._gazebo_delete_proxy = self.create_client(DeleteEntity, 'delete_entity')
 
         # Setup system variables
-        self._spawn_called = False
-        self._processing = False
+        self._status = SpawnerStatus()
+        self._accepting_spawns = False
         self._vehicle_queue = []
         self._queue_mutex = multiprocessing.Lock()
-        self._active_vehicles = []
         self._gazebo_spawn_future = None
         self._gazebo_delete_future = None
         self._gazebo_spawn_request_start_time = None
+        self._gazebo_spawn_request_name = None
+        self._gazebo_spawn_request_last_warning = None
 
         # SdfToTf Publisher
         self._sdf_to_tf_publisher = SdfTfPublisherSingleton(ros_node=self,
@@ -197,6 +205,9 @@ class MrsDroneSpawner(Node):
 
         if sdf_content is None:
             self.get_logger().error('Template did not render, spawn failed.')
+            self._status.failed(name, 'Template did not render')
+            self._publish_status()
+            self._user_input_manager.assigned_ids.discard(robot_params['ID'])
             return
 
         self._sdf_to_tf_publisher.generate_sensor_tfs(sdf_content)
@@ -222,6 +233,9 @@ class MrsDroneSpawner(Node):
         request.entity_factory.pose.orientation.z = q_z
 
         self.get_logger().info(f'Requesting spawn for model {name}')
+        self._gazebo_spawn_request_start_time = time.time()
+        self._gazebo_spawn_request_name = name
+        self._gazebo_spawn_request_last_warning = self._gazebo_spawn_request_start_time
         self._gazebo_spawn_future = self._gazebo_spawn_proxy.call_async(request)
 
         self._gazebo_spawn_future.add_done_callback(
@@ -235,28 +249,29 @@ class MrsDroneSpawner(Node):
         try:
             response = future.result()
             if not response.success:
-                raise CouldNotSpawn(f'Call failed')
+                raise CouldNotSpawn('Gazebo refused to create the model '
+                                    '(e.g., invalid SDF or the name already exists), see the Gazebo output')
 
             ros_gz_bridge_process = None
             firmware_process = None
-            mavros_process = None
-
-            ros_gz_bridge_config, sensor_topics = self._ros_gz_manager.generate_uav_ros_gz_config(robot_params)
 
             try:
+                # file writes first: a failure here goes through the cleanup below, like a failed launch
+                platform_config = self._write_platform_config(robot_params)
+                ros_gz_bridge_config, sensor_topics = self._ros_gz_manager.generate_uav_ros_gz_config(robot_params)
+
                 if ros_gz_bridge_config != "":
                     ros_gz_bridge_process = self._ros_gz_manager.launch_uav_ros_gz_bridge(
                         robot_params['name'], ros_gz_bridge_config, sensor_topics)
-                mavros_process = self._px4_mavlink_manager.launch_mavros(robot_params)
                 firmware_process = self._px4_mavlink_manager.launch_px4_firmware(robot_params)
 
             except Exception as e:
                 self.get_logger().error(f'Failed during spawn sequence for {robot_params["name"]}: {e}')
+                self._status.failed(robot_params['name'], f'Failed during spawn sequence: {e}')
+                self._publish_status()
                 self.delete_gazebo_model(robot_params['name'])
                 if firmware_process and firmware_process.is_alive():
                     firmware_process.terminate()
-                if mavros_process and mavros_process.is_alive():
-                    mavros_process.terminate()
                 if ros_gz_bridge_process and ros_gz_bridge_process.is_alive():
                     ros_gz_bridge_process.terminate()
                 self._user_input_manager.assigned_ids.remove(robot_params['ID'])
@@ -264,17 +279,19 @@ class MrsDroneSpawner(Node):
                 return
 
             glob_running_processes.append(firmware_process)
-            glob_running_processes.append(mavros_process)
             if ros_gz_bridge_process is not None:
                 glob_running_processes.append(ros_gz_bridge_process)
 
             self.get_logger().info(f'Vehicle {robot_params["name"]} successfully spawned')
-            self._active_vehicles.append(robot_params['name'])
+            self._status.spawned(robot_params['name'], platform_config)
+            self._publish_status()
             self._gazebo_spawn_future = None
 
         except Exception as e:
             self.get_logger().error(
                 f'Spawning failed for {robot_params["name"]} with error: {e}, aborting launch sequence.')
+            self._status.failed(robot_params['name'], f'Spawning failed: {e}')
+            self._publish_status()
             self._user_input_manager.assigned_ids.remove(robot_params['ID'])
             self._gazebo_spawn_future = None
             return
@@ -307,7 +324,7 @@ class MrsDroneSpawner(Node):
 
         except Exception as e:
             self.get_logger().error(f'Failed to delete model {name}. Error: {e}')
-            self._gazebo_spawn_future = None
+            self._gazebo_delete_future = None
 
     # #}
 
@@ -320,7 +337,6 @@ class MrsDroneSpawner(Node):
             response.message = f'Gazebo spawn service "{service_name}" not available.'
             return response
 
-        self._spawn_called = True
         self.get_logger().info(f'Spawn called with args "{request.value}"')
         response.success = False
 
@@ -351,12 +367,23 @@ class MrsDroneSpawner(Node):
 
         self.get_logger().info(f'Spawner params assigned "{params_dict}"')
 
+        # --name can repeat an existing name (e.g. --name uav11 next to the default uav11 of ID 11)
+        names_in_use = [name for name in params_dict['names'] if self._status.is_active(name)]
+        if names_in_use:
+            self.get_logger().warn(f'Vehicle names already in use: {names_in_use}')
+            response.message = f'Vehicle names already in use: {names_in_use}'
+            response.success = False
+            self._user_input_manager.assigned_ids = already_assigned_ids
+            return response
+
         self.get_logger().info('Adding vehicles to a spawn queue')
-        self._processing = True
         with self._queue_mutex:
             for i, ID in enumerate(params_dict['ids']):
                 robot_params = self.get_jinja_params_for_one_robot(params_dict, i, ID)
                 self._vehicle_queue.append(robot_params)
+                # PX4 SITL sets MAV_SYS_ID = ID + 1
+                self._status.queued(robot_params['name'], robot_params['mavlink_config']['fcu_url'], ID + 1)
+        self._publish_status()
 
         response.success = True
         response.message = f'Launch sequence queued for {len(params_dict["ids"])} robots'
@@ -366,39 +393,72 @@ class MrsDroneSpawner(Node):
 
     # #{ callback_action_timer(self)
     def callback_action_timer(self):
-        # Check for an ongoing request and if it has timed out
-        if self._gazebo_spawn_future is not None and not self._gazebo_spawn_future.done(
-        ) and self._gazebo_spawn_request_start_time is not None:
-            if time.time() - self._gazebo_spawn_request_start_time > 5.0:
-                self.get_logger().error('Service call timed out!')
-                self._gazebo_spawn_future = None  # Reset state to allow a new request
-            else:
-                self.get_logger().warn('Previous gazebo_spawn service call is pending. Skipping this cycle.')
+        # One spawn request at a time. There is no timeout: Gazebo answers once its world is loaded, which can take
+        # long, dropping the request would lose the vehicle. Warn periodically instead, so that a stuck Gazebo is
+        # visible.
+        if self._gazebo_spawn_future is not None and not self._gazebo_spawn_future.done():
+            now = time.time()
+            if now - self._gazebo_spawn_request_last_warning > 10.0:
+                self.get_logger().warn(
+                    f'Gazebo has not created {self._gazebo_spawn_request_name} yet '
+                    f'({now - self._gazebo_spawn_request_start_time:.0f} s), is the Gazebo simulation running?')
+                self._gazebo_spawn_request_last_warning = now
             return
         with self._queue_mutex:
             if not self._vehicle_queue:
-                self._processing = False
                 return
             robot_params = self._vehicle_queue.pop(0)
 
-        self.spawn_gazebo_model(robot_params)
+        self._status.spawning(robot_params['name'])
+        self._publish_status()
+
+        # an exception here would end rclpy.spin and leave the vehicle SPAWNING
+        try:
+            self.spawn_gazebo_model(robot_params)
+        except Exception as e:
+            self.get_logger().error(f'Spawning failed for {robot_params["name"]}: {e}')
+            self._status.failed(robot_params['name'], f'Spawning failed: {e}')
+            self._publish_status()
+            self._user_input_manager.assigned_ids.discard(robot_params['ID'])
+            self._gazebo_spawn_future = None
 
         if len(self._vehicle_queue) == 0:
             self._sdf_to_tf_publisher.publish_sensor_tfs()
 
     # #}
 
-    # #{ callback_diagnostics_timer(self)
-    def callback_diagnostics_timer(self):
-        diagnostics = GazeboSpawnerDiagnostics()
-        diagnostics.spawn_called = self._spawn_called
-        diagnostics.processing = self._processing
-        diagnostics.active_vehicles = self._active_vehicles
-        self._queue_mutex.acquire()
-        diagnostics.queued_vehicles = [params['name'] for params in self._vehicle_queue]
-        diagnostics.queued_processes = len(self._vehicle_queue)
-        self._queue_mutex.release()
-        self._diagnostics_pub.publish(diagnostics)
+    # #{ callback_status_gate_timer(self)
+    def callback_status_gate_timer(self):
+        # the status announces that the spawner accepts spawn calls (waitForGazebo), which needs the ros_gz_bridge
+        # create_entity service; publish the first (empty) status once it is there
+        if not self._gazebo_spawn_proxy.service_is_ready():
+            return
+
+        self._status_gate_timer.cancel()
+        self._accepting_spawns = True
+        self._publish_status()
+
+    # #}
+
+    # #{ _publish_status(self)
+    def _publish_status(self):
+        if self._accepting_spawns:
+            self._status_pub.publish(self._status.to_msg())
+
+    # #}
+
+    # #{ _write_platform_config(self, robot_params)
+    def _write_platform_config(self, robot_params) -> str:
+        '''Writes the HW API platform config of the vehicle into the temp folder, returns its content'''
+        name = robot_params['name']
+        content = platform_config_yaml(robot_params)
+        filepath = os.path.join(self._tempfile_folder, f'platform_config_{name}.yaml')
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+            self.get_logger().info(f'platform config for {name} written to {filepath}')
+
+        return content
 
     # #}
 
