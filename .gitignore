@@ -34,3 +34,6 @@ env/
 # ========================
 .DS_Store
 Thumbs.db
+
+# PX4 metadata, copied from the px4 package by setup.py
+ROMFS/px4fmu_common/extras/
