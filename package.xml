@@ -14,6 +14,8 @@
 
   <buildtool_depend>ament_cmake_python</buildtool_depend>
 
+  <build_depend>ament_index_python</build_depend>
+
   <depend>rclpy</depend>
   <depend>python3-jinja2</depend>
   <depend>ros_gz</depend>

@@ -1,8 +1,14 @@
 import os
+import shutil
+from ament_index_python.packages import get_package_share_directory
 from setuptools import find_packages, setup
 
 package_name = 'mrs_uav_gazebo_simulator'
 data_directories = ['launch', 'config', 'models', 'ROMFS', 'tmux']
+
+# PX4 metadata (events, parameters, actuators) of the PX4 build the SITL runs, served over MAVLink FTP from /etc/extras;
+# copied into the (git-ignored) ROMFS/px4fmu_common/extras and installed with the rest of the ROMFS
+shutil.copytree(os.path.join(get_package_share_directory('px4'), 'etc', 'extras'), os.path.join('ROMFS', 'px4fmu_common', 'extras'), dirs_exist_ok=True)
 
 data_files_list = []
 
