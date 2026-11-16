@@ -10,7 +10,7 @@
 {# relative to the robot's fcu frame, so the gimbal has to be attached to the root link of the vehicle.   #}
 {# (x, y, z) is the position of the first joint w.r.t. parent_link, the *_offset_* arguments are the      #}
 {# translations of the following joints w.r.t. the previous one. The joints have no rotational offset.     #}
-{# The yaw axis is locked by default (min_yaw = max_yaw = 0), set its limits to make the gimbal 3-axis.    #}
+{# The yaw axis is limited to +-90 deg by default, set min_yaw = max_yaw = 0 to lock it (2-axis gimbal).   #}
 {# roll, pitch and yaw are accepted for the common camera macro interface but ignored, the orientation    #}
 {# of the camera is set by the servo plugin.                                                               #}
 
@@ -18,7 +18,7 @@
 {%- macro servo_camera_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args,
                              roll_offset_x = 0.0, roll_offset_y = 0.0, roll_offset_z = 0.0,
                              pitch_offset_x = 0.0, pitch_offset_y = 0.0, pitch_offset_z = 0.0,
-                             min_yaw = 0.0, max_yaw = 0.0, max_yaw_rate = 1.0, compensate_tilt_yaw = false,
+                             min_yaw = -1.57, max_yaw = 1.57, max_yaw_rate = 0.2, compensate_tilt_yaw = false,
                              min_roll = -0.5, max_roll = 0.5, max_roll_rate = 1.0, compensate_tilt_roll = true,
                              min_pitch = -1.57, max_pitch = 1.57, max_pitch_rate = 1.0, compensate_tilt_pitch = true,
                              yaw_link_mesh_file = '', roll_link_mesh_file = '', pitch_link_mesh_file = '', mesh_scale = '1 1 1') -%}
