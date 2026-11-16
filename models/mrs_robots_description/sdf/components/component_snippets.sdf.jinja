@@ -245,7 +245,7 @@ limitations under the License.
 {# optional keyword arguments (gimbal axes, limits, meshes) are passed through, see servo_camera.sdf.jinja #}
 {%- import "mrs_robots_description/sdf/components/camera/servo/servo_camera.sdf.jinja" as servo_camera_macros -%}
 {%- macro servo_camera_macro(parent_link, x, y, z, mount, spawner_args) -%}
-  {{ servo_camera_macros.servo_camera_macro(parent_link, x, y, z, mount, spawner_args, **kwargs) }}
+  {{ servo_camera_macros.servo_camera_macro('servo_camera', parent_link, x, y, z, 0, 0, 0, mount, spawner_args, **kwargs) }}
 {%- endmacro -%}
 
 

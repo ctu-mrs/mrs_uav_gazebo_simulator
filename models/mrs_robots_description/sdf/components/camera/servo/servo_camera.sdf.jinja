@@ -11,9 +11,11 @@
 {# (x, y, z) is the position of the first joint w.r.t. parent_link, the *_offset_* arguments are the      #}
 {# translations of the following joints w.r.t. the previous one. The joints have no rotational offset.     #}
 {# The yaw axis is locked by default (min_yaw = max_yaw = 0), set its limits to make the gimbal 3-axis.    #}
+{# roll, pitch and yaw are accepted for the common camera macro interface but ignored, the orientation    #}
+{# of the camera is set by the servo plugin.                                                               #}
 
 {# servo_camera_macro {-->#}
-{%- macro servo_camera_macro(parent_link, x, y, z, mount, spawner_args,
+{%- macro servo_camera_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args,
                              roll_offset_x = 0.0, roll_offset_y = 0.0, roll_offset_z = 0.0,
                              pitch_offset_x = 0.0, pitch_offset_y = 0.0, pitch_offset_z = 0.0,
                              min_yaw = 0.0, max_yaw = 0.0, max_yaw_rate = 1.0, compensate_tilt_yaw = false,
@@ -30,7 +32,6 @@
 
     {# setup local variables {--> #}
     {%- set uav_name = spawner_args['name'] -%}
-    {%- set camera_name = 'servo_camera' -%}
     {%- set yaw_link_name = camera_name + '_yaw' -%}
     {%- set roll_link_name = camera_name + '_roll' -%}
     {%- set pitch_link_name = camera_name + '_pitch' -%}
@@ -50,14 +51,14 @@
     <link name="{{ yaw_link_name }}">
       <pose relative_to="{{ yaw_link_name }}_joint">0 0 0 0 0 0</pose>
       {{ generic.zero_inertial_macro() }}
-      {{ servo_link_visual_macro(yaw_link_name, yaw_link_mesh_file, mesh_scale) }}
+      {{ template_servo_link_visual_macro(yaw_link_name, yaw_link_mesh_file, mesh_scale) }}
     </link>
 
     <joint name="{{ yaw_link_name }}_joint" type="revolute">
       <parent>{{ parent_link }}</parent>
       <child>{{ yaw_link_name }}</child>
       <pose relative_to="{{ parent_link }}">{{ x }} {{ y }} {{ z }} 0 0 0</pose>
-      {{ servo_joint_axis_macro('0 0 1', min_yaw, max_yaw) }}
+      {{ template_servo_joint_axis_macro('0 0 1', min_yaw, max_yaw) }}
     </joint>
     <!--}-->
 
@@ -65,14 +66,14 @@
     <link name="{{ roll_link_name }}">
       <pose relative_to="{{ roll_link_name }}_joint">0 0 0 0 0 0</pose>
       {{ generic.zero_inertial_macro() }}
-      {{ servo_link_visual_macro(roll_link_name, roll_link_mesh_file, mesh_scale) }}
+      {{ template_servo_link_visual_macro(roll_link_name, roll_link_mesh_file, mesh_scale) }}
     </link>
 
     <joint name="{{ roll_link_name }}_joint" type="revolute">
       <parent>{{ yaw_link_name }}</parent>
       <child>{{ roll_link_name }}</child>
       <pose relative_to="{{ yaw_link_name }}">{{ roll_offset_x }} {{ roll_offset_y }} {{ roll_offset_z }} 0 0 0</pose>
-      {{ servo_joint_axis_macro('1 0 0', min_roll, max_roll) }}
+      {{ template_servo_joint_axis_macro('1 0 0', min_roll, max_roll) }}
     </joint>
     <!--}-->
 
@@ -80,14 +81,14 @@
     <link name="{{ pitch_link_name }}">
       <pose relative_to="{{ pitch_link_name }}_joint">0 0 0 0 0 0</pose>
       {{ generic.zero_inertial_macro() }}
-      {{ servo_link_visual_macro(pitch_link_name, pitch_link_mesh_file, mesh_scale) }}
+      {{ template_servo_link_visual_macro(pitch_link_name, pitch_link_mesh_file, mesh_scale) }}
     </link>
 
     <joint name="{{ pitch_link_name }}_joint" type="revolute">
       <parent>{{ roll_link_name }}</parent>
       <child>{{ pitch_link_name }}</child>
       <pose relative_to="{{ roll_link_name }}">{{ pitch_offset_x }} {{ pitch_offset_y }} {{ pitch_offset_z }} 0 0 0</pose>
-      {{ servo_joint_axis_macro('0 1 0', min_pitch, max_pitch) }}
+      {{ template_servo_joint_axis_macro('0 1 0', min_pitch, max_pitch) }}
     </joint>
     <!--}-->
 
@@ -194,8 +195,8 @@
 
 {# ----------------------------------- Helpers ------------------------------------- #}
 
-{# servo_link_visual_macro {-->#}
-{%- macro servo_link_visual_macro(link_name, mesh_file, mesh_scale) -%}
+{# template_servo_link_visual_macro {-->#}
+{%- macro template_servo_link_visual_macro(link_name, mesh_file, mesh_scale) -%}
   {%- if mesh_file == '' -%}
     {{ generic.visual_colored_box_macro(
       name = link_name,
@@ -227,8 +228,8 @@
 {%- endmacro -%}
 {# <!--}--> #}
 
-{# servo_joint_axis_macro {-->#}
-{%- macro servo_joint_axis_macro(xyz, lower, upper) -%}
+{# template_servo_joint_axis_macro {-->#}
+{%- macro template_servo_joint_axis_macro(xyz, lower, upper) -%}
   <axis>
     <xyz>{{ xyz }}</xyz>
     <limit>
