@@ -1,0 +1,6 @@
+# Gazebo publishes no TF between the UAVs, connect their trees through the world_origin they all share (world_config.yaml)
+connections:
+  - root_frame_id: uav1/fcu
+    equal_frame_id: uav1/world_origin
+  - root_frame_id: uav2/fcu
+    equal_frame_id: uav2/world_origin

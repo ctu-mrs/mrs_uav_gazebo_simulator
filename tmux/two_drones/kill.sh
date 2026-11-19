@@ -9,6 +9,6 @@ cd "$SCRIPTPATH"
 export TMUX_SESSION_NAME=simulation
 export TMUX_SOCKET_NAME=mrs
 
-# just attach to the session
+# kill the session from a new pane in it, the same as prefix+k (killTmuxSession is from mrs_uav_shell_additions)
 tmux -L $TMUX_SOCKET_NAME split-window -t $TMUX_SESSION_NAME
-tmux -L $TMUX_SOCKET_NAME send-keys -t $TMUX_SESSION_NAME "sleep 1; tmux list-panes -s -F \"#{pane_pid} #{pane_current_command}\" | grep -v tmux | cut -d\" \" -f1 | while read in; do killProcessRecursive \$in; done; exit" ENTER
+tmux -L $TMUX_SOCKET_NAME send-keys -t $TMUX_SESSION_NAME "killTmuxSession --confirmed; exit" ENTER
