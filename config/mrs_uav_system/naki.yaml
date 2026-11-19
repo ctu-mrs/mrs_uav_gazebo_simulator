@@ -1,3 +1,6 @@
+# The HW API outputs (mrs_uav_hw_api/outputs) come from the spawn keywords (e.g. --enable-rangefinder -> distance_sensor).
+# Setting mrs_uav_hw_api keys here overrides them for every spawned vehicle of this type.
+
 uav_mass: 7.5
 
 motor_params:
