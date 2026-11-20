@@ -241,6 +241,13 @@ limitations under the License.
   {{ mobius_macros.mobius_camera_down_macro(camera_name, parent_link, x, y, z, roll, pitch, yaw, mount, spawner_args) }}
 {%- endmacro -%}
 
+{# ==== Servo camera ==== #}
+{# optional keyword arguments (gimbal axes, limits, meshes) are passed through, see servo_camera.sdf.jinja #}
+{%- import "mrs_robots_description/sdf/components/camera/servo/servo_camera.sdf.jinja" as servo_camera_macros -%}
+{%- macro servo_camera_macro(parent_link, x, y, z, mount, spawner_args) -%}
+  {{ servo_camera_macros.servo_camera_macro('servo_camera', parent_link, x, y, z, 0, 0, 0, mount, spawner_args, **kwargs) }}
+{%- endmacro -%}
+
 
 {# ============================= Depth cameras ============================ #}
 {# Note: All of these cameras have misaligned point clouds. We are waiting for a fix. #}
