@@ -1,7 +1,8 @@
 #!/bin/sh
 # shellcheck disable=SC2154
 
-port_base=$((14000 + (4 * px4_instance)))
+# VEHICLE_BASE_PORT is set by the MRS drone spawner (mavlink_config.vehicle_base_port)
+port_base=$((${VEHICLE_BASE_PORT:-14000} + (4 * px4_instance)))
 
 udp_offboard_port_local=$((port_base))
 udp_offboard_port_remote=$((port_base + 1))
